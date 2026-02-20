@@ -105,6 +105,7 @@ class WindowManager implements IWindowManager {
                 webSecurity: false,
                 sandbox: false,
                 webviewTag: true,
+                backgroundThrottling: true,
             },
             frame: false,
             icon: nativeImage.createFromPath(getResourcePath(ResourceName.LOGO_IMAGE)),
@@ -177,7 +178,14 @@ class WindowManager implements IWindowManager {
                 e.preventDefault();
                 mainWindow.hide();
                 mainWindow.setSkipTaskbar(true);
+                // Throttle renderer when hidden to reduce CPU usage
+                mainWindow.webContents.setBackgroundThrottling(true);
             }
+        });
+
+        mainWindow.on("show", () => {
+            // Restore full rendering when window comes back
+            mainWindow.webContents.setBackgroundThrottling(false);
         });
 
         // 5. 更新thumbbar
