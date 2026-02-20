@@ -1,4 +1,5 @@
 import type { ForgeConfig } from "@electron-forge/shared-types";
+import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";
@@ -23,11 +24,11 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    // new MakerSquirrel({
-    //   exe: "MusicFree",
-    //   setupIcon: path.resolve(__dirname, "resources/logo.ico"),
-    //   setupMsi: "MusicFreeInstaller",
-    // }),
+    new MakerSquirrel({
+      exe: "MusicFree.exe",
+      setupIcon: path.resolve(__dirname, "res/logo.ico"),
+      setupExe: "MusicFreeSetup.exe",
+    }, ["win32"]),
     new MakerZIP({}, ["darwin"]),
     new MakerDMG(
       {
