@@ -329,20 +329,21 @@ class WindowManager implements IWindowManager {
         });
 
 
-        lyricWindow.on("resize", () => {
+        const updateLyricSizeConfig = debounce(() => {
             const [wWidth, wHeight] = lyricWindow.getSize();
-            const fontSize = Math.max(Math.min(Math.floor((height - 60) / 2), 80), 16);
+            const fontSize = Math.max(Math.min(Math.floor((wHeight - 60) / 2), 80), 16);
             AppConfig.setConfig({
                 "lyric.fontSize": fontSize,
                 "private.lyricWindowSize": {
-                    width,
-                    height,
+                    width: wWidth,
+                    height: wHeight,
                 },
             });
             width = wWidth;
             height = wHeight;
+        }, 300, { leading: false, trailing: true });
 
-        });
+        lyricWindow.on("resize", updateLyricSizeConfig);
 
         // 初始化设置
         lyricWindow.once("ready-to-show", async () => {
