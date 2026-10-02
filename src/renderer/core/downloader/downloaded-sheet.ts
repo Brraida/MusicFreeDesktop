@@ -1,199 +1,153 @@
-import {
-    getInternalData,
-    getMediaPrimaryKey,
-    isSameMedia,
-    setInternalData,
-} from "@/common/media-util";
+import { getInternalData, getMediaPrimaryKey, isSameMedia, setInternalData } from "@/common/media-util";
 import Store from "@/common/store";
-import {
-    getUserPreferenceIDB,
-    setUserPreferenceIDB,
-} from "@/renderer/utils/user-perference";
+import { getUserPreferenceIDB, setUserPreferenceIDB } from "@/renderer/utils/user-perference";
 import musicSheetDB from "../db/music-sheet-db";
 import { internalDataKey, musicRefSymbol } from "@/common/constant";
 import { useEffect, useState } from "react";
 import { DownloadEvts, ee } from "./ee";
 import { fsUtil } from "@shared/utils/renderer";
+import PQueue from "p-queue";
+import logger from "@shared/logger/renderer";
 
 const downloadedMusicListStore = new Store<IMusic.IMusicItem[]>([]);
 const downloadedSet = new Set<string>();
+const mutations = new PQueue({ concurrency: 1 });
+let initialization: Promise<void>;
 
-// 在初始化歌单时一起初始化
-export async function setupDownloadedMusicList() {
-    const downloadedPKs = (await getUserPreferenceIDB("downloadedList")) ?? [];
-    downloadedMusicListStore.setValue(await getDownloadedDetails(downloadedPKs));
-    downloadedPKs.forEach((it) => {
-        downloadedSet.add(getMediaPrimaryKey(it));
-    });
-}
-
-async function getDownloadedDetails(mediaBases: IMedia.IMediaBase[]) {
-    return await musicSheetDB.transaction(
-        "readonly",
-        musicSheetDB.musicStore,
-        async () => {
-            const musicDetailList = await musicSheetDB.musicStore.bulkGet(
-                mediaBases.map((item) => [item.platform, item.id]),
-            );
-
-            return musicDetailList;
-        },
-    );
-}
-
-function primaryKeyMap(media: IMedia.IMediaBase) {
-    return {
-        platform: media.platform,
-        id: media.id,
-    };
-}
-
-// 添加到已下载完成的列表中
-export async function addDownloadedMusicToList(
-    musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
-) {
-    const _musicItems = Array.isArray(musicItems) ? musicItems : [musicItems];
-    try {
-        // 筛选出不在列表中的项目
-        const targetMusicList = downloadedMusicListStore.getValue();
-        const validMusicItems = _musicItems.filter(
-            (item) => -1 === targetMusicList.findIndex((mi) => isSameMedia(mi, item)),
-        );
-
-        await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
-            // 寻找已入库的音乐项目
-            const allMusic = await musicSheetDB.musicStore.bulkGet(
-                validMusicItems.map((item) => [item.platform, item.id]),
-            );
-            allMusic.forEach((mi, index) => {
-                if (mi) {
-                    mi[musicRefSymbol] += 1;
-                    mi[internalDataKey] = {
-                        ...(mi[internalDataKey] ?? {}),
-                        ...(validMusicItems[index][internalDataKey] ?? {}),
-                    };
-                } else {
-                    allMusic[index] = {
-                        ...validMusicItems[index],
-                        [musicRefSymbol]: 1,
-                    };
+export function setupDownloadedMusicList() {
+    if (!initialization) {
+        initialization = (async () => {
+            const keys = (await getUserPreferenceIDB("downloadedList")) ?? [];
+            // Download metadata is authoritative. Rebuild an incomplete legacy index.
+            const records = await musicSheetDB.musicStore.toArray();
+            const byKey = new Map(records.map((item) => [getMediaPrimaryKey(item), item]));
+            const ordered = new Map<string, IMusic.IMusicItem>();
+            [...keys, ...records].forEach((item) => {
+                const pk = getMediaPrimaryKey(item);
+                const record = byKey.get(pk);
+                if (record && getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData")?.path) {
+                    ordered.set(pk, record);
                 }
             });
-            await musicSheetDB.musicStore.bulkPut(allMusic);
-            downloadedMusicListStore.setValue((prev) => [...prev, ...allMusic]);
-            allMusic.forEach((it) => {
-                downloadedSet.add(getMediaPrimaryKey(it));
-            });
-            ee.emit(DownloadEvts.Downloaded, allMusic);
-            setUserPreferenceIDB(
-                "downloadedList",
-                downloadedMusicListStore.getValue().map(primaryKeyMap),
-            );
-            return true;
+            const candidates = [...ordered.values()];
+            const exists = await Promise.all(candidates.map((item) => fsUtil.isFile(
+                getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData").path,
+            )));
+            const valid = candidates.filter((_item, index) => exists[index]);
+            downloadedSet.clear();
+            valid.forEach((item) => downloadedSet.add(getMediaPrimaryKey(item)));
+            downloadedMusicListStore.setValue(valid);
+            await setUserPreferenceIDB("downloadedList", valid.map(primaryKeyMap));
+        })().catch((error) => {
+            initialization = undefined;
+            throw error;
         });
-    } catch {
-        console.log("error!!");
-        return false;
     }
+    return initialization;
+}
+
+function primaryKeyMap(item: IMedia.IMediaBase) {
+    return { platform: item.platform, id: item.id };
+}
+
+function reportSaveError(message: string, error: Error) {
+    try {
+        logger.logError(message, error);
+    } catch {
+        // A logging transport failure must not change a committed download result.
+    }
+}
+
+export async function addDownloadedMusicToList(
+    musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
+): Promise<boolean> {
+    const result = await mutations.add(async () => {
+        let committed = false;
+        try {
+            await setupDownloadedMusicList();
+            const uniqueItems = new Map((Array.isArray(musicItems) ? musicItems : [musicItems])
+                .map((item) => [getMediaPrimaryKey(item), item]));
+            const validItems = [...uniqueItems.values()].filter((item) => !isDownloaded(item));
+            if (!validItems.length) {
+                return true;
+            }
+            const allMusic = await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
+                const existing = await musicSheetDB.musicStore.bulkGet(validItems.map((item) => [item.platform, item.id]));
+                const records = validItems.map((item, index) => {
+                    const previous = existing[index];
+                    return {
+                        ...(previous ?? item),
+                        [musicRefSymbol]: (previous?.[musicRefSymbol] ?? 0) + 1,
+                        [internalDataKey]: { ...(previous?.[internalDataKey] ?? {}), ...(item[internalDataKey] ?? {}) },
+                    };
+                });
+                await musicSheetDB.musicStore.bulkPut(records);
+                return records;
+            });
+            committed = true;
+            // Publish changes after commit. The preference index lives in a different database.
+            allMusic.forEach((item) => downloadedSet.add(getMediaPrimaryKey(item)));
+            downloadedMusicListStore.setValue((previous) => [...previous, ...allMusic]);
+            try {
+                ee.emit(DownloadEvts.Downloaded, allMusic);
+            } catch (error) {
+                reportSaveError("Download metadata saved, but a completion observer failed", error);
+            }
+            const savedIndex = await setUserPreferenceIDB("downloadedList", downloadedMusicListStore.getValue().map(primaryKeyMap));
+            if (!savedIndex) {
+                logger.logInfo("Download index will be reconstructed from committed music metadata on startup");
+            }
+            return true;
+        } catch (error) {
+            reportSaveError(committed
+                ? "Download metadata saved, but a notification or index update failed"
+                : "Failed to save downloaded music metadata", error);
+            return committed;
+        }
+    });
+    return result === true;
 }
 
 export async function removeDownloadedMusic(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
     removeFile = false,
 ): Promise<ICommon.ICommonReturnType> {
-    const _musicItems = Array.isArray(musicItems) ? musicItems : [musicItems];
-
-    let message: string | null = null;
-
-    try {
-        // 1. 获取全部详细信息
-        const toBeRemovedMusicDetail = await musicSheetDB.transaction(
-            "r",
-            musicSheetDB.musicStore,
-            async () => {
-                return await musicSheetDB.musicStore.bulkGet(
-                    _musicItems.map((item) => [item.platform, item.id]),
-                );
-            },
-        );
-        // 2. 删除文件，事务中删除会报错
-        let removeResults: boolean[] = [];
-        if (removeFile) {
-            removeResults = await Promise.all(
-                toBeRemovedMusicDetail.map((it) => {
-                    try {
-                        return fsUtil.rimraf(
-                            getInternalData<IMusic.IMusicItemInternalData>(it, "downloadData")
-                                ?.path,
-                        );
-                    } catch (e) {
-                        // 删除失败
-                        message = "部分歌曲删除失败 " + (e?.message ?? "");
-                        return false;
-                    }
-                }),
-            );
-        }
-        // 3. 修改数据库
-        await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
-            const needDelete: any[] = [];
-            const needUpdate: any[] = [];
-            await Promise.all(
-                toBeRemovedMusicDetail.map(async (musicItem, index) => {
-                    if (!musicItem) {
-                        return;
-                    }
-                    // 1. 如果本地文件删除失败
-                    if (removeFile && !removeResults[index]) {
-                        return;
-                    }
-                    // 只从歌单中删除，引用-1
-                    musicItem[musicRefSymbol]--;
-                    if (musicItem[musicRefSymbol] === 0) {
-                        needDelete.push([musicItem.platform, musicItem.id]);
+    const result = await mutations.add(async (): Promise<ICommon.ICommonReturnType> => {
+        try {
+            await setupDownloadedMusicList();
+            const items = Array.isArray(musicItems) ? musicItems : [musicItems];
+            const records = await musicSheetDB.musicStore.bulkGet(items.map((item) => [item.platform, item.id]));
+            const valid = records.filter(Boolean);
+            const results = removeFile ? await Promise.all(valid.map((item) => fsUtil.rimraf(
+                getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData")?.path,
+            ))) : valid.map(() => true);
+            const removed = valid.filter((_item, index) => results[index]);
+            const removedKeys = new Set(removed.map(getMediaPrimaryKey));
+            await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
+                const deleted: string[][] = [];
+                const updated: typeof records = [];
+                for (const item of removed) {
+                    item[musicRefSymbol] = Math.max((item[musicRefSymbol] ?? 1) - 1, 0);
+                    if (!item[musicRefSymbol]) {
+                        deleted.push([item.platform, item.id]);
                     } else {
-                        // 清空下载
-                        setInternalData<IMusic.IMusicItemInternalData>(
-                            musicItem,
-                            "downloadData",
-                            undefined,
-                        );
-                        needUpdate.push(musicItem);
+                        setInternalData<IMusic.IMusicItemInternalData>(item, "downloadData", undefined);
+                        updated.push(item);
                     }
-                }),
-            );
-            console.log(needUpdate);
-            await musicSheetDB.musicStore.bulkDelete(needDelete);
-            await musicSheetDB.musicStore.bulkPut(needUpdate);
-
-            downloadedMusicListStore.setValue((prev) =>
-                prev.filter(
-                    (it) => -1 === _musicItems.findIndex((_) => isSameMedia(_, it)),
-                ),
-            );
-            // 触发事件
-            ee.emit(DownloadEvts.RemoveDownload, _musicItems);
-            _musicItems.forEach((it) => {
-                downloadedSet.delete(getMediaPrimaryKey(it));
+                }
+                await musicSheetDB.musicStore.bulkDelete(deleted);
+                await musicSheetDB.musicStore.bulkPut(updated);
             });
-            setUserPreferenceIDB(
-                "downloadedList",
-                downloadedMusicListStore.getValue(),
-            );
-        });
-    } catch (e) {
-        message = "删除失败 " + (e?.message ?? "");
-    }
-    if (message) {
-        return [
-            false,
-            {
-                msg: message,
-            },
-        ];
-    } else {
-        return [true];
-    }
+            removedKeys.forEach((pk) => downloadedSet.delete(pk));
+            downloadedMusicListStore.setValue((previous) => previous.filter((item) => !removedKeys.has(getMediaPrimaryKey(item))));
+            ee.emit(DownloadEvts.RemoveDownload, removed);
+            await setUserPreferenceIDB("downloadedList", downloadedMusicListStore.getValue().map(primaryKeyMap));
+            return results.every(Boolean) ? [true] : [false, { msg: "部分歌曲删除失败" }];
+        } catch (error) {
+            return [false, { msg: error?.message }];
+        }
+    });
+    return result || [false, { msg: "Download mutation did not complete" }];
 }
 
 export function isDownloaded(musicItem: IMedia.IMediaBase) {
