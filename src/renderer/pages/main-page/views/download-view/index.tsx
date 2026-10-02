@@ -3,15 +3,50 @@ import "./index.scss";
 import Downloaded from "./components/Downloaded";
 import Downloading from "./components/Downloading";
 import { useTranslation } from "react-i18next";
+import Downloader from "@/renderer/core/downloader";
+import { toast } from "react-toastify";
 
 export default function DownloadView() {
     const { t } = useTranslation();
+    const queueState = Downloader.useQueueState();
+    const tasks = Downloader.useDownloadingMusicList();
+
+    async function togglePause() {
+        try {
+            if (queueState.paused) {
+                await Downloader.resumeAllDownloads();
+            } else {
+                await Downloader.pauseAllDownloads();
+            }
+        } catch (error) {
+            toast.error(error?.message ?? t("download_page.control_failed"));
+        }
+    }
 
     return (
         <div
             id="page-container"
             className="page-container download-view--container"
         >
+            <div className="download-queue-controls">
+                <button
+                    type="button"
+                    disabled={queueState.changing || (!queueState.paused && !tasks.length)}
+                    onClick={togglePause}
+                >
+                    {t(queueState.changing
+                        ? "download_page.changing"
+                        : queueState.paused ? "download_page.resume_all" : "download_page.pause_all")}
+                </button>
+                <button
+                    type="button"
+                    disabled={queueState.changing || !tasks.length}
+                    onClick={() => Downloader.retryFailedDownloads()}
+                >
+                    {t("download_page.retry_failed")}
+                </button>
+                {queueState.paused && <span>{t("download_page.pause_hint")}</span>}
+            </div>
             <Tab.Group>
                 <Tab.List className="tab-list-container">
                     <Tab as="div" className="tab-list-item">

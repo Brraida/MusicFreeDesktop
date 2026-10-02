@@ -84,9 +84,16 @@
   "download_page": {
     "waiting": "Waiting...",
     "failed": "Download Failed",
+    "pause_all": "Pause all downloads",
+    "resume_all": "Resume downloads",
+    "retry_failed": "Retry failed tasks",
+    "paused": "Paused",
     "saving": "Saving download record…",
+    "changing": "Working…",
+    "pause_hint": "Active transfers and queued tasks are paused. Unfinished songs restart when resumed.",
     "save_failed": "File downloaded, but its record could not be saved. Retry failed tasks to save the record again.",
-    "invalid_source": "Unable to get a download URL"
+    "invalid_source": "Unable to get a download URL",
+    "control_failed": "Unable to change download state"
   },
   "plugin_management_page": {
     "plugin_management": "Plugin Management",

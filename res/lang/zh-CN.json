@@ -74,9 +74,16 @@
   "download_page": {
     "waiting": "等待中...",
     "failed": "下载失败",
+    "pause_all": "暂停全部下载",
+    "resume_all": "继续下载",
+    "retry_failed": "重试失败任务",
+    "paused": "已暂停",
     "saving": "正在保存下载记录…",
+    "changing": "正在处理…",
+    "pause_hint": "已停止当前传输和排队任务；继续时未完成的歌曲会重新下载。",
     "save_failed": "文件已下载，但记录保存失败；点击“重试失败任务”可重新保存记录。",
-    "invalid_source": "无法获取歌曲下载地址"
+    "invalid_source": "无法获取歌曲下载地址",
+    "control_failed": "下载控制操作失败"
   },
   "plugin_management_page": {
     "plugin_management": "插件管理",

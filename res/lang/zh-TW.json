@@ -84,9 +84,16 @@
   "download_page": {
     "waiting": "等待中...",
     "failed": "下載失敗",
+    "pause_all": "暫停全部下載",
+    "resume_all": "繼續下載",
+    "retry_failed": "重試失敗任務",
+    "paused": "已暫停",
     "saving": "正在儲存下載記錄…",
+    "changing": "正在處理…",
+    "pause_hint": "已停止目前傳輸與佇列任務；繼續時未完成的歌曲會重新下載。",
     "save_failed": "檔案已下載，但記錄儲存失敗；點擊「重試失敗任務」可重新儲存記錄。",
-    "invalid_source": "無法取得歌曲下載網址"
+    "invalid_source": "無法取得歌曲下載網址",
+    "control_failed": "下載控制操作失敗"
   },
   "plugin_management_page": {
     "plugin_management": "插件管理",

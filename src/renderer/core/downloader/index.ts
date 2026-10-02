@@ -29,10 +29,13 @@ interface IDownloaderWorker {
         source: IMusic.IMusicSource, path: string,
         onProgress: IOnStateChangeFunc & Comlink.ProxyMarked, taskId: string,
     ) => Promise<IDownloadStatus>;
+    pauseAllDownloads: () => Promise<void>;
+    resumeAllDownloads: () => Promise<void>;
 }
 
 const downloadingMusicStore = new Store<IMusic.IMusicItem[]>([]);
 const downloadingProgress = new Map<string, IDownloadStatus>();
+const queueStateStore = new Store({ paused: false, changing: false });
 const queuedKeys = new Set<string>();
 const activeControllers = new Map<string, AbortController>();
 const activeTasks = new Set<Promise<void>>();
@@ -110,6 +113,18 @@ ee.on(DownloadEvts.Downloaded, (items: IMusic.IMusicItem | IMusic.IMusicItem[]) 
     }
 });
 
+function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+    return new Promise((resolve, reject) => {
+        const onAbort = () => reject(new Error("Download paused"));
+        if (signal.aborted) {
+            onAbort();
+            return;
+        }
+        signal.addEventListener("abort", onAbort, { once: true });
+        promise.then(resolve, reject).finally(() => signal.removeEventListener("abort", onAbort));
+    });
+}
+
 async function runDownload(item: IMusic.IMusicItem) {
     const pk = getMediaPrimaryKey(item);
     const controller = new AbortController();
@@ -126,14 +141,21 @@ async function runDownload(item: IMusic.IMusicItem) {
             let realQuality = qualityOrder[0];
             for (const quality of qualityOrder) {
                 try {
-                    source = await PluginManager.callPluginDelegateMethod(
+                    source = await abortable(PluginManager.callPluginDelegateMethod(
                         item, "getMediaSource", item, quality,
-                    );
+                    ), controller.signal);
                     if (source?.url) {
                         realQuality = quality;
                         break;
                     }
-                } catch {}
+                } catch (error) {
+                    if (controller.signal.aborted) {
+                        throw error;
+                    }
+                }
+            }
+            if (controller.signal.aborted) {
+                throw new Error("Download paused");
             }
             if (!source?.url) {
                 throw new Error(i18n.t("download_page.invalid_source"));
@@ -145,7 +167,9 @@ async function runDownload(item: IMusic.IMusicItem) {
                 `${fileName}.${extension.replace(/[^a-zA-Z0-9]/g, "") || "mp3"}`,
             );
             const result = await downloaderWorker.downloadFile(source, downloadPath, Comlink.proxy((status) => {
-                updateStatus(item, status);
+                if (!queueStateStore.getValue().paused && !controller.signal.aborted) {
+                    updateStatus(item, status);
+                }
             }), pk);
             if (result.state !== DownloadState.DONE) {
                 updateStatus(item, result);
@@ -163,7 +187,9 @@ async function runDownload(item: IMusic.IMusicItem) {
         }
         finishDownload(item);
     } catch (error) {
-        updateStatus(item, { state: DownloadState.ERROR, msg: error?.message });
+        updateStatus(item, controller.signal.aborted
+            ? { state: DownloadState.PAUSED }
+            : { state: DownloadState.ERROR, msg: error?.message });
     } finally {
         activeControllers.delete(pk);
     }
@@ -208,11 +234,56 @@ async function startDownload(musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]
             ...previous.filter((item) => !seen.has(getMediaPrimaryKey(item))), ...validItems,
         ]);
         for (const item of validItems) {
-            updateStatus(item, { state: DownloadState.WAITING });
+            updateStatus(item, { state: queueStateStore.getValue().paused ? DownloadState.PAUSED : DownloadState.WAITING });
             enqueue(item);
         }
     }
     return { added: validItems.length, skipped: items.length - validItems.length };
+}
+
+async function pauseAllDownloads() {
+    if (queueStateStore.getValue().paused || queueStateStore.getValue().changing) {
+        return;
+    }
+    queueStateStore.setValue({ paused: true, changing: true });
+    downloadingQueue.pause();
+    for (const item of downloadingMusicStore.getValue()) {
+        const status = downloadingProgress.get(getMediaPrimaryKey(item));
+        if (status?.state === DownloadState.WAITING || status?.state === DownloadState.DOWNLOADING) {
+            updateStatus(item, { ...status, state: DownloadState.PAUSED });
+        }
+    }
+    activeControllers.forEach((controller) => controller.abort());
+    try {
+        await downloaderWorker?.pauseAllDownloads();
+        await Promise.allSettled([...activeTasks]);
+    } finally {
+        queueStateStore.setValue({ paused: true, changing: false });
+    }
+}
+
+async function resumeAllDownloads() {
+    if (!queueStateStore.getValue().paused || queueStateStore.getValue().changing) {
+        return;
+    }
+    queueStateStore.setValue({ paused: true, changing: true });
+    try {
+        await downloaderWorker?.resumeAllDownloads();
+        for (const item of downloadingMusicStore.getValue()) {
+            const pk = getMediaPrimaryKey(item);
+            if (downloadingProgress.get(pk)?.state === DownloadState.PAUSED) {
+                updateStatus(item, { state: DownloadState.WAITING });
+                if (!queuedKeys.has(pk)) {
+                    enqueue(item);
+                }
+            }
+        }
+        queueStateStore.setValue({ paused: false, changing: false });
+        downloadingQueue.start();
+    } catch (error) {
+        queueStateStore.setValue({ paused: true, changing: false });
+        throw error;
+    }
 }
 
 async function retryFailedDownloads() {
@@ -245,7 +316,8 @@ function useDownloadState(musicItem: IMusic.IMusicItem) {
 }
 
 export default {
-    setupDownloader, startDownload, retryFailedDownloads,
+    setupDownloader, startDownload, pauseAllDownloads, resumeAllDownloads, retryFailedDownloads,
+    useQueueState: queueStateStore.useValue,
     getDownloadStatus, useDownloadStatus, useDownloadingMusicList: downloadingMusicStore.useValue,
     useDownloaded, isDownloaded, useDownloadedMusicList, removeDownloadedMusic,
     setDownloadingConcurrency, useDownloadState,

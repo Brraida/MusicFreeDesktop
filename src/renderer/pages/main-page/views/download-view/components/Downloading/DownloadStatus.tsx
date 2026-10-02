@@ -21,6 +21,8 @@ function DownloadStatus(props: IProps) {
         return <span>{t("common.downloaded")}</span>;
     } else if (downloadStatus.state === DownloadState.WAITING) {
         return <span>{t("download_page.waiting")}</span>;
+    } else if (downloadStatus.state === DownloadState.PAUSED) {
+        return <span>{t("download_page.paused")}</span>;
     } else if (downloadStatus.state === DownloadState.SAVING) {
         return <span>{t("download_page.saving")}</span>;
     } else if (downloadStatus.state === DownloadState.ERROR) {

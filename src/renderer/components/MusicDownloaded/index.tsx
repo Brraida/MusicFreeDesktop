@@ -26,6 +26,8 @@ function MusicDownloaded(props: IMusicDownloadedProps) {
 
     if (isDownloadedOrLocal) {
         iconName = "check-circle";
+    } else if (downloadState === DownloadState.PAUSED) {
+        iconName = "pause";
     } else if (
         downloadState !== DownloadState.NONE &&
     downloadState !== DownloadState.ERROR
@@ -39,7 +41,8 @@ function MusicDownloaded(props: IMusicDownloadedProps) {
                 isDownloadedOrLocal ? "music-downloaded" : "music-can-download"
             }`}
             title={
-                isDownloadedOrLocal ? t("common.downloaded") : t("common.download")
+                isDownloadedOrLocal ? t("common.downloaded")
+                    : downloadState === DownloadState.PAUSED ? t("download_page.paused") : t("common.download")
             }
             onClick={() => {
                 if (

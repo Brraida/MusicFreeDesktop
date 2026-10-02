@@ -21,6 +21,17 @@ type IOnStateChangeFunc = (data: IDownloadResult) => void;
 
 const activeDownloads = new Map<string, AbortController>();
 const reservedPaths = new Set<string>();
+let paused = false;
+
+async function pauseAllDownloads() {
+    paused = true;
+    activeDownloads.forEach((controller) => controller.abort());
+}
+
+function resumeAllDownloads() {
+    paused = false;
+}
+
 async function reserveFilePath(filePath: string) {
     const { dir, name, ext } = path.parse(filePath);
     for (let suffix = 0; ; suffix++) {
@@ -47,6 +58,9 @@ async function downloadFile(
     onStateChange: IOnStateChangeFunc,
     taskId = randomUUID(),
 ): Promise<IDownloadResult> {
+    if (paused) {
+        return { state: DownloadState.PAUSED };
+    }
     const controller = new AbortController();
     activeDownloads.set(taskId, controller);
     let targetPath: string | undefined;
@@ -115,6 +129,9 @@ async function downloadFile(
             { signal: controller.signal },
         );
         reportProgress.cancel();
+        if (controller.signal.aborted) {
+            return { state: DownloadState.PAUSED };
+        }
         if (!downloaded) {
             throw new Error("Empty download");
         }
@@ -123,7 +140,9 @@ async function downloadFile(
         temporaryPath = undefined;
         return { state: DownloadState.DONE, path: targetPath, downloaded, total };
     } catch (error) {
-        return { state: DownloadState.ERROR, msg: error?.message };
+        return controller.signal.aborted
+            ? { state: DownloadState.PAUSED }
+            : { state: DownloadState.ERROR, msg: error?.message };
     } finally {
         reportProgress.cancel();
         if (temporaryPath) {
@@ -155,4 +174,4 @@ async function downloadFileNew(mediaSource: IMusic.IMusicSource, filePath: strin
     }
 }
 
-Comlink.expose({ downloadFile, downloadFileNew });
+Comlink.expose({ downloadFile, downloadFileNew, pauseAllDownloads, resumeAllDownloads });

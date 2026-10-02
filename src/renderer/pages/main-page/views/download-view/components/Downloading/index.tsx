@@ -10,6 +10,7 @@ import "./index.scss";
 import { i18n } from "@/shared/i18n/renderer";
 import useVirtualList from "@/hooks/useVirtualList";
 import DownloadStatus from "./DownloadStatus";
+import { useRef } from "react";
 
 const columnHelper = createColumnHelper<IMusic.IMusicItem>();
 
@@ -66,15 +67,18 @@ export default function Downloading() {
         getCoreRowModel: getCoreRowModel(),
     });
 
+    const tableRef = useRef<HTMLTableElement>();
     const virtualController = useVirtualList({
         data: table.getRowModel().rows,
         scrollElementQuery: "#page-container",
+        offsetHeight: () => tableRef.current?.offsetTop ?? 0,
         estimateItemHeight: estimizeItemHeight,
     });
 
     return (
         <div className="downloading-container">
             <table
+                ref={tableRef}
                 style={{
                     tableLayout: "fixed",
                     height: virtualController.totalHeight + estimizeItemHeight,
@@ -102,7 +106,7 @@ export default function Downloading() {
                         transform: `translateY(${virtualController.startTop}px)`,
                     }}
                 >
-                    {virtualController.virtualItems.map((virtualItem, index) => {
+                    {virtualController.virtualItems.map((virtualItem) => {
                         const dataItem = virtualItem.dataItem;
                         const musicItem = dataItem.original;
                         // todo 拆出一个组件
