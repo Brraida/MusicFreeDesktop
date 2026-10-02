@@ -9,7 +9,7 @@
   & th {
     position: relative;
 
-    &:not([data-id="like"]):hover {
+    &:not([data-id="like"]):not([data-id="selection"]):hover {
       background-color: var(--listHoverColor);
 
       & .sort-container[data-sorting="false"] {
@@ -17,7 +17,7 @@
       }
     }
 
-    &:nth-child(2) {
+    &[data-id="index"] {
       text-align: center;
     }
 
@@ -53,7 +53,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
 
-    &:nth-child(2) {
+    &[data-id="index"] {
       text-align: center;
     }
   }
@@ -107,4 +107,51 @@
 
 .music-list-drag-receiver-bottom {
   bottom: -6px;
+}
+
+.music-list-batch-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+
+  & button {
+    font: inherit;
+    padding: 6px 10px;
+    border: 1px solid var(--dividerColor, currentColor);
+    border-radius: 4px;
+    color: inherit;
+    background: transparent;
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background-color: var(--listHoverColor);
+    }
+
+    &:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+  }
+
+  & .music-list-batch-hint {
+    opacity: 0.7;
+    font-size: 0.9em;
+  }
+}
+
+.music-list-container .music-list-selection-cell {
+  text-align: center;
+
+  & input[type="checkbox"] {
+    appearance: auto;
+    width: 14px;
+    height: 14px;
+    margin: 0;
+    padding: 0;
+    vertical-align: middle;
+    accent-color: var(--primaryColor);
+    cursor: pointer;
+  }
 }

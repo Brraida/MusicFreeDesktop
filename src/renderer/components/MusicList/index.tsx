@@ -20,7 +20,7 @@ import MusicDownloaded from "../MusicDownloaded";
 import { localPluginName, RequestStateCode } from "@/common/constant";
 import BottomLoadingState from "../BottomLoadingState";
 import { IContextMenuItem, showContextMenu } from "../ContextMenu";
-import { getInternalData, getMediaPrimaryKey, isSameMedia } from "@/common/media-util";
+import { getInternalData, getMediaPrimaryKey } from "@/common/media-util";
 import { CSSProperties, memo, useCallback, useEffect, useRef, useState } from "react";
 import { showModal } from "../Modal";
 import useVirtualList from "@/hooks/useVirtualList";
@@ -73,7 +73,7 @@ const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
         minSize: 42,
         maxSize: 42,
         cell: (info) => (
-            <div className="music-list-operations">
+            <div className="music-list-operations" onClick={(event) => event.stopPropagation()}>
                 <MusicFavorite musicItem={info.row.original} size={18}></MusicFavorite>
                 <MusicDownloaded musicItem={info.row.original}></MusicDownloaded>
             </div>
@@ -326,6 +326,8 @@ function _MusicList(props: IMusicListProps) {
     const [sorting, setSorting] = useState<SortingState>([]);
 
     const musicListRef = useRef(musicList);
+    musicListRef.current = musicList;
+    const [batchSelecting, setBatchSelecting] = useState(false);
     const columnShownRef = useRef(
         AppConfig.getConfig("normal.musicListColumnsShown").reduce(
             (prev, curr) => ({
@@ -354,10 +356,11 @@ function _MusicList(props: IMusicListProps) {
     });
 
     const tableContainerRef = useRef<HTMLDivElement>();
+    const tableRef = useRef<HTMLTableElement>();
     const virtualController = useVirtualList({
         data: table.getRowModel().rows,
         getScrollElement: virtualProps?.getScrollElement,
-        offsetHeight: () => tableContainerRef.current?.offsetTop ?? 0,
+        offsetHeight: () => tableRef.current?.offsetTop ?? 0,
         estimateItemHeight: estimizeItemHeight,
         fallbackRenderCount: !(
             virtualProps?.getScrollElement
@@ -366,19 +369,39 @@ function _MusicList(props: IMusicListProps) {
             : virtualProps?.fallbackRenderCount ?? 50,
     });
 
-    const [activeItems, setActiveItems] = useState<Set<number>>(new Set());
-    const lastActiveIndexRef = useRef(0);
+    // Identify songs by their source and ID so selection survives sorting and pagination.
+    const [activeItems, setActiveItems] = useState<Set<string>>(new Set());
+    const lastActiveKeyRef = useRef<string>();
+    const rows = table.getRowModel().rows;
+    const selectedItems = rows
+        .filter((row) => activeItems.has(getMediaPrimaryKey(row.original)))
+        .map((row) => row.original);
+    const allSelected = musicList.length > 0 && selectedItems.length === musicList.length;
+    const selectAllRef = useRef<HTMLInputElement>();
+
+    useEffect(() => {
+        if (selectAllRef.current) {
+            selectAllRef.current.indeterminate = selectedItems.length > 0 && !allSelected;
+        }
+    }, [selectedItems.length, allSelected, batchSelecting]);
+
+    useEffect(() => {
+        const availableKeys = new Set(musicList.map(getMediaPrimaryKey));
+        setActiveItems((previous) => new Set([...previous].filter((key) => availableKeys.has(key))));
+        if (!availableKeys.has(lastActiveKeyRef.current)) {
+            lastActiveKeyRef.current = undefined;
+        }
+    }, [musicList]);
 
     useEffect(() => {
         setActiveItems(new Set());
-        lastActiveIndexRef.current = 0;
-        musicListRef.current = musicList;
-    }, [musicList]);
+        lastActiveKeyRef.current = undefined;
+    }, [musicSheet?.platform, musicSheet?.id]);
 
     useEffect(() => {
         const ctrlAHandler = (evt: Event) => {
             evt.preventDefault();
-            setActiveItems(new Set(Array.from({ length: musicListRef.current.length }, (_, i) => i)));
+            setActiveItems(new Set(musicListRef.current.map(getMediaPrimaryKey)));
         };
         hotkeys("Ctrl+A", "music-list", ctrlAHandler);
 
@@ -386,6 +409,31 @@ function _MusicList(props: IMusicListProps) {
             hotkeys.unbind("Ctrl+A", ctrlAHandler);
         };
     }, []);
+
+    function toggleItem(key: string) {
+        setActiveItems((previous) => {
+            const next = new Set(previous);
+            if (next.has(key)) {
+                next.delete(key);
+            } else {
+                next.add(key);
+            }
+            return next;
+        });
+        lastActiveKeyRef.current = key;
+    }
+
+    function selectAll() {
+        setActiveItems(new Set(musicList.map(getMediaPrimaryKey)));
+    }
+
+    async function downloadSelected() {
+        const result = await Downloader.startDownload(selectedItems);
+        toast.info(i18n.t("music_list_batch.download_queued", {
+            added: result.added,
+            skipped: result.skipped,
+        }));
+    }
 
     const _onDrop = useCallback(
         (fromIndex: number, toIndex: number) => {
@@ -419,7 +467,50 @@ function _MusicList(props: IMusicListProps) {
                 hotkeys.setScope("all");
             }}
         >
+            <div className="music-list-batch-toolbar">
+                <button
+                    type="button"
+                    onClick={() => {
+                        setBatchSelecting((previous) => !previous);
+                        setActiveItems(new Set());
+                        lastActiveKeyRef.current = undefined;
+                    }}
+                >
+                    {i18n.t(batchSelecting ? "music_list_batch.finish" : "music_list_batch.select")}
+                </button>
+                {batchSelecting && (
+                    <>
+                        <button type="button" onClick={selectAll} disabled={!musicList.length}>
+                            {i18n.t("common.select_all")}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveItems(new Set())}
+                            disabled={!selectedItems.length}
+                        >
+                            {i18n.t("music_list_batch.clear")}
+                        </button>
+                        <span aria-live="polite">
+                            {i18n.t("music_list_batch.selected", { count: selectedItems.length })}
+                        </span>
+                        <button type="button" onClick={downloadSelected} disabled={!selectedItems.length}>
+                            {i18n.t("music_list_batch.download")}
+                        </button>
+                        <button
+                            type="button"
+                            disabled={!selectedItems.length}
+                            onClick={() => showModal("AddMusicToSheet", { musicItems: selectedItems })}
+                        >
+                            {i18n.t("music_list_batch.add_to_sheet")}
+                        </button>
+                        <span className="music-list-batch-hint">
+                            {i18n.t("music_list_batch.loaded_only")}
+                        </span>
+                    </>
+                )}
+            </div>
             <table
+                ref={tableRef}
                 style={{
                     height: virtualController.totalHeight + estimizeItemHeight,
                     tableLayout: "fixed",
@@ -427,6 +518,24 @@ function _MusicList(props: IMusicListProps) {
             >
                 <thead>
                     <tr>
+                        {batchSelecting && (
+                            <th className="music-list-selection-cell" data-id="selection" style={{ width: 36 }}>
+                                <input
+                                    ref={selectAllRef}
+                                    type="checkbox"
+                                    checked={allSelected}
+                                    disabled={!musicList.length}
+                                    aria-label={i18n.t("common.select_all")}
+                                    onChange={(event) => {
+                                        if (event.target.checked) {
+                                            selectAll();
+                                        } else {
+                                            setActiveItems(new Set());
+                                        }
+                                    }}
+                                />
+                            </th>
+                        )}
                         {table.getHeaderGroups()[0].headers.map((header) => (
                             <th
                                 key={header.id}
@@ -488,74 +597,51 @@ function _MusicList(props: IMusicListProps) {
                         // todo 拆出一个组件
                         return (
                             <tr
-                                key={row.id}
+                                key={getMediaPrimaryKey(row.original)}
                                 data-active={
-                                    activeItems.has(virtualItem.rowIndex)
+                                    activeItems.has(getMediaPrimaryKey(row.original))
                                 }
                                 onContextMenu={(e) => {
-                                    if (
-                                        activeItems.size > 1
-                                    ) {
-                                        const selectedItems: IMusic.IMusicItem[] = [];
-                                        const rows = table.getRowModel().rows;
-                                        activeItems.forEach(item => {
-                                            selectedItems.push(rows[item].original);
-                                        });
-
+                                    const key = getMediaPrimaryKey(row.original);
+                                    if (activeItems.has(key) && selectedItems.length > 1) {
                                         showMusicContextMenu(
                                             selectedItems,
                                             e.clientX,
                                             e.clientY,
-                                            musicSheet?.platform === localPluginName
-                                                ? musicSheet.id
-                                                : undefined,
+                                            musicSheet?.platform === localPluginName ? musicSheet.id : undefined,
                                         );
                                     } else {
-                                        lastActiveIndexRef.current = virtualItem.rowIndex;
-                                        setActiveItems(new Set([virtualItem.rowIndex]));
+                                        lastActiveKeyRef.current = key;
+                                        setActiveItems(new Set([key]));
                                         showMusicContextMenu(
                                             row.original,
                                             e.clientX,
                                             e.clientY,
-                                            musicSheet?.platform === localPluginName
-                                                ? musicSheet.id
-                                                : undefined,
+                                            musicSheet?.platform === localPluginName ? musicSheet.id : undefined,
                                         );
                                     }
                                 }}
-                                onClick={() => {
-                                // 如果点击的时候按下shift
-                                    if (hotkeys.shift) {
-                                        let start = lastActiveIndexRef.current;
-                                        let end = virtualItem.rowIndex;
-
-                                        if (start >= end) {
-                                            [start, end] = [end, start];
-                                        }
-
-                                        if (end > musicListRef.current.length) {
-                                            end = musicListRef.current.length - 1;
-                                        }
-
-                                        setActiveItems(
-                                            new Set(
-                                                Array.from({ length: end - start + 1 }, (_, i) => start + i),
-                                            ),
-                                        );
-                                    } else if (hotkeys.ctrl) {
-                                        const newSet = new Set(activeItems);
-                                        if (newSet.has(virtualItem.rowIndex)) {
-                                            newSet.delete(virtualItem.rowIndex);
-                                        } else {
-                                            newSet.add(virtualItem.rowIndex);
-                                        }
-                                        setActiveItems(newSet);
+                                onClick={(event) => {
+                                    const key = getMediaPrimaryKey(row.original);
+                                    if (event.shiftKey) {
+                                        const anchorIndex = rows.findIndex((item) =>
+                                            getMediaPrimaryKey(item.original) === lastActiveKeyRef.current);
+                                        const start = Math.min(Math.max(anchorIndex, 0), virtualItem.rowIndex);
+                                        const end = Math.max(Math.max(anchorIndex, 0), virtualItem.rowIndex);
+                                        const range = rows.slice(start, end + 1)
+                                            .map((item) => getMediaPrimaryKey(item.original));
+                                        setActiveItems((previous) => new Set(batchSelecting ? [...previous, ...range] : range));
+                                    } else if (batchSelecting || event.ctrlKey || event.metaKey) {
+                                        toggleItem(key);
                                     } else {
-                                        setActiveItems(new Set([virtualItem.rowIndex]));
-                                        lastActiveIndexRef.current = virtualItem.rowIndex;
+                                        setActiveItems(new Set([key]));
+                                        lastActiveKeyRef.current = key;
                                     }
                                 }}
                                 onDoubleClick={() => {
+                                    if (batchSelecting) {
+                                        return;
+                                    }
                                     const config =
                                     doubleClickBehavior ??
                                     AppConfig.getConfig("playMusic.clickMusicList");
@@ -568,7 +654,7 @@ function _MusicList(props: IMusicListProps) {
                                         trackPlayer.playMusic(row.original);
                                     }
                                 }}
-                                draggable={enableDrag}
+                                draggable={enableDrag && !batchSelecting}
                                 onDragStart={(e) => {
                                 // TODO
                                 // if(activeItems) {
@@ -577,9 +663,22 @@ function _MusicList(props: IMusicListProps) {
                                     startDrag(e, virtualItem.rowIndex, "musiclist");
                                 }}
                             >
+                                {batchSelecting && (
+                                    <td className="music-list-selection-cell" style={{ width: 36 }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={activeItems.has(getMediaPrimaryKey(row.original))}
+                                            aria-label={i18n.t("music_list_batch.select_song", { title: row.original.title })}
+                                            onClick={(event) => event.stopPropagation()}
+                                            onDoubleClick={(event) => event.stopPropagation()}
+                                            onChange={() => toggleItem(getMediaPrimaryKey(row.original))}
+                                        />
+                                    </td>
+                                )}
                                 {row.getVisibleCells().map((cell) => (
                                     <td
                                         key={cell.id}
+                                        data-id={cell.column.id}
                                         style={{
                                         //@ts-ignore
                                             width: cell.column.columnDef.fr
@@ -636,15 +735,4 @@ function _MusicList(props: IMusicListProps) {
     );
 }
 
-export default memo(
-    _MusicList,
-    (prev, curr) =>
-        prev.state === curr.state &&
-        prev.enableDrag === curr.enableDrag &&
-        prev.musicList === curr.musicList &&
-        prev.onPageChange === curr.onPageChange &&
-        prev.onDragEnd === curr.onDragEnd &&
-        prev.musicSheet &&
-        curr.musicSheet &&
-        isSameMedia(prev.musicSheet, curr.musicSheet),
-);
+export default memo(_MusicList);

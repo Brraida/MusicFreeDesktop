@@ -142,6 +142,17 @@
     "total_music_num": "Total {{number}} songs"
   },
 
+  "music_list_batch": {
+    "select": "Select songs",
+    "finish": "Done selecting",
+    "clear": "Deselect all",
+    "selected": "{{count}} selected",
+    "download": "Download selected",
+    "add_to_sheet": "Add to playlist",
+    "loaded_only": "Select all includes songs already loaded in this list",
+    "select_song": "Select song: {{title}}",
+    "download_queued": "Queued {{added}} songs; skipped {{skipped}} (local, downloaded, or already queued)"
+  },
   "music_list_context_menu": {
     "next_play": "Play Next",
     "add_to_my_sheets": "Add to Playlist",

@@ -127,6 +127,17 @@
     "folder_view": "文件夹视图",
     "total_music_num": "共 {{number}} 首"
   },
+  "music_list_batch": {
+    "select": "批量选择",
+    "finish": "完成选择",
+    "clear": "取消全选",
+    "selected": "已选 {{count}} 首",
+    "download": "下载选中歌曲",
+    "add_to_sheet": "添加到歌单",
+    "loaded_only": "全选范围：当前列表中已加载的歌曲",
+    "select_song": "选择歌曲：{{title}}",
+    "download_queued": "已加入下载队列 {{added}} 首，跳过 {{skipped}} 首（本地、已下载或已在队列中）"
+  },
   "music_list_context_menu": {
     "next_play": "下一首播放",
     "add_to_my_sheets": "添加到歌单",
