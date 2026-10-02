@@ -1,19 +1,10 @@
-import {
-    getMediaPrimaryKey,
-    getQualityOrder,
-    isSameMedia,
-    setInternalData,
-} from "@/common/media-util";
+import { getMediaPrimaryKey, getQualityOrder, isSameMedia, setInternalData } from "@/common/media-util";
 import * as Comlink from "comlink";
 import { DownloadState, localPluginName } from "@/common/constant";
 import PQueue from "p-queue";
 import {
-    addDownloadedMusicToList,
-    isDownloaded,
-    removeDownloadedMusic,
-    setupDownloadedMusicList,
-    useDownloaded,
-    useDownloadedMusicList,
+    addDownloadedMusicToList, isDownloaded, removeDownloadedMusic,
+    setupDownloadedMusicList, useDownloaded, useDownloadedMusicList,
 } from "./downloaded-sheet";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import Store from "@/common/store";
@@ -21,228 +12,241 @@ import { useEffect, useState } from "react";
 import { DownloadEvts, ee } from "./ee";
 import AppConfig from "@shared/app-config/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
-
+import { i18n } from "@/shared/i18n/renderer";
+import logger from "@shared/logger/renderer";
 
 export interface IDownloadStatus {
     state: DownloadState;
+    path?: string;
     downloaded?: number;
     total?: number;
     msg?: string;
 }
 
-const downloadingMusicStore = new Store<Array<IMusic.IMusicItem>>([]);
-const downloadingProgress = new Map<string, IDownloadStatus>();
-
-type ProxyMarkedFunction<T extends (...args: any) => void> = T &
-  Comlink.ProxyMarked;
-
 type IOnStateChangeFunc = (data: IDownloadStatus) => void;
-
 interface IDownloaderWorker {
     downloadFile: (
-        mediaSource: IMusic.IMusicSource,
-        filePath: string,
-        onStateChange: ProxyMarkedFunction<IOnStateChangeFunc>
-    ) => Promise<void>;
+        source: IMusic.IMusicSource, path: string,
+        onProgress: IOnStateChangeFunc & Comlink.ProxyMarked, taskId: string,
+    ) => Promise<IDownloadStatus>;
 }
 
+const downloadingMusicStore = new Store<IMusic.IMusicItem[]>([]);
+const downloadingProgress = new Map<string, IDownloadStatus>();
+const queuedKeys = new Set<string>();
+const activeControllers = new Map<string, AbortController>();
+const activeTasks = new Set<Promise<void>>();
+// Retrying a failed record save must not transfer the completed file again.
+const completedFiles = new Map<string, IMusic.IMusicItem>();
+const downloadingQueue = new PQueue({ concurrency: 5 });
 let downloaderWorker: IDownloaderWorker;
 
 async function setupDownloader() {
     setupDownloaderWorker();
-    setupDownloadedMusicList();
+    await setupDownloadedMusicList();
 }
 
 function setupDownloaderWorker() {
-    // 初始化worker
-    const downloaderWorkerPath = getGlobalContext().workersPath.downloader;
-    if (downloaderWorkerPath) {
-        const worker = new Worker(downloaderWorkerPath);
-        downloaderWorker = Comlink.wrap(worker);
+    if (downloaderWorker) {
+        return;
     }
+    const workerPath = getGlobalContext().workersPath.downloader;
+    if (!workerPath) {
+        throw new Error("Download worker is unavailable");
+    }
+    downloaderWorker = Comlink.wrap(new Worker(workerPath));
     setDownloadingConcurrency(AppConfig.getConfig("download.concurrency"));
 }
 
-const concurrencyLimit = 20;
-const downloadingQueue = new PQueue({
-    concurrency: 5,
-});
-
 function setDownloadingConcurrency(concurrency: number) {
-    if (isNaN(concurrency)) {
+    if (!Number.isFinite(concurrency)) {
         return;
     }
-    downloadingQueue.concurrency = Math.min(
-        concurrency < 1 ? 1 : concurrency,
-        concurrencyLimit,
-    );
+    downloadingQueue.concurrency = Math.min(Math.max(Math.floor(concurrency), 1), 20);
 }
 
-async function startDownload(
-    musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
-) {
-    if (!downloaderWorker) {
-        setupDownloaderWorker();
+function notifyStatus(item: IMusic.IMusicItem, status: IDownloadStatus) {
+    try {
+        ee.emit(DownloadEvts.DownloadStatusUpdated, item, status);
+    } catch (error) {
+        try {
+            logger.logError("Download status observer failed", error);
+        } catch {
+            // Logging must not change the state of a completed download.
+        }
     }
+}
 
-    const _musicItems = Array.isArray(musicItems) ? musicItems : [musicItems];
-    // 过滤掉已下载的、本地音乐、任务中的音乐
-    const _validMusicItems = _musicItems.filter(
-        (it) => !isDownloaded(it) && it.platform !== localPluginName,
-    );
+function finishDownload(item: IMusic.IMusicItem) {
+    const pk = getMediaPrimaryKey(item);
+    completedFiles.delete(pk);
+    downloadingProgress.delete(pk);
+    downloadingMusicStore.setValue((previous) => previous.filter((song) => getMediaPrimaryKey(song) !== pk));
+    notifyStatus(item, { state: DownloadState.DONE });
+}
 
-    const downloadCallbacks = _validMusicItems.map((it) => {
-        const pk = getMediaPrimaryKey(it);
-        downloadingProgress.set(pk, {
-            state: DownloadState.WAITING,
-        });
+function getDownloadStatus(item: IMusic.IMusicItem): IDownloadStatus | null {
+    return isDownloaded(item)
+        ? { state: DownloadState.DONE }
+        : downloadingProgress.get(getMediaPrimaryKey(item)) ?? null;
+}
 
-        return async () => {
-            // Not on waiting list
-            if (!downloadingProgress.has(pk)) {
+function updateStatus(item: IMusic.IMusicItem, status: IDownloadStatus) {
+    // Committed metadata takes precedence over a delayed progress/error callback.
+    if (isDownloaded(item)) {
+        finishDownload(item);
+        return;
+    }
+    downloadingProgress.set(getMediaPrimaryKey(item), status);
+    notifyStatus(item, status);
+}
+
+ee.on(DownloadEvts.Downloaded, (items: IMusic.IMusicItem | IMusic.IMusicItem[]) => {
+    for (const item of Array.isArray(items) ? items : [items]) {
+        const pk = getMediaPrimaryKey(item);
+        if (downloadingProgress.has(pk) || completedFiles.has(pk) || queuedKeys.has(pk)) {
+            finishDownload(item);
+        }
+    }
+});
+
+async function runDownload(item: IMusic.IMusicItem) {
+    const pk = getMediaPrimaryKey(item);
+    const controller = new AbortController();
+    activeControllers.set(pk, controller);
+    try {
+        let completedItem = completedFiles.get(pk);
+        if (!completedItem) {
+            updateStatus(item, { state: DownloadState.DOWNLOADING });
+            const qualityOrder = getQualityOrder(
+                AppConfig.getConfig("download.defaultQuality"),
+                AppConfig.getConfig("download.whenQualityMissing"),
+            );
+            let source: IPlugin.IMediaSourceResult | null = null;
+            let realQuality = qualityOrder[0];
+            for (const quality of qualityOrder) {
+                try {
+                    source = await PluginManager.callPluginDelegateMethod(
+                        item, "getMediaSource", item, quality,
+                    );
+                    if (source?.url) {
+                        realQuality = quality;
+                        break;
+                    }
+                } catch {}
+            }
+            if (!source?.url) {
+                throw new Error(i18n.t("download_page.invalid_source"));
+            }
+            const fileName = `${item.title}-${item.artist}`.replace(/[/|\\?*"<>:]/g, "_");
+            const extension = source.url.match(/.*\/.+\.([^./?#]+)/)?.[1] ?? "mp3";
+            const downloadPath = window.path.resolve(
+                AppConfig.getConfig("download.path") || getGlobalContext().appPath.downloads,
+                `${fileName}.${extension.replace(/[^a-zA-Z0-9]/g, "") || "mp3"}`,
+            );
+            const result = await downloaderWorker.downloadFile(source, downloadPath, Comlink.proxy((status) => {
+                updateStatus(item, status);
+            }), pk);
+            if (result.state !== DownloadState.DONE) {
+                updateStatus(item, result);
                 return;
             }
-
-            downloadingProgress.get(pk).state = DownloadState.DOWNLOADING;
-            const fileName = `${it.title}-${it.artist}`.replace(/[/|\\?*"<>:]/g, "_");
-            await new Promise<void>((resolve) => {
-                downloadMusicImpl(it, fileName, (stateData) => {
-                    downloadingProgress.set(pk, stateData);
-                    ee.emit(DownloadEvts.DownloadStatusUpdated, it, stateData);
-                    if (stateData.state === DownloadState.DONE) {
-                        downloadingMusicStore.setValue((prev) =>
-                            prev.filter((di) => !isSameMedia(it, di)),
-                        );
-                        downloadingProgress.delete(pk);
-                        resolve();
-                    } else if (stateData.state === DownloadState.ERROR) {
-                        resolve();
-                    }
-                });
-            });
-        };
-    });
-
-    downloadingMusicStore.setValue((prev) => [...prev, ..._validMusicItems]);
-    downloadingQueue.addAll(downloadCallbacks);
+            completedItem = setInternalData<IMusic.IMusicItemInternalData>(item, "downloadData", {
+                path: result.path ?? downloadPath, quality: realQuality,
+            }, true) as IMusic.IMusicItem;
+            completedFiles.set(pk, completedItem);
+        }
+        updateStatus(item, { state: DownloadState.SAVING });
+        if (!await addDownloadedMusicToList(completedItem)) {
+            updateStatus(item, { state: DownloadState.ERROR, msg: i18n.t("download_page.save_failed") });
+            return;
+        }
+        finishDownload(item);
+    } catch (error) {
+        updateStatus(item, { state: DownloadState.ERROR, msg: error?.message });
+    } finally {
+        activeControllers.delete(pk);
+    }
 }
 
-async function downloadMusicImpl(
-    musicItem: IMusic.IMusicItem,
-    fileName: string,
-    onStateChange: IOnStateChangeFunc,
-) {
-    const [defaultQuality, whenQualityMissing] = [
-        AppConfig.getConfig("download.defaultQuality"),
-        AppConfig.getConfig("download.whenQualityMissing"),
-    ];
-    const qualityOrder = getQualityOrder(defaultQuality, whenQualityMissing);
-    let mediaSource: IPlugin.IMediaSourceResult | null = null;
-    let realQuality: IMusic.IQualityKey = qualityOrder[0];
-    for (const quality of qualityOrder) {
-        try {
-            mediaSource = await PluginManager.callPluginDelegateMethod(
-                musicItem,
-                "getMediaSource",
-                musicItem,
-                quality,
-            );
-            if (!mediaSource?.url) {
-                continue;
-            }
-            realQuality = quality;
-            break;
-        } catch {}
-    }
-
-    try {
-        if (mediaSource?.url) {
-            const ext = mediaSource.url.match(/.*\/.+\.([^./?#]+)/)?.[1] ?? "mp3";
-            const downloadBasePath =
-        AppConfig.getConfig("download.path") ??
-        getGlobalContext().appPath.downloads;
-            const downloadPath = window.path.resolve(
-                downloadBasePath,
-                `./${fileName}.${ext}`,
-            );
-            downloaderWorker.downloadFile(
-                mediaSource,
-                downloadPath,
-                Comlink.proxy((dataState) => {
-                    onStateChange(dataState);
-                    if (dataState.state === DownloadState.DONE) {
-                        addDownloadedMusicToList(
-                            setInternalData<IMusic.IMusicItemInternalData>(
-                                musicItem as any,
-                                "downloadData",
-                                {
-                                    path: downloadPath,
-                                    quality: realQuality,
-                                },
-                                true,
-                            ) as IMusic.IMusicItem,
-                        );
-                    }
-                }),
-            );
-        } else {
-            throw new Error("Invalid Source");
+function enqueue(item: IMusic.IMusicItem) {
+    const pk = getMediaPrimaryKey(item);
+    queuedKeys.add(pk);
+    void downloadingQueue.add(async () => {
+        queuedKeys.delete(pk);
+        if (isDownloaded(item)) {
+            finishDownload(item);
+            return;
         }
-    } catch (e) {
-        console.log(e, "ERROR");
-        onStateChange({
-            state: DownloadState.ERROR,
-            msg: e?.message,
-        });
+        const task = runDownload(item);
+        activeTasks.add(task);
+        try {
+            await task;
+        } finally {
+            activeTasks.delete(task);
+        }
+    }).catch((error) => updateStatus(item, { state: DownloadState.ERROR, msg: error?.message }));
+}
+
+async function startDownload(musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) {
+    setupDownloaderWorker();
+    const items = Array.isArray(musicItems) ? musicItems : [musicItems];
+    const seen = new Set<string>();
+    const validItems = items.filter((item) => {
+        const pk = getMediaPrimaryKey(item);
+        const state = downloadingProgress.get(pk)?.state;
+        if (seen.has(pk) || isDownloaded(item) || item.platform === localPluginName ||
+            queuedKeys.has(pk) || activeControllers.has(pk) ||
+            (state && state !== DownloadState.ERROR)) {
+            return false;
+        }
+        seen.add(pk);
+        return true;
+    });
+    if (validItems.length) {
+        downloadingMusicStore.setValue((previous) => [
+            ...previous.filter((item) => !seen.has(getMediaPrimaryKey(item))), ...validItems,
+        ]);
+        for (const item of validItems) {
+            updateStatus(item, { state: DownloadState.WAITING });
+            enqueue(item);
+        }
     }
+    return { added: validItems.length, skipped: items.length - validItems.length };
+}
+
+async function retryFailedDownloads() {
+    return startDownload(downloadingMusicStore.getValue().filter((item) =>
+        downloadingProgress.get(getMediaPrimaryKey(item))?.state === DownloadState.ERROR));
 }
 
 function useDownloadStatus(musicItem: IMusic.IMusicItem) {
-    const [downloadStatus, setDownloadStatus] = useState<IDownloadStatus | null>(
-        null,
-    );
-
+    const [status, setStatus] = useState<IDownloadStatus | null>(() => getDownloadStatus(musicItem));
+    const downloaded = useDownloaded(musicItem);
     useEffect(() => {
-        setDownloadStatus(
-            downloadingProgress.get(getMediaPrimaryKey(musicItem)) || null,
-        );
-
-        const updateFn = (mi: IMusic.IMusicItem, stateData: IDownloadStatus) => {
-            if (isSameMedia(mi, musicItem)) {
-                setDownloadStatus(stateData);
+        setStatus(getDownloadStatus(musicItem));
+        const update = (item: IMusic.IMusicItem, next: IDownloadStatus) => {
+            if (isSameMedia(item, musicItem)) {
+                setStatus(getDownloadStatus(musicItem) ?? next);
             }
         };
-
-        ee.on(DownloadEvts.DownloadStatusUpdated, updateFn);
-
+        ee.on(DownloadEvts.DownloadStatusUpdated, update);
         return () => {
-            ee.off(DownloadEvts.DownloadStatusUpdated, updateFn);
+            ee.off(DownloadEvts.DownloadStatusUpdated, update);
         };
     }, [musicItem]);
-
-    return downloadStatus;
+    return downloaded || isDownloaded(musicItem)
+        ? { state: DownloadState.DONE }
+        : status?.state === DownloadState.DONE ? null : status;
 }
 
-// 下载状态
 function useDownloadState(musicItem: IMusic.IMusicItem) {
-    const musicStatus = useDownloadStatus(musicItem);
-    const downloaded = useDownloaded(musicItem);
-
-    return (
-        musicStatus?.state || (downloaded ? DownloadState.DONE : DownloadState.NONE)
-    );
+    return useDownloadStatus(musicItem)?.state ?? DownloadState.NONE;
 }
 
-const Downloader = {
-    setupDownloader,
-    startDownload,
-    useDownloadStatus,
-    useDownloadingMusicList: downloadingMusicStore.useValue,
-    useDownloaded,
-    isDownloaded,
-    useDownloadedMusicList,
-    removeDownloadedMusic,
-    setDownloadingConcurrency,
-    useDownloadState,
+export default {
+    setupDownloader, startDownload, retryFailedDownloads,
+    getDownloadStatus, useDownloadStatus, useDownloadingMusicList: downloadingMusicStore.useValue,
+    useDownloaded, isDownloaded, useDownloadedMusicList, removeDownloadedMusic,
+    setDownloadingConcurrency, useDownloadState,
 };
-export default Downloader;

@@ -17,8 +17,12 @@ function DownloadStatus(props: IProps) {
     const downloadStatus = Downloader.useDownloadStatus(musicItem);
     if (!downloadStatus) {
         return <span>-</span>;
+    } else if (downloadStatus.state === DownloadState.DONE) {
+        return <span>{t("common.downloaded")}</span>;
     } else if (downloadStatus.state === DownloadState.WAITING) {
         return <span>{t("download_page.waiting")}</span>;
+    } else if (downloadStatus.state === DownloadState.SAVING) {
+        return <span>{t("download_page.saving")}</span>;
     } else if (downloadStatus.state === DownloadState.ERROR) {
         return (
             <span style={{ color: "var(--dangerColor, #FC5F5F)" }}>

@@ -73,7 +73,10 @@
   },
   "download_page": {
     "waiting": "等待中...",
-    "failed": "下载失败"
+    "failed": "下载失败",
+    "saving": "正在保存下载记录…",
+    "save_failed": "文件已下载，但记录保存失败；点击“重试失败任务”可重新保存记录。",
+    "invalid_source": "无法获取歌曲下载地址"
   },
   "plugin_management_page": {
     "plugin_management": "插件管理",

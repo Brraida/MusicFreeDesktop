@@ -83,7 +83,10 @@
 
   "download_page": {
     "waiting": "Waiting...",
-    "failed": "Download Failed"
+    "failed": "Download Failed",
+    "saving": "Saving download record…",
+    "save_failed": "File downloaded, but its record could not be saved. Retry failed tasks to save the record again.",
+    "invalid_source": "Unable to get a download URL"
   },
   "plugin_management_page": {
     "plugin_management": "Plugin Management",

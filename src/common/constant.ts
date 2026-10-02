@@ -122,6 +122,8 @@ export enum DownloadState {
     WAITING = "WAITING",
     /** 下载中 */
     DOWNLOADING = "DOWNLOADING",
+    /** 正在保存下载记录 */
+    SAVING = "SAVING",
     /** 失败 */
     ERROR = "ERROR",
     /** 下载完成 */
