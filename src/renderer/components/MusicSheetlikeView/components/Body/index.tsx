@@ -59,11 +59,11 @@ export default function Body(props: IProps) {
                 }
             });
         }
-    }, [inputSearch]);
+    }, [inputSearch, musicList]);
 
     useEffect(() => {
         setInputSearch("");
-    }, [musicSheet?.id]);
+    }, [musicSheet?.platform, musicSheet?.id]);
 
     return (
         <div className="music-sheetlike-view--body-container">
