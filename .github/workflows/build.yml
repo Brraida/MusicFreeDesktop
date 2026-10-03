@@ -72,6 +72,11 @@ jobs:
           node scripts/ci/build-info.cjs
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
+      - name: Configure Linux sandbox helper
+        if: runner.os == 'Linux'
+        run: |
+          sudo chown root:root node_modules/electron/dist/chrome-sandbox
+          sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
       - name: TypeScript check
         run: npx --no-install tsc --noEmit
       - name: Node regression tests
