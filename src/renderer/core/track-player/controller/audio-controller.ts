@@ -5,7 +5,6 @@ import { encodeUrlHeaders } from "@/common/normalize-util";
 import albumImg from "@/assets/imgs/album-cover.jpg";
 import getUrlExt from "@/renderer/utils/get-url-ext";
 import Hls, { Events as HlsEvents, HlsConfig } from "hls.js";
-import { isSameMedia } from "@/common/media-util";
 import { PlayerState } from "@/common/constant";
 import ServiceManager from "@shared/service-manager/renderer";
 import ControllerBase from "@renderer/core/track-player/controller/controller-base";
@@ -19,6 +18,11 @@ import Promise = Dexie.Promise;
 class AudioController extends ControllerBase implements IAudioController {
     private audio: HTMLAudioElement;
     private hls: Hls;
+    private sourceGeneration = 0;
+    private sourceFetch: AbortController | null = null;
+    private objectUrl: string | null = null;
+    private wantsPlay = false;
+    private pendingSeek: number | null = null;
 
     private _playerState: PlayerState = PlayerState.None;
     get playerState() {
@@ -56,6 +60,7 @@ class AudioController extends ControllerBase implements IAudioController {
         };
 
         this.audio.onerror = (event) => {
+            if (!this.hasSource) return;
             this.playerState = PlayerState.Paused;
             navigator.mediaSession.playbackState = "paused";
             this.onError?.(ErrorReason.EmptyResource, event as any);
@@ -89,6 +94,11 @@ class AudioController extends ControllerBase implements IAudioController {
             this.onSpeedChange?.(this.audio.playbackRate);
         };
 
+        this.audio.onloadedmetadata = () => {
+            this.applyPendingSeek();
+            if (this.wantsPlay) this.play();
+        };
+
 
         // @ts-ignore  isDev
         window.ad = this.audio;
@@ -97,54 +107,84 @@ class AudioController extends ControllerBase implements IAudioController {
     private initHls(config?: Partial<HlsConfig>) {
         if (!this.hls) {
             this.hls = new Hls(config);
-            this.hls.attachMedia(this.audio);
-            this.hls.on(HlsEvents.ERROR, (evt, error) => {
-                this.onError(ErrorReason.EmptyResource, error);
+            const hls = this.hls;
+            const generation = this.sourceGeneration;
+            hls.attachMedia(this.audio);
+            hls.on(HlsEvents.ERROR, (evt, error) => {
+                if (hls === this.hls && generation === this.sourceGeneration && error.fatal) {
+                    this.onError?.(ErrorReason.EmptyResource, error);
+                }
             });
         }
     }
 
     private destroyHls() {
         if (this.hls) {
-            this.hls.detachMedia();
-            this.hls.off(HlsEvents.ERROR);
-            this.hls.destroy();
+            const hls = this.hls;
             this.hls = null;
+            hls.detachMedia();
+            hls.off(HlsEvents.ERROR);
+            hls.destroy();
         }
     }
 
     destroy(): void {
-        this.destroyHls();
         this.reset();
     }
 
     pause(): void {
+        this.wantsPlay = false;
         if (this.hasSource) {
             this.audio.pause();
         }
     }
 
     play(): void {
+        this.wantsPlay = true;
         if (this.hasSource) {
             this.audio.play().catch(voidCallback);
         }
     }
 
     reset(): void {
+        this.releaseSource();
+        this.musicItem = null;
         this.playerState = PlayerState.None;
-        this.audio.src = "";
-        this.audio.removeAttribute("src");
         navigator.mediaSession.metadata = null;
         navigator.mediaSession.playbackState = "none";
     }
 
     seekTo(seconds: number): void {
-        if (this.hasSource && isFinite(seconds)) {
+        if (isFinite(seconds)) {
+            this.pendingSeek = Math.max(0, seconds);
+            this.applyPendingSeek();
+        }
+    }
+
+    private applyPendingSeek() {
+        if (!this.hasSource || this.pendingSeek === null) return;
+        try {
             const duration = this.audio.duration;
-            this.audio.currentTime = Math.min(
-                seconds,
-                isNaN(duration) ? Infinity : duration,
-            );
+            this.audio.currentTime = Math.min(this.pendingSeek, isNaN(duration) ? Infinity : duration);
+            this.pendingSeek = null;
+        } catch {
+            // Retry once metadata is available (including HLS and Blob sources).
+        }
+    }
+
+    private releaseSource() {
+        ++this.sourceGeneration;
+        this.sourceFetch?.abort();
+        this.sourceFetch = null;
+        this.wantsPlay = false;
+        this.pendingSeek = null;
+        this.destroyHls();
+        this.audio.pause();
+        this.audio.removeAttribute("src");
+        this.audio.load();
+        if (this.objectUrl) {
+            URL.revokeObjectURL(this.objectUrl);
+            this.objectUrl = null;
         }
     }
 
@@ -162,6 +202,7 @@ class AudioController extends ControllerBase implements IAudioController {
     }
 
     prepareTrack(musicItem: IMusic.IMusicItem) {
+        this.releaseSource();
         this.musicItem = { ...musicItem };
 
         // 1. update metadata
@@ -178,12 +219,12 @@ class AudioController extends ControllerBase implements IAudioController {
 
         // 2. reset track
         this.playerState = PlayerState.None;
-        this.audio.src = "";
-        this.audio.removeAttribute("src");
         navigator.mediaSession.playbackState = "none";
     }
 
     setTrackSource(trackSource: IMusic.IMusicSource, musicItem: IMusic.IMusicItem): void {
+        this.releaseSource();
+        const generation = this.sourceGeneration;
         this.musicItem = { ...musicItem };
 
         // 1. update metadata
@@ -228,6 +269,22 @@ class AudioController extends ControllerBase implements IAudioController {
             url = urlObj.toString();
         }
 
+        // HLS must resolve relative segments against the original manifest URL.
+        // Apply headers to every HLS request through the existing Electron hook.
+        if (getUrlExt(url)?.toLowerCase() === ".m3u8") {
+            if (!Hls.isSupported()) {
+                this.onError?.(ErrorReason.UnsupportedResource);
+                return;
+            }
+            this.initHls(headers ? {
+                xhrSetup: (xhr, requestUrl) => {
+                    xhr.open("GET", encodeUrlHeaders(requestUrl, headers), true);
+                },
+            } : undefined);
+            this.hls.loadSource(url);
+            return;
+        }
+
         // 2.3 hack url with headers
         if (headers) {
             const forwardedUrl = ServiceManager.RequestForwarderService.forwardRequest(url, "GET", headers);
@@ -241,31 +298,43 @@ class AudioController extends ControllerBase implements IAudioController {
         }
 
         if (!url) {
-            this.onError(ErrorReason.EmptyResource, new Error("url is empty"));
+            this.onError?.(ErrorReason.EmptyResource, new Error("url is empty"));
             return;
         }
 
         // 3. set real source
-        if (getUrlExt(trackSource.url) === ".m3u8") {
-            if (Hls.isSupported()) {
-                this.initHls();
-                this.hls.loadSource(url);
-            } else {
-                this.onError(ErrorReason.UnsupportedResource);
-                return;
-            }
-        } else if (headers) {
+        if (headers) {
+            const controller = new AbortController();
+            this.sourceFetch = controller;
             fetch(url, {
                 method: "GET",
-                headers: {
-                    ...trackSource.headers,
-                },
+                headers,
+                signal: controller.signal,
             })
                 .then(async (res) => {
-                    const blob = await res.blob();
-                    if (isSameMedia(this.musicItem, musicItem)) {
-                        this.audio.src = URL.createObjectURL(blob);
+                    if (!res.ok) {
+                        await res.body?.cancel();
+                        throw new Error(`HTTP ${res.status}`);
                     }
+                    if (generation !== this.sourceGeneration || controller.signal.aborted) {
+                        await res.body?.cancel();
+                        return;
+                    }
+                    const blob = await res.blob();
+                    if (generation === this.sourceGeneration && !controller.signal.aborted) {
+                        this.objectUrl = URL.createObjectURL(blob);
+                        this.audio.src = this.objectUrl;
+                        this.applyPendingSeek();
+                        if (this.wantsPlay) this.play();
+                    }
+                }).catch(error => {
+                    if (generation === this.sourceGeneration && !controller.signal.aborted) {
+                        this.wantsPlay = false;
+                        this.playerState = PlayerState.Paused;
+                        this.onError?.(ErrorReason.EmptyResource, error);
+                    }
+                }).finally(() => {
+                    if (this.sourceFetch === controller) this.sourceFetch = null;
                 });
         } else {
             this.audio.src = url;
