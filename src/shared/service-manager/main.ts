@@ -3,12 +3,14 @@ import { app, ipcMain } from "electron";
 import { IWindowManager } from "@/types/main/window-manager";
 import { ServiceName } from "@shared/service-manager/common";
 import getResourcePath from "@/common/get-resource-path";
+import { randomBytes } from "crypto";
 
 
 class ServiceInstance {
     private serviceProcess: ChildProcess = null;
     private retryTimeOut = 6000;
     private started = false;
+    private restartTimer: ReturnType<typeof setTimeout> | null = null;
     private subprocessName: string;
 
     private hostChangeCallback: (host: string | null) => void;
@@ -31,50 +33,80 @@ class ServiceInstance {
             return;
         }
         this.started = true;
+        this.launch();
+    }
+
+    private launch() {
+        if (!this.started || this.serviceProcess) {
+            return;
+        }
         const servicePath = getResourcePath(".service/" + this.subprocessName + ".js");
-        this.serviceProcess = fork(servicePath);
+        const token = randomBytes(32).toString("hex");
+        let child: ChildProcess;
+        try {
+            child = fork(servicePath, [], {
+                env: { ...process.env, MUSICFREE_FORWARDER_TOKEN: token },
+            });
+        } catch {
+            this.scheduleRestart();
+            return;
+        }
+        this.serviceProcess = child;
 
         interface IMessage {
             type: "port",
             port: number
         }
 
-        this.serviceProcess.on("message", (msg: IMessage) => {
-            const host = "http://127.0.0.1:" + msg.port;
-            this.hostChangeCallback(host);
-        });
-
-        this.serviceProcess.on("error", () => {
-            if (this.started) {
-                setTimeout(() => {
-                    this.start(); // 自动重启子进程
-                }, this.retryTimeOut);
-
-                this.retryTimeOut = this.retryTimeOut > 300000 ? 300000 : this.retryTimeOut * 2;
+        child.on("message", (msg: IMessage) => {
+            if (child !== this.serviceProcess || !this.started || msg?.type !== "port" ||
+                !Number.isInteger(msg.port) || msg.port < 1 || msg.port > 65535) {
+                return;
             }
+            this.retryTimeOut = 6000;
+            const host = `http://127.0.0.1:${msg.port}/?token=${token}`;
+            this.hostChangeCallback?.(host);
         });
 
-        this.serviceProcess.on("exit", (code) => {
-            if (this.started) {
-                console.error(`Service exited with code ${code}. Restarting...`);
-                setTimeout(() => {
-                    this.start(); // 自动重启子进程
-                }, this.retryTimeOut);
-
-                this.retryTimeOut = this.retryTimeOut > 300000 ? 300000 : this.retryTimeOut * 2;
+        const ended = () => {
+            if (child !== this.serviceProcess) {
+                return;
             }
-        });
+            this.serviceProcess = null;
+            this.hostChangeCallback?.(null);
+            if (!child.killed) {
+                child.kill();
+            }
+            this.scheduleRestart();
+        };
+        child.on("error", ended);
+        child.on("exit", ended);
+    }
+
+    private scheduleRestart() {
+        if (!this.started || this.restartTimer) {
+            return;
+        }
+        this.restartTimer = setTimeout(() => {
+            this.restartTimer = null;
+            this.launch();
+        }, this.retryTimeOut);
+        this.retryTimeOut = Math.min(300000, this.retryTimeOut * 2);
     }
 
     stop() {
         this.started = false;
-        if (!this.serviceProcess.killed) {
-            this.serviceProcess.removeAllListeners();
-            this.serviceProcess.kill();
-            this.serviceProcess = null;
-            this.retryTimeOut = 6000;
-            this.hostChangeCallback(null);
+        if (this.restartTimer) {
+            clearTimeout(this.restartTimer);
+            this.restartTimer = null;
         }
+        const child = this.serviceProcess;
+        this.serviceProcess = null;
+        if (child && !child.killed) {
+            child.kill();
+        }
+        this.retryTimeOut = 6000;
+        this.hostChangeCallback?.(null);
     }
 }
 
@@ -93,10 +125,10 @@ class ServiceManager {
         this.serviceMap.set(serviceName, { instance, host: null });
         instance.onHostChange((host) => {
             const mainWindow = this.windowManager?.mainWindow;
-            if (mainWindow) {
+            this.serviceMap.get(serviceName).host = host;
+            if (mainWindow && !mainWindow.isDestroyed()) {
                 mainWindow.webContents.send("@shared/service-manager/host-changed", serviceName, host);
             }
-            this.serviceMap.get(serviceName).host = host;
         });
 
         return instance;
@@ -114,11 +146,7 @@ class ServiceManager {
         this.windowManager = windowManager;
 
         app.on("before-quit", () => {
-            if (!windowManager.mainWindow?.isDestroyed()) {
-                this.serviceMap.forEach((val) => {
-                    val.instance.stop();
-                });
-            }
+            this.serviceMap.forEach((val) => val.instance.stop());
         });
 
         // put services here
