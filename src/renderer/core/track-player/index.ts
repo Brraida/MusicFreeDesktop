@@ -129,6 +129,9 @@ class TrackPlayer {
 
     private currentIndex = -1;
 
+    private sourceRequestId = 0;
+    private lyricRequestId = 0;
+
     private audioController: IAudioController;
 
     private ee: EventEmitter<InternalPlayerEvents>;
@@ -268,8 +271,9 @@ class TrackPlayer {
         this.fetchCurrentLyric();
 
         // 5. fetch music source
+        const requestId = ++this.sourceRequestId;
         this.fetchMediaSource(currentMusic, defaultQuality).then(({ mediaSource, quality }) => {
-            if (this.isCurrentMusic(currentMusic)) {
+            if (requestId === this.sourceRequestId && this.isCurrentMusic(currentMusic) && mediaSource?.url) {
                 this.setTrack(mediaSource, currentMusic, {
                     seekTo: currentProgress,
                     autoPlay: false,
@@ -321,6 +325,7 @@ class TrackPlayer {
         const nextMusicItem = this.musicQueue[index];
         this.setCurrentMusic(nextMusicItem);
         this.currentIndex = index;
+        const requestId = ++this.sourceRequestId;
 
         this.setPlayerState(PlayerState.Buffering);
         this.audioController.prepareTrack?.(nextMusicItem);
@@ -328,7 +333,10 @@ class TrackPlayer {
         try {
             const { mediaSource, quality } = await this.fetchMediaSource(nextMusicItem, intendedQuality);
 
-            if (!mediaSource.url) {
+            if (requestId !== this.sourceRequestId || !this.isCurrentMusic(nextMusicItem)) {
+                return;
+            }
+            if (!mediaSource?.url) {
                 throw new Error("mediaSource.url is empty");
             }
 
@@ -352,7 +360,7 @@ class TrackPlayer {
                 nextMusicItem,
             ).catch(voidCallback);
 
-            if (!(musicInfo && this.isCurrentMusic(nextMusicItem) && typeof musicInfo === "object")) {
+            if (!(requestId === this.sourceRequestId && musicInfo && this.isCurrentMusic(nextMusicItem) && typeof musicInfo === "object")) {
                 return;
             }
 
@@ -364,6 +372,9 @@ class TrackPlayer {
             });
 
         } catch (e) {
+            if (requestId !== this.sourceRequestId || !this.isCurrentMusic(nextMusicItem)) {
+                return;
+            }
             // 播放失败
             this.setCurrentQuality(AppConfig.getConfig("playMusic.defaultQuality"));
             this.audioController.reset();
@@ -571,13 +582,23 @@ class TrackPlayer {
     public async setQuality(quality: IMusic.IQualityKey) {
         const currentMusic = this.currentMusic;
         if (currentMusic && quality !== this.currentQuality) {
-            const { mediaSource, quality: realQuality } = await this.fetchMediaSource(currentMusic, quality);
-            if (this.isCurrentMusic(currentMusic)) {
-                this.setTrack(mediaSource, currentMusic, {
-                    seekTo: this.progress.currentTime ?? 0,
-                    autoPlay: this.playerState === PlayerState.Playing,
-                });
-                this.setCurrentQuality(realQuality);
+            const requestId = ++this.sourceRequestId;
+            try {
+                const { mediaSource, quality: realQuality } = await this.fetchMediaSource(currentMusic, quality);
+                if (requestId === this.sourceRequestId && this.isCurrentMusic(currentMusic)) {
+                    if (!mediaSource?.url) {
+                        throw new Error("mediaSource.url is empty");
+                    }
+                    this.setTrack(mediaSource, currentMusic, {
+                        seekTo: this.progress.currentTime ?? 0,
+                        autoPlay: this.playerState === PlayerState.Playing,
+                    });
+                    this.setCurrentQuality(realQuality);
+                }
+            } catch (error) {
+                if (requestId === this.sourceRequestId && this.isCurrentMusic(currentMusic)) {
+                    logger.logError("切换音质失败", error);
+                }
             }
         }
     }
@@ -610,6 +631,7 @@ class TrackPlayer {
 
 
     public async fetchCurrentLyric(forceLoad = false) {
+        const requestId = ++this.lyricRequestId;
         const currentMusic = this.currentMusic;
 
         if (!currentMusic) {
@@ -633,7 +655,10 @@ class TrackPlayer {
                     linkedLyricItem,
                 );
             }
-            if (!lyricSource && this.isCurrentMusic(currentMusic)) {
+            if (requestId !== this.lyricRequestId || !this.isCurrentMusic(currentMusic)) {
+                return;
+            }
+            if (!lyricSource) {
                 lyricSource = await PluginManager.callPluginDelegateMethod(
                     currentMusic,
                     "getLyric",
@@ -641,12 +666,13 @@ class TrackPlayer {
                 );
             }
 
-            if (!this.isCurrentMusic(currentMusic)) {
+            if (requestId !== this.lyricRequestId || !this.isCurrentMusic(currentMusic)) {
                 return;
             }
 
             if (!lyricSource?.rawLrc && !lyricSource?.translation) {
                 this.setCurrentLyric({});
+                return;
             }
             const parser = new LyricParser(lyricSource.rawLrc, {
                 musicItem: currentMusic,
@@ -658,6 +684,9 @@ class TrackPlayer {
                 currentLrc: parser.getPosition(this.progress.currentTime || 0),
             });
         } catch (e) {
+            if (requestId !== this.lyricRequestId || !this.isCurrentMusic(currentMusic)) {
+                return;
+            }
             logger.logError("歌词解析失败", e);
             this.setCurrentLyric({});
         }
@@ -724,6 +753,8 @@ class TrackPlayer {
     // 只读数据的设置
     private setCurrentMusic(musicItem: IMusic.IMusicItem | null) {
         if (!this.isCurrentMusic(musicItem)) {
+            ++this.sourceRequestId;
+            ++this.lyricRequestId;
             currentMusicStore.setValue(musicItem);
             this.ee.emit(PlayerEvents.MusicChanged, musicItem);
             this.fetchCurrentLyric();
