@@ -1,6 +1,6 @@
 /**
  * 数据库模块
- * 
+ *
  * 此模块负责加载数据库相关的功能，提供渲染进程需要的业务逻辑。
  */
 
@@ -484,20 +484,20 @@ class LocalMusicSheetDB {
      * 批量移动歌单到指定位置（支持所有拖拽和排序场景）
      * @param selectedSheets 要移动的歌单标识数组
      * @param targetPlatform 目标歌单的平台（null表示移动到开头/末尾）
-     * @param targetId 目标歌单的ID（null表示移动到开头/末尾）  
+     * @param targetId 目标歌单的ID（null表示移动到开头/末尾）
      * @param position 相对于目标歌单的位置："before" | "after"，默认"after"
      * @returns 成功移动的数量
-     * 
+     *
      * @example
      * // 移动到开头
      * batchMoveMusicSheets(sheets, null, null, "before")
-     * 
-     * // 移动到末尾  
+     *
+     * // 移动到末尾
      * batchMoveMusicSheets(sheets, null, null, "after")
-     * 
+     *
      * // 移动到指定歌单之前
      * batchMoveMusicSheets(sheets, "platform1", "id1", "before")
-     * 
+     *
      * // 移动到指定歌单之后
      * batchMoveMusicSheets(sheets, "platform1", "id1", "after")
      */

@@ -167,7 +167,7 @@ export function ContextMenuComponent() {
         }
         const isLeft = x < window.innerWidth / 2 ? 0 : 1;
         const isTop = y < window.innerHeight / 2 ? 0 : 2;
-    
+
         const containerHeight = Math.min(
             component
                 ? height

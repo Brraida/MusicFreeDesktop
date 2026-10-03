@@ -22,7 +22,9 @@ export default function Initialize({ children }: { children: ReactNode }) {
                 // A logging failure must not suppress the diagnostic screen.
             }
         });
-        return () => { active = false; };
+        return () => {
+            active = false;
+        };
     }, []);
 
     if (error) {

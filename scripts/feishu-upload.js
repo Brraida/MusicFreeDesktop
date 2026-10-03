@@ -1,7 +1,7 @@
-const fs = require('fs');
-const path = require('path');
-const { Readable } = require('stream');
-const { Client } = require('@larksuiteoapi/node-sdk');
+const fs = require("fs");
+const path = require("path");
+const { Readable } = require("stream");
+const { Client } = require("@larksuiteoapi/node-sdk");
 
 /**
  * 飞书云空间文件上传工具
@@ -13,7 +13,7 @@ class FeishuFileUploader {
         this.client = new Client({
             appId: appId,
             appSecret: appSecret,
-            disableTokenCache: true
+            disableTokenCache: true,
         });
         this.appId = appId;
         this.appSecret = appSecret;
@@ -38,18 +38,18 @@ class FeishuFileUploader {
             }
         }
 
-        console.log('正在获取 tenant_access_token...');
+        console.log("正在获取 tenant_access_token...");
 
         try {
-            const response = await fetch('https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal', {
-                method: 'POST',
+            const response = await fetch("https://open.feishu.cn/open-apis/auth/v3/tenant_access_token/internal", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json; charset=utf-8'
+                    "Content-Type": "application/json; charset=utf-8",
                 },
                 body: JSON.stringify({
                     app_id: this.appId,
-                    app_secret: this.appSecret
-                })
+                    app_secret: this.appSecret,
+                }),
             });
 
             const data = await response.json();
@@ -61,11 +61,11 @@ class FeishuFileUploader {
             this.tenantAccessToken = data.tenant_access_token;
             this.tokenExpireTime = Date.now() + (data.expire * 1000);
 
-            console.log('tenant_access_token 获取成功');
+            console.log("tenant_access_token 获取成功");
             return this.tenantAccessToken;
 
         } catch (error) {
-            console.error('获取 tenant_access_token 失败:', error.message);
+            console.error("获取 tenant_access_token 失败:", error.message);
             throw error;
         }
     }    /**
@@ -146,9 +146,9 @@ class FeishuFileUploader {
         }
 
         // 网络错误等也可以重试
-        return error.code === 'ECONNRESET' ||
-            error.code === 'ETIMEDOUT' ||
-            error.code === 'ENOTFOUND';
+        return error.code === "ECONNRESET" ||
+            error.code === "ETIMEDOUT" ||
+            error.code === "ENOTFOUND";
     }    /**
      * 直接上传小文件
      */
@@ -160,19 +160,19 @@ class FeishuFileUploader {
             const response = await this.client.drive.v1.file.upload({
                 data: {
                     file_name: fileName,
-                    parent_type: 'explorer',
+                    parent_type: "explorer",
                     parent_node: parentNode,
                     size: fileBuffer.length,
-                    file: fileBuffer
-                }
+                    file: fileBuffer,
+                },
             }, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             return response.data;
-        }, '小文件上传');
+        }, "小文件上传");
     }    /**
      * 分片上传预处理
      */
@@ -183,18 +183,18 @@ class FeishuFileUploader {
             const response = await this.client.drive.v1.file.uploadPrepare({
                 data: {
                     file_name: fileName,
-                    parent_type: 'explorer',
+                    parent_type: "explorer",
                     parent_node: parentNode,
-                    size: fileSize
-                }
+                    size: fileSize,
+                },
             }, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             return response.data;
-        }, '预上传');
+        }, "预上传");
     }/**
      * 上传单个分片
      */
@@ -204,10 +204,10 @@ class FeishuFileUploader {
 
         // 创建一个真正的可读流
         const chunkStream = new Readable({
-            read() { }
+            read() { },
         });
         chunkStream.push(chunkBuffer);
-        chunkStream.push(null); // 标记流结束        
+        chunkStream.push(null); // 标记流结束
         return await this.withRetry(async () => {
             const response = await this.client.drive.v1.file.uploadPart({
                 data: {
@@ -215,12 +215,12 @@ class FeishuFileUploader {
                     seq: seq,
                     size: chunkBuffer.length,
                     checksum: checksum,
-                    file: chunkStream
-                }
+                    file: chunkStream,
+                },
             }, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             return response?.data;
@@ -237,16 +237,16 @@ class FeishuFileUploader {
             const response = await this.client.drive.v1.file.uploadFinish({
                 data: {
                     upload_id: uploadId,
-                    block_num: blockNum
-                }
+                    block_num: blockNum,
+                },
             }, {
                 headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                    "Authorization": `Bearer ${token}`,
+                },
             });
 
             return response.data;
-        }, '完成上传');
+        }, "完成上传");
     }
 
     /**
@@ -265,7 +265,7 @@ class FeishuFileUploader {
         console.log(`预上传成功, upload_id: ${upload_id}, 分片数量: ${block_num}`);
 
         // 2. 分片上传
-        const fileHandle = fs.openSync(filePath, 'r');
+        const fileHandle = fs.openSync(filePath, "r");
         try {
             for (let i = 0; i < block_num; i++) {
                 const start = i * block_size;
@@ -288,7 +288,7 @@ class FeishuFileUploader {
         }
 
         // 3. 完成上传
-        console.log('完成分片上传...');
+        console.log("完成分片上传...");
         const finishResult = await this.uploadFinish(upload_id, block_num);
 
         return finishResult;
@@ -313,20 +313,20 @@ class FeishuFileUploader {
             let result;
 
             if (fileSize <= this.maxFileSize) {
-                console.log('使用直接上传方式');
+                console.log("使用直接上传方式");
                 result = await this.uploadSmallFile(filePath, fileName, parentNode);
             } else {
-                console.log('使用分片上传方式');
+                console.log("使用分片上传方式");
                 result = await this.uploadLargeFile(filePath, fileName, parentNode);
             }
 
-            console.log('文件上传成功!');
+            console.log("文件上传成功!");
             return result;
 
         } catch (error) {
-            console.error('文件上传失败:', error.message);
+            console.error("文件上传失败:", error.message);
             if (error.response && error.response.data) {
-                console.error('错误详情:', error.response.data);
+                console.error("错误详情:", error.response.data);
             }
             throw error;
         }
@@ -346,12 +346,12 @@ async function main() {
         // 从命令行参数获取文件路径和文件名
         const args = process.argv.slice(2);
         if (args.length < 1) {
-            console.error('用法: node feishu-upload.js <文件路径> [上传文件名]');
-            console.error('');
-            console.error('环境变量:');
-            console.error('  FEISHU_APP_ID         - 飞书应用ID');
-            console.error('  FEISHU_APP_SECRET     - 飞书应用密钥');
-            console.error('  FEISHU_PARENT_NODE    - 云空间文件夹token');
+            console.error("用法: node feishu-upload.js <文件路径> [上传文件名]");
+            console.error("");
+            console.error("环境变量:");
+            console.error("  FEISHU_APP_ID         - 飞书应用ID");
+            console.error("  FEISHU_APP_SECRET     - 飞书应用密钥");
+            console.error("  FEISHU_PARENT_NODE    - 云空间文件夹token");
             process.exit(1);
         }
 
@@ -360,8 +360,8 @@ async function main() {
 
         // 验证环境变量
         if (!appId || !appSecret || !parentNode) {
-            console.error('错误: 缺少必要的环境变量');
-            console.error('请设置: FEISHU_APP_ID, FEISHU_APP_SECRET, FEISHU_PARENT_NODE');
+            console.error("错误: 缺少必要的环境变量");
+            console.error("请设置: FEISHU_APP_ID, FEISHU_APP_SECRET, FEISHU_PARENT_NODE");
             process.exit(1);
         }
 
@@ -371,14 +371,14 @@ async function main() {
         // 执行上传
         const result = await uploader.uploadFile(filePath, fileName, parentNode);
 
-        console.log('上传结果:', result);
+        console.log("上传结果:", result);
 
         if (result.file_token) {
             console.log(`文件上传成功! file_token: ${result.file_token}`);
         }
 
     } catch (error) {
-        console.error('上传失败:', error.message);
+        console.error("上传失败:", error.message);
         process.exit(1);
     }
 }

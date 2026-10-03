@@ -21,11 +21,11 @@ import trackPlayer from "../core/track-player";
 
 logger.logPerf("Create Bundle");
 ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary
-        FallbackComponent={Fallback} onReset={() => {
-            // 删除软件配置
-            AppConfig.reset();
-            trackPlayer.reset();
-        }}><Initialize><Root></Root></Initialize></ErrorBoundary>);
+    FallbackComponent={Fallback} onReset={() => {
+        // 删除软件配置
+        AppConfig.reset();
+        trackPlayer.reset();
+    }}><Initialize><Root></Root></Initialize></ErrorBoundary>);
 
 function Root() {
     return (

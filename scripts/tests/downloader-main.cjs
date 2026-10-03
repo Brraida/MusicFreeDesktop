@@ -28,7 +28,9 @@ const server = http.createServer((request, response) => {
     if (pathname === "/playlist-split") {
         response.writeHead(200);
         response.write("#EX");
-        setTimeout(() => { response.write("TM"); setTimeout(() => response.end("3U\n#EXT-X-ENDLIST\n"), 10); }, 10);
+        setTimeout(() => {
+            response.write("TM"); setTimeout(() => response.end("3U\n#EXT-X-ENDLIST\n"), 10);
+        }, 10);
         return;
     }
     if (pathname.includes("404")) {

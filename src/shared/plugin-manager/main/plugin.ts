@@ -109,7 +109,7 @@ export class Plugin {
                     ensurePluginInitialized,
                 };
 
-                 
+
                 _instance = Function(`
                     'use strict';
                     return function(require, __musicfree_require, module, exports, console, env, process) {

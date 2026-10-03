@@ -57,5 +57,5 @@ export default function BottomLoadingState(props: IProps) {
         {component}
     </div>;
 
-  
+
 }

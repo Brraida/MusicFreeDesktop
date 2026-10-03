@@ -1,6 +1,6 @@
 /**
  * 数据库模块
- * 
+ *
  * 此模块负责加载数据库相关的功能，提供渲染进程需要的业务逻辑。
  */
 
@@ -742,7 +742,7 @@ class LocalMusicSheetDB {
                 artist: result.artist,
                 _raw: result._raw,
                 _sortIndex: result._sortIndex,
-            }));        
+            }));
         } catch (error) {
             console.error("搜索歌单失败:", error);
             return [];
@@ -753,20 +753,20 @@ class LocalMusicSheetDB {
      * 批量移动歌单到指定位置（支持所有拖拽和排序场景）
      * @param selectedSheets 要移动的歌单标识数组
      * @param targetPlatform 目标歌单的平台（null表示移动到开头/末尾）
-     * @param targetId 目标歌单的ID（null表示移动到开头/末尾）  
+     * @param targetId 目标歌单的ID（null表示移动到开头/末尾）
      * @param position 相对于目标歌单的位置："before" | "after"，默认"after"
      * @returns 成功移动的数量
-     * 
+     *
      * @example
      * // 移动到开头
      * batchMoveMusicSheets(sheets, null, null, "before")
-     * 
-     * // 移动到末尾  
+     *
+     * // 移动到末尾
      * batchMoveMusicSheets(sheets, null, null, "after")
-     * 
+     *
      * // 移动到指定歌单之前
      * batchMoveMusicSheets(sheets, "platform1", "id1", "before")
-     * 
+     *
      * // 移动到指定歌单之后
      * batchMoveMusicSheets(sheets, "platform1", "id1", "after")
      */
@@ -801,10 +801,10 @@ class LocalMusicSheetDB {
                 // 计算插入位置
                 let insertIndex = 0;
                 if (targetPlatform && targetId) {
-                    const targetIndex = remainingSheets.findIndex(s => 
+                    const targetIndex = remainingSheets.findIndex(s =>
                         s.platform === targetPlatform && s.id === targetId,
                     );
-                    insertIndex = targetIndex === -1 ? 0 : 
+                    insertIndex = targetIndex === -1 ? 0 :
                         (position === "after" ? targetIndex + 1 : targetIndex);
                 } else {
                     insertIndex = position === "before" ? 0 : remainingSheets.length;
@@ -838,7 +838,7 @@ class LocalMusicSheetDB {
         } catch (error) {
             console.error("批量移动歌单失败:", error);
             return 0;
-        }    
+        }
     }
 }
 
