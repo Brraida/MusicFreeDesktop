@@ -32,7 +32,7 @@ runner 标签与架构按 [GitHub 官方 runner 列表](https://github.com/actio
 ## 日常提交
 
 - `dev`、`master`、`main` 的 push 和目标为这些分支的 PR 自动运行。
-- 每个平台执行类型检查、七组 Node 回归、五组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示。
+- 每个平台执行类型检查、七组 Node 回归、五组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
 - 普通提交不生成发布归档。测试日志与结果保留 7 天；失败时也尝试上传已有结果。
 - 安装使用锁文件和 npm 官方 registry，依赖版本及 integrity 不随 CI 更新。缓存 npm 下载，不缓存 `node_modules`。
 
@@ -65,6 +65,8 @@ git push origin v0.0.80
 
 新流程不依赖个人 PAT、`MYAPPID`、飞书或 GitCode secret。构建权限为 `contents: read`，只有标签触发的草稿发布作业使用 `contents: write`。Windows 使用现有 Forge Squirrel maker，旧 Inno Setup 脚本仍可单独使用。
 
+macOS ZIP 使用 Forge；DMG 使用系统自带的 `ditto` 和 `hdiutil`，包含应用及指向 `/Applications` 的拖拽安装链接，并执行 `hdiutil verify`。这样避免旧 `appdmg` 可选依赖安装失败导致全部安装包生成失败。
+
 ## 验证边界
 
 - 工作流使用目前仓库锁定的 Electron 和 Forge，不在配置 CI 时升级播放器宿主。
@@ -91,4 +93,5 @@ Linux 的第二条使用 `xvfb-run -a node scripts/ci/run-tests.cjs electron`。
 | `build-info.cjs` | 计算平台路径、版本标签校验、构建来源 |
 | `verify-build.cjs` / `verify-runtime.cjs` | 使用应用自己的 Electron 验证打包产物 |
 | `collect-artifacts.cjs` / `archive.py` | 收集安装器和完整便携包，输出 SHA-256 与来源信息 |
+| `create-dmg.cjs` | 在 macOS runner 上保留应用结构、生成并校验 DMG |
 | `create-release.cjs` | 检查四平台产物，创建或更新 Release 草稿 |

@@ -51,6 +51,29 @@ try {
         assert.equal(digest, require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(fixture, 'out/releases', filename))).digest('hex'));
     }
     assert.throws(() => load('collect-artifacts.cjs', { './build-info.cjs': helperMock }), /overwrite/);
+    // macOS image creation keeps the app tree and an Applications drag target.
+    const macBuild = helpers('darwin', 'arm64').layout(fixture);
+    fs.mkdirSync(path.join(macBuild.directory, 'MusicFree.app/Contents'), { recursive: true });
+    fs.writeFileSync(path.join(macBuild.directory, 'MusicFree.app/Contents/test'), 'mac application');
+    const dmgCommands = [];
+    load('create-dmg.cjs', {
+        './build-info.cjs': { layout: () => macBuild },
+        'node:child_process': { execFileSync: (command, args) => {
+            dmgCommands.push([command, ...args]);
+            if (command === 'ditto') fs.cpSync(args[0], args[1], { recursive: true });
+            else if (args[0] === 'create') {
+                const staging = args[args.indexOf('-srcfolder') + 1];
+                assert.equal(fs.readFileSync(path.join(staging, 'MusicFree.app/Contents/test'), 'utf8'), 'mac application');
+                assert.equal(fs.readFileSync(path.join(staging, 'Applications'), 'utf8'), '/Applications');
+                fs.writeFileSync(args.at(-1), 'test image');
+            }
+        } },
+        'node:fs': { ...fs, symlinkSync: (target, file) => fs.writeFileSync(file, target),
+            readlinkSync: file => fs.readFileSync(file, 'utf8') },
+    });
+    assert.deepEqual(dmgCommands.map(args => args[0]), ['ditto', 'hdiutil', 'hdiutil']);
+    assert.ok(dmgCommands[1].includes('HFS+'));
+    assert.equal(dmgCommands[2][1], 'verify');
     // Simulate GitHub CLI responses without creating releases or contacting GitHub.
     const releaseRoot = path.join(fixture, 'out/releases');
     for (const target of ['win32-x64', 'linux-x64', 'darwin-x64', 'darwin-arm64']) {

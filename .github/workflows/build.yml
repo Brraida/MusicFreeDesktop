@@ -92,8 +92,14 @@ jobs:
       - name: Verify packaged executable and native modules
         run: node scripts/ci/verify-build.cjs
       - name: Generate installation packages
-        if: env.BUILD_PACKAGES == 'true'
+        if: env.BUILD_PACKAGES == 'true' && runner.os != 'macOS'
         run: npm run make -- --skip-package --arch=${{ matrix.arch }}
+      - name: Generate macOS application ZIP
+        if: env.BUILD_PACKAGES == 'true' && runner.os == 'macOS'
+        run: npm run make -- --skip-package --arch=${{ matrix.arch }} --targets=@electron-forge/maker-zip
+      - name: Generate and verify macOS DMG
+        if: env.BUILD_PACKAGES == 'true' && runner.os == 'macOS'
+        run: node scripts/ci/create-dmg.cjs
       - name: Collect packages and SHA-256 checksums
         if: env.BUILD_PACKAGES == 'true'
         run: node scripts/ci/collect-artifacts.cjs
