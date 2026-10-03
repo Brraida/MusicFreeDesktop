@@ -168,56 +168,25 @@ export async function updateSheet(
  * @returns 删除后的ID
  */
 export async function removeSheet(sheetId: string) {
-    try {
-        if (sheetId === defaultSheet.id) {
-            // 默认歌单不可删除
-            return;
-        }
-        await musicSheetDB.transaction(
-            "readwrite",
-            musicSheetDB.sheets,
-            musicSheetDB.musicStore,
-            async () => {
-                const targetSheet = musicSheets.find((item) => item.id === sheetId);
-
-                await removeMusicFromSheet(
-                    targetSheet.musicList ?? ([] as any),
-                    sheetId,
-                );
-                musicSheetDB.sheets.delete(sheetId);
-            },
-        );
-        musicSheets = musicSheets.filter((it) => it.id !== sheetId);
-        return musicSheets;
-    } catch (e) {
-        console.log(e);
-    }
+    if (sheetId === defaultSheet.id) return;
+    await musicSheetDB.transaction(
+        "rw", musicSheetDB.sheets, musicSheetDB.musicStore, async () => {
+            await removeMusicInTransaction(sheetId, () => true);
+            await musicSheetDB.sheets.delete(sheetId);
+        },
+    );
+    musicSheets = musicSheets.filter(item => item.id !== sheetId);
+    return musicSheets;
 }
 
-/**
- * 清空所有音乐
- * @param sheetId 歌单ID
- * @returns 删除后的ID
- */
+/** 清空歌曲，原有歌单信息保留。 */
 export async function clearSheet(sheetId: string) {
-    try {
-        await musicSheetDB.transaction(
-            "readwrite",
-            musicSheetDB.sheets,
-            musicSheetDB.musicStore,
-            async () => {
-                const targetSheet = musicSheets.find((item) => item.id === sheetId);
-                await removeMusicFromSheet(
-                    targetSheet.musicList ?? ([] as any),
-                    sheetId,
-                );
-                targetSheet.musicList = [];
-            },
-        );
-        return [...musicSheets];
-    } catch (e) {
-        console.log(e);
-    }
+    const sheet = await musicSheetDB.transaction(
+        "rw", musicSheetDB.sheets, musicSheetDB.musicStore,
+        () => removeMusicInTransaction(sheetId, () => true),
+    );
+    publishCommittedSheet(sheet);
+    return musicSheets;
 }
 
 /**
@@ -263,171 +232,92 @@ export async function addMusicToSheet(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
     sheetId: string,
 ) {
-    const _musicItems = Array.isArray(musicItems) ? musicItems : [musicItems];
-    try {
-        // 当前的列表
-        const targetSheet = musicSheets.find((item) => item.id === sheetId);
-        if (!targetSheet) {
-            return;
-        }
-        // 筛选出不在列表中的项目
-        const targetMusicList = targetSheet.musicList;
-        // 要添加到音乐列表中的项目
-        const validMusicItems = _musicItems.filter(
-            (item) => -1 === targetMusicList.findIndex((mi) => isSameMedia(mi, item)),
-        );
-
-        await musicSheetDB.transaction(
-            "rw",
-            musicSheetDB.musicStore,
-            musicSheetDB.sheets,
-            async () => {
-                // 寻找已入库的音乐项目
-                const allMusic = await musicSheetDB.musicStore.bulkGet(
-                    validMusicItems.map((item) => [item.platform, item.id]),
-                );
-                allMusic.forEach((mi, index) => {
-                    if (mi) {
-                        mi[musicRefSymbol] += 1;
-                    } else {
-                        allMusic[index] = {
-                            ...validMusicItems[index],
-                            [musicRefSymbol]: 1,
-                        };
-                    }
-                });
-                await musicSheetDB.musicStore.bulkPut(allMusic);
-                const timeStamp = Date.now();
-                await musicSheetDB.sheets
-                    .where("id")
-                    .equals(sheetId)
-                    .modify((obj) => {
-                        obj.artwork =
-                            validMusicItems[validMusicItems.length - 1]?.artwork ??
-                            obj.artwork;
-                        obj.musicList = [
-                            ...(obj.musicList ?? []),
-                            ...validMusicItems.map((item, index) => ({
-                                platform: item.platform,
-                                id: item.id,
-                                [sortIndexSymbol]: index,
-                                [timeStampSymbol]: timeStamp,
-                            })),
-                        ];
-                        targetSheet.artwork = obj.artwork;
-                        targetSheet.musicList = obj.musicList;
-                        musicSheets = [...musicSheets];
-                    });
-            },
-        );
-
-        if (sheetId === defaultSheet.id) {
-            _musicItems.forEach((mi) => {
-                favoriteMusicListIds.add(getMediaPrimaryKey(mi));
+    const items = Array.isArray(musicItems) ? musicItems : [musicItems];
+    const sheet = await musicSheetDB.transaction(
+        "rw", musicSheetDB.musicStore, musicSheetDB.sheets, async () => {
+            const target = await musicSheetDB.sheets.get(sheetId);
+            if (!target) throw new Error("Music sheet not found");
+            // Both duplicate input and competing writers are checked against the
+            // latest persisted state inside the same read/write transaction.
+            const keys = new Set((target.musicList ?? []).map(getMediaPrimaryKey));
+            const valid = items.filter(item => {
+                const key = getMediaPrimaryKey(item);
+                if (keys.has(key)) return false;
+                keys.add(key);
+                return true;
             });
-        }
+            if (!valid.length) return target;
+            const records = await musicSheetDB.musicStore.bulkGet(valid.map(item => [item.platform, item.id]));
+            await musicSheetDB.musicStore.bulkPut(records.map((record, index) => record ? {
+                ...record, [musicRefSymbol]: (record[musicRefSymbol] ?? 0) + 1,
+            } : { ...valid[index], [musicRefSymbol]: 1 }));
+            const timeStamp = Date.now();
+            target.artwork = valid[valid.length - 1]?.artwork ?? target.artwork;
+            target.musicList = [...(target.musicList ?? []), ...valid.map((item, index) => ({
+                platform: item.platform, id: item.id,
+                [sortIndexSymbol]: index, [timeStampSymbol]: timeStamp,
+            }))];
+            await musicSheetDB.sheets.put(target);
+            return target;
+        },
+    );
+    publishCommittedSheet(sheet);
+    return musicSheets;
+}
 
-        return musicSheets;
-    } catch {
-        console.log("error!!");
+function publishCommittedSheet(sheet: IMusic.IDBMusicSheetItem) {
+    const existing = musicSheets.some(item => item.id === sheet.id);
+    musicSheets = existing ? musicSheets.map(item => item.id === sheet.id ? sheet : item) : [...musicSheets, sheet];
+    if (sheet.id === defaultSheet.id) {
+        favoriteMusicListIds.clear();
+        sheet.musicList.forEach(item => favoriteMusicListIds.add(getMediaPrimaryKey(item)));
     }
 }
 
-/**
- * 从歌单内移除歌曲
- * @param musicItems 要移除的歌曲
- * @param sheetId 歌单ID
- * @returns
- */
+// Called only from a transaction. Cache/index changes happen after its commit.
+async function removeMusicInTransaction(sheetId: string, shouldRemove: (item: IMedia.IMediaBase) => boolean) {
+    const sheet = await musicSheetDB.sheets.get(sheetId);
+    if (!sheet) throw new Error("Music sheet not found");
+    const removed = (sheet.musicList ?? []).filter(shouldRemove);
+    const remaining = (sheet.musicList ?? []).filter(item => !shouldRemove(item));
+    const removedCounts = new Map<string, { item: IMedia.IMediaBase; count: number }>();
+    for (const item of removed) {
+        const key = getMediaPrimaryKey(item);
+        const entry = removedCounts.get(key);
+        if (entry) ++entry.count;
+        else removedCounts.set(key, { item, count: 1 });
+    }
+    const entries = [...removedCounts.values()];
+    const records = await musicSheetDB.musicStore.bulkGet(entries.map(({ item }) => [item.platform, item.id]));
+    const deleted: Array<[string, string | number]> = [];
+    const updated: typeof records = [];
+    records.forEach((record, index) => {
+        if (!record) return;
+        const references = (record[musicRefSymbol] ?? 0) - entries[index].count;
+        if (references <= 0) deleted.push([record.platform, record.id]);
+        else updated.push({ ...record, [musicRefSymbol]: references });
+    });
+    await musicSheetDB.musicStore.bulkDelete(deleted);
+    await musicSheetDB.musicStore.bulkPut(updated);
+    const last = remaining[remaining.length - 1];
+    sheet.artwork = last ? (await musicSheetDB.musicStore.get([last.platform, last.id]))?.artwork : undefined;
+    sheet.musicList = remaining;
+    await musicSheetDB.sheets.put(sheet);
+    return sheet;
+}
+
+/** 从歌单内移除歌曲；并发添加不会被旧缓存覆盖。 */
 export async function removeMusicFromSheet(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
     sheetId: string,
 ) {
-    const targetSheet = musicSheets.find((item) => item.id === sheetId);
-    if (!targetSheet) {
-        return;
-    }
-    // 重新组装
-    const _musicItems = Array.isArray(musicItems) ? musicItems : [musicItems];
-    const targetMusicList = targetSheet.musicList ?? [];
-    const toBeRemovedMusic: IMedia.IMediaBase[] = [];
-    const restMusic: IMedia.IMediaBase[] = [];
-    for (const mi of targetMusicList) {
-        // 用map会更快吧
-        if (_musicItems.findIndex((item) => isSameMedia(mi, item)) === -1) {
-            // 剩余的音乐
-            restMusic.push(mi);
-        } else {
-            // 将要删除的音乐
-            toBeRemovedMusic.push(mi);
-        }
-    }
-
-    try {
-        await musicSheetDB.transaction(
-            "rw",
-            musicSheetDB.sheets,
-            musicSheetDB.musicStore,
-            async () => {
-                // 寻找引用
-                const toBeRemovedMusicDetail = await musicSheetDB.musicStore.bulkGet(
-                    toBeRemovedMusic.map((item) => [item.platform, item.id]),
-                );
-                // 如果引用计数为0，进入删除队列
-                const needDelete: any[] = [];
-                // 如果不为0，进入更新队列
-                const needUpdate: any[] = [];
-                toBeRemovedMusicDetail.forEach((musicItem) => {
-                    if (!musicItem) {
-                        return;
-                    }
-                    musicItem[musicRefSymbol]--;
-                    if (musicItem[musicRefSymbol] === 0) {
-                        needDelete.push([musicItem.platform, musicItem.id]);
-                    } else {
-                        needUpdate.push(musicItem);
-                    }
-                });
-                await musicSheetDB.musicStore.bulkDelete(needDelete);
-                await musicSheetDB.musicStore.bulkPut(needUpdate);
-
-                // 当前的最后一首歌
-                const lastMusic = restMusic[restMusic.length - 1];
-                // 更新当前歌单的封面
-                let newArtwork: string;
-                if (lastMusic) {
-                    newArtwork = (
-                        await musicSheetDB.musicStore.get([
-                            lastMusic.platform,
-                            lastMusic.id,
-                        ])
-                    ).artwork;
-                }
-
-                await musicSheetDB.sheets
-                    .where("id")
-                    .equals(sheetId)
-                    .modify((obj) => {
-                        obj.artwork = newArtwork;
-                        obj.musicList = restMusic;
-                        // 修改 MusicSheets
-                        targetSheet.artwork = newArtwork;
-                        targetSheet.musicList = obj.musicList;
-                        musicSheets = [...musicSheets];
-                    });
-            },
-        );
-
-        if (sheetId === defaultSheet.id) {
-            // 从默认歌单里删除
-            toBeRemovedMusic.forEach((mi) => {
-                favoriteMusicListIds.delete(getMediaPrimaryKey(mi));
-            });
-        }
-    } catch (e) {
-        console.log(e);
-        throw e;
-    }
+    const items = Array.isArray(musicItems) ? musicItems : [musicItems];
+    const keys = new Set(items.map(getMediaPrimaryKey));
+    const sheet = await musicSheetDB.transaction(
+        "rw", musicSheetDB.sheets, musicSheetDB.musicStore,
+        () => removeMusicInTransaction(sheetId, item => keys.has(getMediaPrimaryKey(item))),
+    );
+    publishCommittedSheet(sheet);
 }
 
 /** 获取歌单内的歌曲详细信息 */
