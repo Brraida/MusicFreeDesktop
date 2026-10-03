@@ -1,136 +1,138 @@
-name: 打包
-on: 
-    workflow_dispatch:
+name: CI and Packages
+
+on:
+  push:
+    branches: [dev, master, main]
+    tags: ['v[0-9]*']
+  pull_request:
+    branches: [dev, master, main]
+  workflow_dispatch:
+    inputs:
+      build_packages:
+        description: 'Generate installation and portable packages after checks pass'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ !startsWith(github.ref, 'refs/tags/') }}
+
+env:
+  HUSKY: '0'
+  BUILD_PACKAGES: ${{ startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.build_packages) }}
+
 jobs:
-    build-windows: 
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                node-version: 18
-            - run: echo (node -p -e '`VERSION=${require("./package.json").version}`') >> $Env:GITHUB_ENV
-            - run: npm install
-            - run: npm run package            
-            - uses: maotoumao/inno-setup-action-cli@main
-              with: 
-                  filepath: ./release/build-windows.iss
-                  variables: /DMyAppVersion=${{ env.VERSION }} /DMyAppId=${{ secrets.MYAPPID }}
-            - name: Rename Setup File
-              run: Rename-Item -Path "./out/MusicFreeSetup.exe" -NewName "MusicFree-${{ env.VERSION }}-win32-x64-setup.exe"
-            - name: Upload Setup
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-win32-x64-setup
-                  path: ./out/MusicFree-${{ env.VERSION }}-win32-x64-setup.exe
-            - name: Generate Portable
-              run: mkdir ./out/MusicFree-win32-x64/portable
-            - uses: vimtor/action-zip@v1.1
-              with:
-                files: ./out/MusicFree-win32-x64
-                dest: MusicFree-${{ env.VERSION }}-win32-x64-portable.zip
-            - name: Upload Portable
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-win32-x64-portable
-                  path: ${{ github.workspace }}/MusicFree-${{ env.VERSION }}-win32-x64-portable.zip
+  build:
+    name: Check and build (${{ matrix.platform }}/${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: windows-2022
+            platform: win32
+            arch: x64
+          - runner: ubuntu-24.04
+            platform: linux
+            arch: x64
+          - runner: macos-15-intel
+            platform: darwin
+            arch: x64
+          - runner: macos-15
+            platform: darwin
+            arch: arm64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          architecture: ${{ matrix.arch }}
+          cache: npm
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.11'
+      - name: Install Linux build and display dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fakeroot dpkg xvfb libgtk-3-0t64 libnss3 libasound2t64
+      - name: Check target architecture and version tag
+        shell: bash
+        env:
+          TARGET_PLATFORM: ${{ matrix.platform }}
+          TARGET_ARCH: ${{ matrix.arch }}
+        run: |
+          node -e "if (process.platform !== process.env.TARGET_PLATFORM || process.arch !== process.env.TARGET_ARCH) throw new Error('Runner architecture mismatch')"
+          node scripts/ci/build-info.cjs
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: TypeScript check
+        run: npx --no-install tsc --noEmit
+      - name: Node regression tests
+        run: node scripts/ci/run-tests.cjs node
+      - name: Electron regression tests
+        if: runner.os != 'Linux'
+        run: node scripts/ci/run-tests.cjs electron
+      - name: Electron regression tests with virtual display
+        if: runner.os == 'Linux'
+        run: xvfb-run -a node scripts/ci/run-tests.cjs electron
+      - name: Compile application and rebuild native modules
+        run: npm run package -- --arch=${{ matrix.arch }}
+      - name: Verify packaged executable and native modules
+        run: node scripts/ci/verify-build.cjs
+      - name: Generate installation packages
+        if: env.BUILD_PACKAGES == 'true'
+        run: npm run make -- --skip-package --arch=${{ matrix.arch }}
+      - name: Collect packages and SHA-256 checksums
+        if: env.BUILD_PACKAGES == 'true'
+        run: node scripts/ci/collect-artifacts.cjs
+      - name: Upload release packages
+        if: env.BUILD_PACKAGES == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/releases/*
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 0
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: checks-${{ matrix.platform }}-${{ matrix.arch }}
+          path: out/ci-test-results/*
+          if-no-files-found: ignore
+          retention-days: 7
 
-    build-windows-legacy: 
-        runs-on: windows-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                node-version: 18
-            - run: echo (node -p -e '`VERSION=${require("./package.json").version}`') >> $Env:GITHUB_ENV
-            - run: npm install
-            - run: npm install electron@22
-            - run: npm run package            
-            - uses: maotoumao/inno-setup-action-cli@main
-              with: 
-                  filepath: ./release/build-windows.iss
-                  variables: /DMyAppVersion=${{ env.VERSION }} /DMyAppId=${{ secrets.MYAPPID }}
-            - name: Rename Setup File
-              run: Rename-Item -Path "./out/MusicFreeSetup.exe" -NewName "MusicFree-${{ env.VERSION }}-win32-x64-legacy-setup.exe"
-            - name: Upload Setup
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-win32-x64-legacy-setup
-                  path: ./out/MusicFree-${{ env.VERSION }}-win32-x64-legacy-setup.exe
-            - name: Generate Portable
-              run: mkdir ./out/MusicFree-win32-x64/portable
-            - uses: vimtor/action-zip@v1.1
-              with:
-                files: ./out/MusicFree-win32-x64
-                dest: MusicFree-${{ env.VERSION }}-win32-x64-legacy-portable.zip
-            - name: Upload Portable
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-win32-x64-legacy-portable
-                  path: ${{ github.workspace }}/MusicFree-${{ env.VERSION }}-win32-x64-legacy-portable.zip
-
-    build-macos-x64: 
-        runs-on: macos-13
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v4
-              with:
-                python-version: '3.10'
-            - uses: actions/setup-node@v4
-              with:
-                node-version: 18
-            - run: node -p -e '`VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-            - run: npm install
-            - run: npm run make            
-            - run: ls ./out/make
-            - name: Rename DMG File
-              run: mv "./out/make/MusicFree-${{ env.VERSION }}-x64.dmg" "./out/make/MusicFree-${{ env.VERSION }}-darwin-x64.dmg"
-            - name: Upload Setup
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-darwin-x64
-                  path: ./out/make/MusicFree-${{ env.VERSION }}-darwin-x64.dmg
-
-    build-macos-arm64: 
-        runs-on: macos-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-python@v4
-              with:
-                python-version: '3.10'
-            - uses: actions/setup-node@v4
-              with:
-                node-version: 18
-            - run: node -p -e '`VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-            - run: npm install            
-            - run: npm run make -- --arch="arm64"
-            - name: Rename DMG File
-              run: mv "./out/make/MusicFree-${{ env.VERSION }}-arm64.dmg" "./out/make/MusicFree-${{ env.VERSION }}-darwin-arm64.dmg"
-            - name: Upload Setup
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-darwin-arm64
-                  path: ./out/make/MusicFree-${{ env.VERSION }}-darwin-arm64.dmg
-
-    build-ubuntu: 
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                node-version: 18
-            - run: node -p -e '`VERSION=${require("./package.json").version}`' >> $GITHUB_ENV
-            - run: npm install            
-            - run: npm run make
-            - name: Find and Rename DEB File
-              run: |
-                  DEB_FILE=$(find ./out/make/deb/x64/ -name "*.deb" | head -1)
-                  if [ -n "$DEB_FILE" ]; then
-                      mv "$DEB_FILE" "./out/make/deb/x64/MusicFree-${{ env.VERSION }}-linux-amd64.deb"
-                  fi
-            - name: Upload Setup
-              uses: actions/upload-artifact@v4
-              with:
-                  name: MusicFree-${{ env.VERSION }}-linux-amd64
-                  path: ./out/make/deb/x64/MusicFree-${{ env.VERSION }}-linux-amd64.deb
-
+  draft-release:
+    name: Create release draft
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: release-*
+          path: out/releases
+          merge-multiple: true
+      - name: Create or update a draft with all four platforms
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/ci/create-release.cjs

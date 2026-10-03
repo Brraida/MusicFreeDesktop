@@ -11,6 +11,7 @@ node scripts/tests/scanner-regression.cjs
 node scripts/tests/audio-regression.cjs
 node scripts/tests/store-regression.cjs
 node scripts/tests/startup-regression.cjs
+node scripts/tests/ci-regression.cjs
 ```
 
 | 测试 | 覆盖与边界 |
@@ -20,6 +21,7 @@ node scripts/tests/startup-regression.cjs
 | scanner | 初始 1/100/10000 条缓冲的隔离测试；真实 Chokidar 与 100 个独立测试文件的增删改、可选 stats、大写扩展名、短损坏文件解析与文件夹导入 |
 | audio | HLS 与 Blob 生命周期、最终 headers、播放/暂停意图、seek、A → B → A、取消与 URL 释放；Audio/HLS/fetch 用替身 |
 | store | 提交后通知、订阅错误隔离、其他订阅继续执行、更新函数失败保留旧状态 |
+| ci | 四平台产物路径、版本标签、完整便携 ZIP（包含空 portable 和隐藏资源）、SHA-256、重复产物保护、Release 草稿创建/更新与正式发布保护；独立临时文件和 GitHub CLI 替身 |
 | startup | 配置/插件/歌单/播放状态/语言/下载记录的阶段错误信息；各初始化服务用替身 |
 
 ## Windows Electron 回归
@@ -43,3 +45,7 @@ node scripts/tests/startup-regression.cjs
 - 启动：真实 React 加载/失败/成功界面；日志服务失败时仍显示诊断；成功前不挂载播放器。重试按钮通过整页重载重新初始化，不删除配置或音乐库。
 
 这些测试不等于所有在线插件、真实音乐格式和设备的全量兼容性测试；Linux/macOS 本轮未执行运行验收。
+
+## CI/CD
+
+GitHub Actions 会通过 `scripts/ci/run-tests.cjs` 分别执行 Node 和 Electron 回归，记录每项结果及日志。构建、下载测试包与版本标签发布见 [发布说明](../../release/README.md)。
