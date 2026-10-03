@@ -22,23 +22,31 @@ import shortCut from "@shared/short-cut/renderer";
 
 setAutoFreeze(false);
 
+async function initializeStage(stage: string, initialize: () => Promise<unknown>) {
+    try {
+        await initialize();
+    } catch (error) {
+        throw new Error(`${stage}初始化失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+}
+
 export default async function () {
     await Promise.all([
-        AppConfig.setup(),
-        PluginManager.setup(),
+        initializeStage("配置", () => AppConfig.setup()),
+        initializeStage("插件", () => PluginManager.setup()),
     ]);
     await Promise.all([
-        MusicSheet.frontend.setupMusicSheets(),
-        trackPlayer.setup(),
+        initializeStage("歌单", () => MusicSheet.frontend.setupMusicSheets()),
+        initializeStage("播放状态", () => trackPlayer.setup()),
     ]);
-    await setupI18n();
+    await initializeStage("语言", setupI18n);
     shortCut.setup();
     dropHandler();
     clearDefaultBehavior();
     setupCommandAndEvents();
     setupDeviceChange();
     localMusic.setupLocalMusic();
-    await Downloader.setupDownloader();
+    await initializeStage("下载记录", () => Downloader.setupDownloader());
     setupRecentlyPlaylist();
     // 本地服务
     ServiceManager.setup();

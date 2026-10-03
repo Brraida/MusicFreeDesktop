@@ -2,7 +2,7 @@ import ReactDOM from "react-dom/client";
 import App from "../app";
 import "animate.css";
 import ModalComponent from "../components/Modal";
-import bootstrap from "./bootstrap";
+import Initialize from "./initialize";
 import { HashRouter, Route, Routes } from "react-router-dom";
 import MainPage from "../pages/main-page";
 import { ContextMenuComponent } from "../components/ContextMenu";
@@ -20,15 +20,12 @@ import AppConfig from "@shared/app-config/renderer";
 import trackPlayer from "../core/track-player";
 
 logger.logPerf("Create Bundle");
-bootstrap().then(() => {
-    logger.logPerf("Bundle Bootstrap Ready");
-    ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary
+ReactDOM.createRoot(document.getElementById("root")).render(<ErrorBoundary
         FallbackComponent={Fallback} onReset={() => {
             // 删除软件配置
             AppConfig.reset();
             trackPlayer.reset();
-        }}><Root></Root></ErrorBoundary>);
-});
+        }}><Initialize><Root></Root></Initialize></ErrorBoundary>);
 
 function Root() {
     return (
