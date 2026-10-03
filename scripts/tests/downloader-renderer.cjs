@@ -117,6 +117,16 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
     terminal = await workerDownload("/broken", "worker-broken.mp3");
     assert.strictEqual(terminal.state, DS.ERROR, "interrupted stream must never report completion");
     assert(!fs.existsSync(target("worker-broken.mp3")));
+    for (const [index, url] of ["/playlist-mime", "/playlist-disguised.mp3", "/playlist-split"].entries()) {
+        const name = `worker-hls-${index}.mp3`;
+        terminal = await workerDownload(url, name);
+        assert.strictEqual(terminal.state, DS.ERROR, "a manifest is not a completed offline song");
+        assert(terminal.msg.includes("HLS playlist downloads are not supported"));
+        assert(!fs.existsSync(target(name)));
+        assert(!fs.readdirSync(testRoot).some(file => file.endsWith(".part")));
+    }
+    terminal = await workerDownload("/actual-audio.m3u8", "worker-direct-audio.mp3");
+    assert.strictEqual(terminal.state, DS.DONE, "actual media must not be rejected based only on URL extension");
     let progressResolve;
     const firstProgress = new Promise(resolve => {
         progressResolve = resolve;

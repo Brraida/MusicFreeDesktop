@@ -17,6 +17,20 @@ const server = http.createServer((request, response) => {
     const pathname = new URL(request.url, "http://localhost").pathname;
     requests.set(pathname, (requests.get(pathname) || 0) + 1);
     response.setHeader("Access-Control-Allow-Origin", "*");
+    if (pathname === "/playlist-mime") {
+        response.writeHead(200, { "Content-Type": "application/vnd.apple.mpegurl" });
+        response.end("#EXTM3U\n#EXT-X-ENDLIST\n"); return;
+    }
+    if (pathname === "/playlist-disguised.mp3") {
+        response.writeHead(200, { "Content-Type": "application/octet-stream" });
+        response.end("\uFEFF#EXTM3U\n#EXT-X-TARGETDURATION:10\nsegment.ts\n"); return;
+    }
+    if (pathname === "/playlist-split") {
+        response.writeHead(200);
+        response.write("#EX");
+        setTimeout(() => { response.write("TM"); setTimeout(() => response.end("3U\n#EXT-X-ENDLIST\n"), 10); }, 10);
+        return;
+    }
     if (pathname.includes("404")) {
         response.writeHead(404); response.end("not found"); return;
     }

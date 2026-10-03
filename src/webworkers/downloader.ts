@@ -96,6 +96,12 @@ async function downloadFile(
         if (!response.ok || !response.body) {
             throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
+        const contentType = (response.headers.get("content-type") ?? "").split(";")[0].trim().toLowerCase();
+        const unsupportedHls = () => new Error("HLS playlist downloads are not supported; choose a direct audio source.");
+        if (["application/vnd.apple.mpegurl", "application/x-mpegurl", "audio/mpegurl", "audio/x-mpegurl"].includes(contentType)) {
+            await response.body.cancel();
+            throw unsupportedHls();
+        }
         total = Number(response.headers.get("content-length")) || 0;
         onStateChange({ state: DownloadState.DOWNLOADING, downloaded, total });
         const progressStream = new Transform({
@@ -107,13 +113,35 @@ async function downloadFile(
         });
         const reader = response.body.getReader();
         const sourceStream = Readable.from((async function* () {
+            const prefixChunks: Buffer[] = [];
+            let prefixSize = 0;
+            let checked = false;
+            const checkPrefix = () => {
+                const prefix = Buffer.concat(prefixChunks).subarray(0, 512).toString("utf8").trimStart();
+                if (prefix.startsWith("#EXTM3U")) throw unsupportedHls();
+            };
             try {
                 while (true) {
                     const chunk = await reader.read();
                     if (chunk.done) {
+                        if (!checked) {
+                            checkPrefix();
+                            for (const part of prefixChunks) yield part;
+                        }
                         break;
                     }
-                    yield Buffer.from(chunk.value);
+                    const part = Buffer.from(chunk.value);
+                    if (!checked) {
+                        prefixChunks.push(part);
+                        prefixSize += part.length;
+                        if (prefixSize < 512 && !part.includes(10)) continue;
+                        checkPrefix();
+                        checked = true;
+                        for (const prefixPart of prefixChunks) yield prefixPart;
+                        prefixChunks.length = 0;
+                    } else {
+                        yield part;
+                    }
                 }
             } finally {
                 await reader.cancel().catch(() => {
