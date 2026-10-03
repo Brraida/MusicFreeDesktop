@@ -1,49 +1,125 @@
-import { getInternalData, getMediaPrimaryKey, isSameMedia, setInternalData } from "@/common/media-util";
+import { getInternalData, getMediaPrimaryKey, setInternalData } from "@/common/media-util";
 import Store from "@/common/store";
 import { getUserPreferenceIDB, setUserPreferenceIDB } from "@/renderer/utils/user-perference";
 import musicSheetDB from "../db/music-sheet-db";
 import { internalDataKey, musicRefSymbol } from "@/common/constant";
-import { useEffect, useState } from "react";
 import { DownloadEvts, ee } from "./ee";
 import { fsUtil } from "@shared/utils/renderer";
 import PQueue from "p-queue";
 import logger from "@shared/logger/renderer";
+import AppConfig from "@shared/app-config/renderer";
+import { getGlobalContext } from "@/shared/global-context/renderer";
 
 const downloadedMusicListStore = new Store<IMusic.IMusicItem[]>([]);
 const downloadedSet = new Set<string>();
+const downloadedRecords = new Map<string, IMusic.IMusicItem>();
 const mutations = new PQueue({ concurrency: 1 });
 let initialization: Promise<void>;
 
+let observingConfig = false;
+
 export function setupDownloadedMusicList() {
+    if (!observingConfig) {
+        observingConfig = true;
+        AppConfig.onConfigUpdate((patch) => {
+            if ("download.path" in patch) {
+                refreshDownloadedMusicList().catch((error) => {
+                    reportSaveError("Failed to reconcile the download directory", error);
+                });
+            }
+        });
+    }
     if (!initialization) {
-        initialization = (async () => {
-            const keys = (await getUserPreferenceIDB("downloadedList")) ?? [];
-            // Download metadata is authoritative. Rebuild an incomplete legacy index.
-            const records = await musicSheetDB.musicStore.toArray();
-            const byKey = new Map(records.map((item) => [getMediaPrimaryKey(item), item]));
-            const ordered = new Map<string, IMusic.IMusicItem>();
-            [...keys, ...records].forEach((item) => {
-                const pk = getMediaPrimaryKey(item);
-                const record = byKey.get(pk);
-                if (record && getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData")?.path) {
-                    ordered.set(pk, record);
-                }
-            });
-            const candidates = [...ordered.values()];
-            const exists = await Promise.all(candidates.map((item) => fsUtil.isFile(
-                getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData").path,
-            )));
-            const valid = candidates.filter((_item, index) => exists[index]);
-            downloadedSet.clear();
-            valid.forEach((item) => downloadedSet.add(getMediaPrimaryKey(item)));
-            downloadedMusicListStore.setValue(valid);
-            await setUserPreferenceIDB("downloadedList", valid.map(primaryKeyMap));
-        })().catch((error) => {
+        initialization = reconcileDownloadedMusicList().catch((error) => {
             initialization = undefined;
             throw error;
         });
     }
     return initialization;
+}
+
+export async function refreshDownloadedMusicList() {
+    await setupDownloadedMusicList();
+    await mutations.add(reconcileDownloadedMusicList);
+}
+
+function pathKey(filePath: string) {
+    const resolved = window.path.resolve(filePath);
+    return getGlobalContext().platform === "win32" ? resolved.toLowerCase() : resolved;
+}
+
+async function reconcileDownloadedMusicList() {
+    const directory = AppConfig.getConfig("download.path") || getGlobalContext().appPath.downloads;
+    const keys = (await getUserPreferenceIDB("downloadedList")) ?? [];
+    // Missing-file metadata is retained so moved files can be recovered later.
+    const records = await musicSheetDB.musicStore.toArray();
+    const byKey = new Map(records.map((item) => [getMediaPrimaryKey(item), item]));
+    const ordered = new Map<string, IMusic.IMusicItem>();
+    [...keys, ...records].forEach((item) => {
+        const pk = getMediaPrimaryKey(item);
+        const record = byKey.get(pk);
+        if (record && getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData")?.path) {
+            ordered.set(pk, record);
+        }
+    });
+    const candidates = [...ordered.values()];
+    const recordedPath = (item: IMusic.IMusicItem) => getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData").path;
+    const exists = await Promise.all(candidates.map((item) => fsUtil.isFile(recordedPath(item))));
+    const claimedPaths = new Set(candidates.filter((_item, index) => exists[index]).map((item) => pathKey(recordedPath(item))));
+    const missing = candidates.filter((_item, index) => !exists[index]).map((item) => ({
+        item, oldPath: recordedPath(item), newPath: window.path.join(directory, window.path.basename(recordedPath(item))),
+    }));
+    const destinationCounts = new Map<string, number>();
+    missing.forEach(({ newPath }) => {
+        const key = pathKey(newPath);
+        destinationCounts.set(key, (destinationCounts.get(key) ?? 0) + 1);
+    });
+    const relocated = (await Promise.all(missing.map(async (candidate) => {
+        const key = pathKey(candidate.newPath);
+        // One file must not be silently associated with multiple song identities.
+        return destinationCounts.get(key) === 1 && !claimedPaths.has(key) && await fsUtil.isFile(candidate.newPath)
+            ? candidate : undefined;
+    }))).filter(Boolean);
+    const committed = relocated.length ? await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
+        const current = await musicSheetDB.musicStore.bulkGet(relocated.map(({ item }) => [item.platform, item.id]));
+        const updated = current.flatMap((item, index) => {
+            const downloadData = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+            if (downloadData?.path !== relocated[index].oldPath) {
+                return [];
+            }
+            return [setInternalData<IMusic.IMusicItemInternalData, "downloadData", typeof item>(item, "downloadData", {
+                ...downloadData, path: relocated[index].newPath,
+            }, true)];
+        });
+        await musicSheetDB.musicStore.bulkPut(updated);
+        return updated;
+    }) : [];
+    const committedByKey = new Map(committed.map((item) => [getMediaPrimaryKey(item), item]));
+    const valid = candidates.flatMap((item, index) => {
+        const updated = committedByKey.get(getMediaPrimaryKey(item));
+        return updated ? [updated] : exists[index] ? [item] : [];
+    });
+    const validKeys = new Set(valid.map(getMediaPrimaryKey));
+    const removed = [...downloadedRecords.values()].filter((item) => !validKeys.has(getMediaPrimaryKey(item)));
+    const added = valid.filter((item) => !isDownloaded(item) || committedByKey.has(getMediaPrimaryKey(item)));
+    downloadedSet.clear();
+    downloadedRecords.clear();
+    valid.forEach((item) => {
+        const pk = getMediaPrimaryKey(item);
+        downloadedSet.add(pk);
+        downloadedRecords.set(pk, item);
+    });
+    downloadedMusicListStore.setValue(valid);
+    for (const [event, items] of [[DownloadEvts.RemoveDownload, removed], [DownloadEvts.Downloaded, added]] as const) {
+        if (items.length) {
+            try {
+                ee.emit(event, items);
+            } catch (error) {
+                reportSaveError("Download reconciliation observer failed", error);
+            }
+        }
+    }
+    await setUserPreferenceIDB("downloadedList", valid.map(primaryKeyMap));
 }
 
 function primaryKeyMap(item: IMedia.IMediaBase) {
@@ -77,7 +153,9 @@ export async function addDownloadedMusicToList(
                     const previous = existing[index];
                     return {
                         ...(previous ?? item),
-                        [musicRefSymbol]: (previous?.[musicRefSymbol] ?? 0) + 1,
+                        // A missing-file record already owns a download reference.
+                        [musicRefSymbol]: (previous?.[musicRefSymbol] ?? 0)
+                            + (getInternalData<IMusic.IMusicItemInternalData>(previous, "downloadData")?.path ? 0 : 1),
                         [internalDataKey]: { ...(previous?.[internalDataKey] ?? {}), ...(item[internalDataKey] ?? {}) },
                     };
                 });
@@ -86,7 +164,11 @@ export async function addDownloadedMusicToList(
             });
             committed = true;
             // Publish changes after commit. The preference index lives in a different database.
-            allMusic.forEach((item) => downloadedSet.add(getMediaPrimaryKey(item)));
+            allMusic.forEach((item) => {
+                const pk = getMediaPrimaryKey(item);
+                downloadedSet.add(pk);
+                downloadedRecords.set(pk, item);
+            });
             downloadedMusicListStore.setValue((previous) => [...previous, ...allMusic]);
             try {
                 ee.emit(DownloadEvts.Downloaded, allMusic);
@@ -138,7 +220,10 @@ export async function removeDownloadedMusic(
                 await musicSheetDB.musicStore.bulkDelete(deleted);
                 await musicSheetDB.musicStore.bulkPut(updated);
             });
-            removedKeys.forEach((pk) => downloadedSet.delete(pk));
+            removedKeys.forEach((pk) => {
+                downloadedSet.delete(pk);
+                downloadedRecords.delete(pk);
+            });
             downloadedMusicListStore.setValue((previous) => previous.filter((item) => !removedKeys.has(getMediaPrimaryKey(item))));
             ee.emit(DownloadEvts.RemoveDownload, removed);
             await setUserPreferenceIDB("downloadedList", downloadedMusicListStore.getValue().map(primaryKeyMap));
@@ -156,46 +241,11 @@ export function isDownloaded(musicItem: IMedia.IMediaBase) {
 
 export const useDownloadedMusicList = downloadedMusicListStore.useValue;
 
+export function getDownloadedMusicItem(musicItem: IMedia.IMediaBase) {
+    return musicItem ? downloadedRecords.get(getMediaPrimaryKey(musicItem)) : undefined;
+}
+
 export function useDownloaded(musicItem: IMedia.IMediaBase) {
-    const [downloaded, setDownloaded] = useState(isDownloaded(musicItem));
-
-    useEffect(() => {
-        const dlCb = (musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) => {
-            if (Array.isArray(musicItems)) {
-                setDownloaded(
-                    (prev) =>
-                        prev ||
-                        musicItems.findIndex((it) => isSameMedia(it, musicItem)) !== -1,
-                );
-            } else {
-                setDownloaded((prev) => prev || isSameMedia(musicItem, musicItems));
-            }
-        };
-
-        const rmCb = (musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) => {
-            if (Array.isArray(musicItems)) {
-                setDownloaded(
-                    (prev) =>
-                        prev &&
-                        musicItems.findIndex((it) => isSameMedia(it, musicItem)) === -1,
-                );
-            } else {
-                setDownloaded((prev) => prev && !isSameMedia(musicItem, musicItems));
-            }
-        };
-
-        if (musicItem) {
-            setDownloaded(isDownloaded(musicItem));
-        }
-
-        ee.on(DownloadEvts.Downloaded, dlCb);
-        ee.on(DownloadEvts.RemoveDownload, rmCb);
-
-        return () => {
-            ee.off(DownloadEvts.Downloaded, dlCb);
-            ee.off(DownloadEvts.RemoveDownload, rmCb);
-        };
-    }, [musicItem]);
-
-    return downloaded;
+    downloadedMusicListStore.useValue();
+    return isDownloaded(musicItem);
 }

@@ -2,6 +2,7 @@
 module.exports = async function runDownloadTests(testRoot, baseURL) {
     const fs = require("fs");
     const path = require("path");
+    window.path = path;
     const assert = require("assert");
     const { createRequire } = require("module");
     const req = createRequire(path.resolve("package.json"));
@@ -53,6 +54,8 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
         },
     };
     const sheetMocks = {
+        "@shared/app-config/renderer": { getConfig: () => testRoot, onConfigUpdate() {} },
+        "@/shared/global-context/renderer": { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: testRoot } }) },
         "@/common/media-util": media,
         "@/common/store": Store.default,
         "@/renderer/utils/user-perference": prefs,

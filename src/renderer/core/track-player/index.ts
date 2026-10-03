@@ -29,6 +29,7 @@ import { createUniqueMap } from "@/common/unique-map";
 import { getLinkedLyric } from "@renderer/core/link-lyric";
 import { fsUtil } from "@shared/utils/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
+import { getDownloadedMusicItem } from "@renderer/core/downloader/downloaded-sheet";
 
 const {
     musicQueueStore,
@@ -713,7 +714,7 @@ class TrackPlayer {
 
         // 1. 判断是否已下载
         const downloadedData = getInternalData<IMusic.IMusicItemInternalData>(
-            musicItem,
+            getDownloadedMusicItem(musicItem) ?? musicItem,
             "downloadData",
         );
         if (downloadedData) {

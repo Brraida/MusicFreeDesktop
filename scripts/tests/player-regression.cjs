@@ -4,11 +4,11 @@ const { load, deferred } = require('./source-loader.cjs');
 const A = { platform: 'test', id: 'A', title: 'A' };
 const B = { ...A, id: 'B', title: 'B' };
 
-function createPlayer({ delay = async () => {} } = {}) {
+function createPlayer({ delay = async () => {}, downloaded, files = {}, internalData = () => undefined } = {}) {
     const constants = load('src/common/constant.ts');
     const media = {
         isSameMedia: (a, b) => !!a && !!b && a.id === b.id && a.platform === b.platform,
-        getInternalData: () => undefined, getQualityOrder: () => ['standard'],
+        getInternalData: internalData, getQualityOrder: () => ['standard'],
         addSortProperty() {}, sortByTimestampAndIndex: a => a,
     };
     const Store = load('src/common/store.ts', { react: {} }).default;
@@ -39,7 +39,8 @@ function createPlayer({ delay = async () => {} } = {}) {
         '@shared/logger/renderer': { logError() {} }, '@/common/void-callback': () => {},
         '@/common/time-util': { delay }, '@/common/unique-map': {},
         '@renderer/core/link-lyric': { getLinkedLyric: async () => null },
-        '@shared/utils/renderer': { fsUtil: {} }, '@shared/plugin-manager/renderer': plugins,
+        '@renderer/core/downloader/downloaded-sheet': { getDownloadedMusicItem: () => downloaded },
+        '@shared/utils/renderer': { fsUtil: files }, '@shared/plugin-manager/renderer': plugins,
     }).default;
     player.setMusicQueue([A, B]);
     return { player, stores, plugins };
@@ -48,6 +49,18 @@ const source = (url, quality = 'standard') => ({ mediaSource: { url }, quality }
 const tick = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); };
 
 (async () => {
+    // A view may still hold the old metadata after automatic path reconciliation.
+    {
+        const updated = { ...A, downloadData: { path: 'new/A.mp3', quality: 'high' } };
+        const { player, plugins } = createPlayer({ downloaded: updated,
+            internalData: song => song.downloadData,
+            files: { isFile: async fp => fp === 'new/A.mp3', addFileScheme: fp => 'file://' + fp },
+        });
+        plugins.callPluginDelegateMethod = () => { throw new Error('Relocated downloads must use the local file'); };
+        const result = await player.fetchMediaSource({ ...A, downloadData: { path: 'old/A.mp3' } });
+        assert.equal(result.mediaSource.url, 'file://new/A.mp3');
+        assert.equal(result.quality, 'high');
+    }
     // A's delayed failure must not reset B or its quality.
     {
         const { player } = createPlayer();
