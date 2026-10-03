@@ -9,7 +9,13 @@ export class StateMapper<T> {
     }
 
     notify = () => {
-        this.cbs.forEach((_) => _?.());
+        for (const callback of [...this.cbs]) {
+            try {
+                callback();
+            } catch (error) {
+                console.error("Store render notification failed", error);
+            }
+        }
     };
 
     useMappedState = () => {
@@ -55,10 +61,15 @@ export default class Store<T> {
         } else {
             newValue = value;
         }
-        this.valueChangeCbs.forEach((cb) => {
-            cb(newValue, this.value);
-        });
+        const oldValue = this.value;
         this.value = newValue;
+        for (const callback of [...this.valueChangeCbs]) {
+            try {
+                callback(newValue, oldValue);
+            } catch (error) {
+                console.error("Store value notification failed", error);
+            }
+        }
         this.stateMapper.notify();
     };
 
