@@ -1,4 +1,5 @@
-import { localPluginHash, PlayerState, RepeatMode, supportLocalMediaType } from "@/common/constant";
+import { localPluginHash, PlayerState, RepeatMode } from "@/common/constant";
+import { isSupportedLocalMediaFile } from "@/common/local-media";
 import MusicSheet from "../core/music-sheet";
 import trackPlayer from "../core/track-player";
 import localMusic from "../core/local-music";
@@ -73,7 +74,7 @@ function dropHandler() {
                     )),
                 );
             } else if (
-                supportLocalMediaType.some((postfix) => f.path.endsWith(postfix))
+                isSupportedLocalMediaFile(f.path)
             ) {
                 validMusicList.push(
                     await PluginManager.callPluginDelegateMethod(

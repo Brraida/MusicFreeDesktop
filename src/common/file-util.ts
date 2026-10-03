@@ -1,6 +1,7 @@
-import { ICommonTagsResult, IPicture, parseFile } from "music-metadata";
+import { ICommonTagsResult, IPicture, parseBuffer, parseFile } from "music-metadata";
 import path from "path";
-import { localPluginName, supportLocalMediaType } from "./constant";
+import { localPluginName } from "./constant";
+import { isSupportedLocalMediaFile } from "./local-media";
 import CryptoJS from "crypto-js";
 import fs from "fs/promises";
 import url from "url";
@@ -17,7 +18,13 @@ export async function parseLocalMusicItem(
 ): Promise<IMusic.IMusicItem> {
     const hash = CryptoJS.MD5(filePath).toString();
     try {
-        const { common = {} as ICommonTagsResult } = await parseFile(filePath);
+        // music-metadata 8's trailing-tag probe can throw before closing its
+        // tokenizer on files shorter than the 128-byte ID3v1 block. Buffering
+        // only these tiny files preserves fallback metadata without leaking an FD.
+        const size = (await fs.stat(filePath)).size;
+        const { common = {} as ICommonTagsResult } = size < 128
+            ? await parseBuffer(await fs.readFile(filePath), { path: filePath })
+            : await parseFile(filePath);
 
         const jschardet = await import("jschardet");
 
@@ -108,9 +115,7 @@ export async function parseLocalMusicItemFolder(
         const folderStat = await fs.stat(folderPath);
         if (folderStat.isDirectory()) {
             const files = await fs.readdir(folderPath);
-            const validFiles = files.filter((fp) =>
-                supportLocalMediaType.some((postfix) => fp.endsWith(postfix)),
-            );
+            const validFiles = files.filter(isSupportedLocalMediaFile);
             // TODO: 分片
             return Promise.all(
                 validFiles.map((fp) =>

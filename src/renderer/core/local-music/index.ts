@@ -16,10 +16,10 @@ interface ILocalFileWatcherWorker {
         cb: ProxyMarkedFunction<
             (musicItems: Array<IMusicItemWithLocalPath>) => Promise<void>
         >
-    ) => void;
+    ) => Promise<void>;
     onRemove: (
         cb: ProxyMarkedFunction<(filePaths: string[]) => Promise<void>>
-    ) => void;
+    ) => Promise<void>;
 }
 
 let localFileWatcherWorker: ILocalFileWatcherWorker;
@@ -42,13 +42,15 @@ async function setupLocalMusic() {
         if (localFileWatcherWorkerPath) {
             const worker = new Worker(localFileWatcherWorkerPath);
             localFileWatcherWorker = Comlink.wrap(worker);
-            await localFileWatcherWorker.setupWatcher(localWatchDir);
         }
 
         const allMusic = await musicSheetDB.localMusicStore.toArray();
 
         localMusicListStore.setValue(allMusic);
-        localFileWatcherWorker.onAdd(
+        if (!localFileWatcherWorker) {
+            return;
+        }
+        await localFileWatcherWorker.onAdd(
             Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                 await musicSheetDB.transaction(
                     "rw",
@@ -62,7 +64,7 @@ async function setupLocalMusic() {
             }),
         );
 
-        localFileWatcherWorker.onRemove(
+        await localFileWatcherWorker.onRemove(
             Comlink.proxy(async (filePaths: string[]) => {
                 await musicSheetDB.transaction(
                     "rw",
@@ -87,7 +89,9 @@ async function setupLocalMusic() {
                 );
             }),
         );
-    } catch {
+        await localFileWatcherWorker.setupWatcher(localWatchDir);
+    } catch (error) {
+        console.error("Local music initialization failed", error);
     }
 }
 
@@ -124,7 +128,7 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
         localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray());
     }
     // 通知
-    localFileWatcherWorker.changeWatchPath(tobeAddedPaths, tobeDeletedPaths);
+    await localFileWatcherWorker?.changeWatchPath(tobeAddedPaths, tobeDeletedPaths);
 }
 
 // async function syncLocalMusic() {
