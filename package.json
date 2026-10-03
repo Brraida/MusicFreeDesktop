@@ -11,6 +11,8 @@
     "make": "electron-forge make",
     "publish": "electron-forge publish",
     "lint": "eslint ./src --fix",
+    "format:check": "eslint --config eslint.format.config.mjs src scripts config res/.service forge.config.ts \"eslint*.mjs\" --max-warnings=0",
+    "format:fix": "eslint --config eslint.format.config.mjs src scripts config res/.service forge.config.ts \"eslint*.mjs\" --max-warnings=0 --fix",
     "lint-staged": "lint-staged",
     "prepare": "husky install"
   },

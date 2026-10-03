@@ -7,7 +7,8 @@
 ```mermaid
 flowchart TD
     Commit["dev / master / main 提交、PR 或手动运行"] --> Install["Node 22 + Python 3.11 + npm ci"]
-    Install --> Tests["TypeScript + Node / Electron 回归"]
+    Install --> Format["代码格式检测；失败则停止"]
+    Format --> Tests["TypeScript + Node / Electron 回归"]
     Tests --> Package["编译应用并重建原生模块"]
     Package --> Verify["运行产物检查入口、资源、SQLite 与 Sharp"]
     Verify --> Condition{"手动要求打包或 v 版本标签？"}
@@ -32,9 +33,22 @@ runner 标签与架构按 [GitHub 官方 runner 列表](https://github.com/actio
 ## 日常提交
 
 - `dev`、`master`、`main` 的 push 和目标为这些分支的 PR 自动运行。
-- 每个平台执行类型检查、七组 Node 回归、五组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
+- 每个平台先检查代码格式，再执行类型检查、七组 Node 回归、五组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
 - 普通提交不生成发布归档。测试日志与结果保留 7 天；失败时也尝试上传已有结果。
 - 安装使用锁文件和 npm 官方 registry，依赖版本及 integrity 不随 CI 更新。缓存 npm 下载，不缓存 `node_modules`。
+
+## 代码格式检测
+
+CI 在依赖安装后执行 `npm run format:check`。格式错误会使当前作业失败，后续编译、打包和 Release 草稿创建均不会执行。
+
+```sh
+npm run format:check  # 检测，不修改文件
+npm run format:fix    # 自动整理，再重新检测
+```
+
+覆盖 `src/`、`scripts/`、`config/`、`res/.service/` 中的 JavaScript / TypeScript，以及根目录的 Forge 和 ESLint 配置；沿用现有声明文件及生成目录忽略规则。当前规则为四空格缩进、双引号、分号、花括号间距、多行尾逗号、花括号换行风格及禁止行末空格。Windows CRLF 和 Unix LF 均可通过。
+
+`eslint.format.config.mjs` 从现有 `eslint.config.mjs` 读取格式规则，并将格式告警作为错误处理。格式检查使用仓库锁定的 ESLint / Stylistic，无需新增依赖。JSON、YAML、SCSS 和 Markdown 暂未纳入此检查；代码质量检查仍可使用现有 `lint` 命令。
 
 ## 手动生成测试包
 

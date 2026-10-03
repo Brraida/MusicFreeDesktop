@@ -45,6 +45,7 @@ export default [
             "@stylistic/semi": ["error", "always"], // 强制分号
             "@stylistic/comma-dangle": ["error", "always-multiline"], // 多行末尾逗号
             "@stylistic/brace-style": ["error", "1tbs"], // 大括号风格
+            "@stylistic/no-trailing-spaces": "error",
 
             // Import 相关规则
             "import/no-duplicates": "error",
@@ -83,7 +84,7 @@ export default [
         },
     },
 
-    // 特定于渲染进程的配置  
+    // 特定于渲染进程的配置
     {
         files: ["src/renderer*/**/*.{ts,tsx,js,jsx}"],
         languageOptions: {

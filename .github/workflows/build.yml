@@ -72,6 +72,8 @@ jobs:
           node scripts/ci/build-info.cjs
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
+      - name: Check code formatting
+        run: npm run format:check
       - name: Configure Linux sandbox helper
         if: runner.os == 'Linux'
         run: |
