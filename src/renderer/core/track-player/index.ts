@@ -148,13 +148,15 @@ class TrackPlayer {
 
     private setupEvents() {
         this.ee.on(PlayerEvents.Error, async (errorMusicItem) => {
+            if (!this.isCurrentMusic(errorMusicItem)) return;
+            const requestId = this.sourceRequestId;
             // config
             const needSkip = AppConfig.getConfig("playMusic.playError") === "skip";
 
             this.resetProgress();
             if (this.musicQueue.length > 1 && needSkip) {
                 await delay(500);
-                if (this.isCurrentMusic(errorMusicItem)) {
+                if (requestId === this.sourceRequestId && this.isCurrentMusic(errorMusicItem)) {
                     this.skipToNext();
                 }
             }
@@ -581,7 +583,12 @@ class TrackPlayer {
 
     public async setQuality(quality: IMusic.IQualityKey) {
         const currentMusic = this.currentMusic;
-        if (currentMusic && quality !== this.currentQuality) {
+        if (currentMusic && quality === this.currentQuality && this.audioController.hasSource) {
+            // Selecting the active quality also supersedes an unfinished switch.
+            ++this.sourceRequestId;
+            return;
+        }
+        if (currentMusic) {
             const requestId = ++this.sourceRequestId;
             try {
                 const { mediaSource, quality: realQuality } = await this.fetchMediaSource(currentMusic, quality);

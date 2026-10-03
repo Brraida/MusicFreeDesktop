@@ -4,7 +4,7 @@ const { load, deferred } = require('./source-loader.cjs');
 const A = { platform: 'test', id: 'A', title: 'A' };
 const B = { ...A, id: 'B', title: 'B' };
 
-function createPlayer() {
+function createPlayer({ delay = async () => {} } = {}) {
     const constants = load('src/common/constant.ts');
     const media = {
         isSameMedia: (a, b) => !!a && !!b && a.id === b.id && a.platform === b.platform,
@@ -17,6 +17,7 @@ function createPlayer() {
     }).default;
     class Audio {
         resetCount = 0; tracks = [];
+        get hasSource() { return this.tracks.length > 0; }
         reset() { this.resetCount++; }
         prepareTrack() {} play() {} seekTo() {}
         setTrackSource(source, song) { this.tracks.push({ source, song }); }
@@ -31,12 +32,12 @@ function createPlayer() {
         '@/common/media-util': media, '@/common/constant': constants,
         '@/renderer/utils/lyric-parser': Lyric,
         '@/renderer/utils/user-perference': { setUserPreference() {}, setUserPreferenceIDB() {}, removeUserPreference() {} },
-        '@shared/app-config/renderer': { getConfig: () => 'standard' },
+        '@shared/app-config/renderer': { getConfig: key => key === 'playMusic.playError' ? 'skip' : 'standard' },
         '@/common/index-map': { createIndexMap: () => ({ update() {}, indexOf: a => a?.id === 'A' ? 0 : 1 }) },
         './store': stores, eventemitter3: EventEmitter,
         '@renderer/core/track-player/controller/audio-controller': Audio,
         '@shared/logger/renderer': { logError() {} }, '@/common/void-callback': () => {},
-        '@/common/time-util': { delay: async () => {} }, '@/common/unique-map': {},
+        '@/common/time-util': { delay }, '@/common/unique-map': {},
         '@renderer/core/link-lyric': { getLinkedLyric: async () => null },
         '@shared/utils/renderer': { fsUtil: {} }, '@shared/plugin-manager/renderer': plugins,
     }).default;
@@ -87,6 +88,33 @@ const tick = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); 
         await old;
         assert.equal(player.currentQuality, 'super');
         assert.equal(player.audioController.tracks.at(-1).source.url, 'latest');
+    }
+    // Returning to the currently playing quality cancels a pending quality switch.
+    {
+        const { player } = createPlayer();
+        player.fetchCurrentLyric = async () => {};
+        player.fetchMediaSource = async () => source('initial'); await player.playIndex(0);
+        const held = deferred(); player.fetchMediaSource = () => held.promise;
+        const old = player.setQuality('high'); await player.setQuality('standard');
+        held.resolve(source('unwanted-high', 'high')); await old;
+        assert.equal(player.currentQuality, 'standard');
+        assert.equal(player.audioController.tracks.at(-1).source.url, 'initial');
+    }
+    // A delayed automatic skip from an old A failure cannot skip a new A.
+    {
+        const previous = Object.getOwnPropertyDescriptor(global, 'navigator');
+        Object.defineProperty(global, 'navigator', { configurable: true, value: { mediaSession: { setActionHandler() {} } } });
+        try {
+            const held = deferred(); const { player } = createPlayer({ delay: () => held.promise });
+            player.fetchCurrentLyric = async () => {};
+            player.fetchMediaSource = async () => source('current');
+            player.setupEvents(); await player.playIndex(0);
+            player.ee.emit(load('src/renderer/core/track-player/enum.ts').PlayerEvents.Error, A);
+            await player.playIndex(1); await player.playIndex(0);
+            held.resolve(); await tick(); assert.equal(player.currentMusic.id, 'A');
+        } finally {
+            if (previous) Object.defineProperty(global, 'navigator', previous); else delete global.navigator;
+        }
     }
     // Lyrics: late success/failure for A -> B -> A and force reload on the same A.
     for (const switchSong of [false, true]) for (const rejected of [false, true]) {
