@@ -72,7 +72,20 @@ macOS ZIP 使用 Forge；DMG 使用系统自带的 `ditto` 和 `hdiutil`，包�
 - 工作流使用目前仓库锁定的 Electron 和 Forge，不在配置 CI 时升级播放器宿主。
 - 原生库验证使用刚编译出的 Electron 可执行文件，检查 SQLite 模块加载、Sharp 实际图片处理和必要资源；不等同于各平台全部设备与功能测试。
 - Windows 安装包和 macOS 应用未配置代码签名或 Apple 公证。若需要正式签名发布，后续接入维护者自己的证书与相应 secret。
-- 本地已验证 Node / Electron 回归入口、Windows 产物验证、版本与产物管理脚本以及 workflow 语法。全新 Node 22 依赖安装和 Linux/macOS 产物需要以首次 GitHub Actions 的实际结果为准。
+- 本地已验证回归入口、Windows 产物验证、版本与产物管理脚本和 workflow 语法；各平台的全新依赖安装及打包结果见下方实际试跑记录。
+
+## 实际试跑记录
+
+2026-10-03 在 `dev` 提交 `5024d0a` 上手动触发完整打包：[GitHub Actions 运行记录](https://github.com/Brraida/MusicFreeDesktop/actions/runs/37112835076)。使用已提交的版本 `0.0.8` 和 Node 22。
+
+| 平台 | 类型检查、7 组 Node / 5 组 Electron 回归、编译及原生模块验证 | 安装包与归档上传 |
+| --- | --- | --- |
+| Windows x64 | 通过 | EXE、便携 ZIP |
+| Linux x64 | 通过 | DEB、tar.gz |
+| macOS Apple Silicon | 通过 | DMG、ZIP |
+| macOS Intel | 通过 | DMG、ZIP |
+
+首轮发现的 Linux 沙箱辅助程序权限和 macOS `appdmg` 缺失问题已分别修复。试跑使用手动构建入口；版本标签创建 Release 草稿的流程已做脚本回归，尚未实际发布。产物通过构建与资源检查，仍需人工测试播放、下载、设备输出和安装体验。
 
 ## 本地验证 CI 辅助脚本
 
