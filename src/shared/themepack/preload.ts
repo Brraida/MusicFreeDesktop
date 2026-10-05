@@ -54,6 +54,8 @@ async function selectTheme(themePack: ICommon.IThemePack | null) {
             "utf-8",
         );
         themeNode.innerHTML = replaceAlias(rawStyle, themePack.path);
+        // Keep a selected pack after bundled defaults in the cascade.
+        document.head.appendChild(themeNode);
 
         if (themePack.iframe) {
             validIframeMap.forEach(async (value, key) => {
