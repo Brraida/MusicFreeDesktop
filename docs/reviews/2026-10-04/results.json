@@ -1,0 +1,158 @@
+{
+  "reviewDate": "2026-10-04",
+  "head": "4e7b711",
+  "base": "d39e8f4",
+  "author": "Brraida",
+  "commitCount": 28,
+  "environment": {
+    "node": "24.20.0 (WSL)",
+    "electron": "25.3.0 (Windows)",
+    "ciNode": "22"
+  },
+  "checks": {
+    "typecheck": {
+      "exitCode": 0
+    },
+    "format": {
+      "exitCode": 0
+    },
+    "eslint": {
+      "errors": 0,
+      "warnings": 138
+    },
+    "diffCheck": {
+      "exitCode": 0
+    }
+  },
+  "node": [
+    {
+      "name": "node-player",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1723
+    },
+    {
+      "name": "node-service",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 788
+    },
+    {
+      "name": "node-scanner",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 4874
+    },
+    {
+      "name": "node-audio",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 680
+    },
+    {
+      "name": "node-store",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 571
+    },
+    {
+      "name": "node-startup",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 830
+    },
+    {
+      "name": "node-ci",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "rerun": "Passed separately with temporary python -> python3 command alias; original failure was python ENOENT"
+    }
+  ],
+  "electron": [
+    {
+      "suite": "downloader",
+      "exitCode": 0,
+      "seconds": 3.71
+    },
+    {
+      "suite": "audio",
+      "exitCode": 0,
+      "seconds": 2.54
+    },
+    {
+      "suite": "playlist",
+      "exitCode": 0,
+      "seconds": 1.26
+    },
+    {
+      "suite": "startup",
+      "exitCode": 0,
+      "seconds": 1.08
+    },
+    {
+      "suite": "relocation",
+      "exitCode": 0,
+      "seconds": 1.72
+    }
+  ],
+  "reproductions": {
+    "R1_R2": {
+      "local": {
+        "originalLocalFileExists": false,
+        "recognized": true,
+        "refsBefore": 1,
+        "remove": [
+          true
+        ],
+        "recordExistsAfter": false,
+        "playlistStillReferences": true
+      },
+      "concurrentRemove": {
+        "refsAfterConcurrentAdd": 2,
+        "recordExistsAfterRemove": false,
+        "playlistStillReferences": true
+      }
+    },
+    "R3": {
+      "doneTasks": 2,
+      "actualFiles": 1,
+      "filenames": [
+        "Song.mp3",
+        "song.mp3"
+      ],
+      "filesystem": "case-insensitive repository volume",
+      "network": "stub Response; actual fs/pipeline/rename"
+    },
+    "R5": {
+      "playCalls": 0,
+      "state": 3,
+      "quality": "high",
+      "tracks": [
+        {
+          "source": {
+            "url": "high-url"
+          },
+          "song": {
+            "platform": "test",
+            "id": "A",
+            "title": "A"
+          }
+        }
+      ]
+    }
+  },
+  "notExecuted": [
+    "fresh npm ci",
+    "full application packaging",
+    "real install/update/uninstall",
+    "Linux/macOS GUI regressions",
+    "all online plugins and audio devices"
+  ]
+}
