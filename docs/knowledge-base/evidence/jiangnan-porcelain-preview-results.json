@@ -1,0 +1,133 @@
+{
+  "recordedAt": "2026-10-04T15:21:52.016345+00:00",
+  "status": "visual-proposal-awaiting-user-review",
+  "scope": "Knowledge-base preview only; no player theme implementation or new player build in this task",
+  "tool": "built-in imagegen",
+  "prompts": "evidence/jiangnan-porcelain-prompts.txt",
+  "chapter": "12-jiangnan-porcelain-theme.md",
+  "entry": "index.html#jiangnan-porcelain-theme",
+  "images": [
+    {
+      "path": "assets/previews/jiangnan-porcelain-main-v1.png",
+      "bytes": 1682047,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "0f0283566b6d7ad997cdc9d8f9a5d52e2346746b9523be7ea005b83e71c2c968"
+    },
+    {
+      "path": "assets/previews/jiangnan-porcelain-detail-mini-v1.png",
+      "bytes": 1941262,
+      "width": 1536,
+      "height": 1024,
+      "sha256": "0269c0d3c95dc733a011ff520a25a0424e14998d674cd348ced00f29fdf940e2"
+    }
+  ],
+  "browserValidation": {
+    "status": "passed",
+    "platform": "win32",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199",
+    "protocol": "file:",
+    "network": "HTTP(S) blocked; no requests attempted",
+    "themePreview": {
+      "desktop": [
+        {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-main-v1.png",
+          "naturalWidth": 1536,
+          "naturalHeight": 1024,
+          "width": 1135,
+          "height": 756.65625,
+          "containerWidth": 1211,
+          "originalLink": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-main-v1.png"
+        },
+        {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-detail-mini-v1.png",
+          "naturalWidth": 1536,
+          "naturalHeight": 1024,
+          "width": 1135,
+          "height": 756.65625,
+          "containerWidth": 1211,
+          "originalLink": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-detail-mini-v1.png"
+        }
+      ],
+      "narrow": [
+        {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-main-v1.png",
+          "naturalWidth": 1536,
+          "naturalHeight": 1024,
+          "width": 477,
+          "height": 318,
+          "containerWidth": 525,
+          "originalLink": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-main-v1.png"
+        },
+        {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-detail-mini-v1.png",
+          "naturalWidth": 1536,
+          "naturalHeight": 1024,
+          "width": 477,
+          "height": 318,
+          "containerWidth": 525,
+          "originalLink": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-detail-mini-v1.png"
+        }
+      ],
+      "print": [
+        {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-main-v1.png",
+          "naturalWidth": 1536,
+          "naturalHeight": 1024,
+          "width": 567,
+          "height": 378,
+          "containerWidth": 567,
+          "originalLink": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-main-v1.png"
+        },
+        {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-detail-mini-v1.png",
+          "naturalWidth": 1536,
+          "naturalHeight": 1024,
+          "width": 567,
+          "height": 378,
+          "containerWidth": 567,
+          "originalLink": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-porcelain-detail-mini-v1.png"
+        }
+      ],
+      "originalImages": [
+        {
+          "width": 1536,
+          "height": 1024
+        },
+        {
+          "width": 1536,
+          "height": 1024
+        }
+      ]
+    },
+    "diagrams": {
+      "total": 13,
+      "rendered": 13,
+      "failed": 0
+    },
+    "normalPageConsoleErrors": 0,
+    "screenshots": [
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791127233878\\jiangnan-main.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791127233878\\jiangnan-detail-mini.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791127233878\\jiangnan-narrow.png"
+    ],
+    "checks": [
+      "Both preview PNGs decoded at desktop, narrow and print sizes",
+      "Images fit their content container",
+      "Chapter navigation, home link and search work",
+      "Both original-size image links opened in Chromium",
+      "All 13 existing diagrams rendered",
+      "266 local HTML links and chapter anchors resolve",
+      "Manual visual inspection of desktop and narrow screenshots"
+    ]
+  },
+  "limitations": [
+    "Generated mockups, not runtime screenshots",
+    "Sample cover is illustrative; implementation should preserve each song artwork",
+    "Mini-player example is enlarged; actual dimensions need implementation verification",
+    "No new theme startup or runtime performance measurement"
+  ],
+  "generatedHtmlSha256": "b443696272993607f946f477ae5d19baf0149146c846f34c0cd2955609ed0ee3",
+  "promptsSha256": "95e26beb394c964b71c43a8a75c1a147dd8e834da58e48ea13f05d9effbb19d0"
+}

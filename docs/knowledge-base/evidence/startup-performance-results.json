@@ -1,0 +1,235 @@
+{
+  "date": "2026-10-04",
+  "baselineGitHead": "4e7b711",
+  "uncommittedWorkspace": true,
+  "platform": "win32",
+  "scope": "Renderer bootstrap and first screen, isolated Windows Electron 25.3.0; not exe cold-start P95",
+  "before": {
+    "passed": true,
+    "package": "vinyl-player-20261004",
+    "platform": "win32",
+    "electron": "25.3.0",
+    "isolatedProfile": true,
+    "fixture": {
+      "records": 1000,
+      "logicalBytesPerFile": 1048576,
+      "hardLinks": true,
+      "legacyWithoutFingerprints": true
+    },
+    "empty": {
+      "text": "[2026-10-04 21:16:25.215] [info]  [Perf Main]: App Ready [Offset]: 0ms\r\n[2026-10-04 21:16:25.266] [info]  [Perf Main]: Create Main Window [Offset]: 51ms\r\n[2026-10-04 21:16:25.917] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 21:16:26.050] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 133ms\r\n[2026-10-04 21:16:26.122] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 205ms\r\n",
+      "bootstrapMs": 133,
+      "firstScreenMs": 205
+    },
+    "legacy": {
+      "text": "[2026-10-04 21:16:26.428] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 21:16:28.665] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 2237ms\r\n[2026-10-04 21:16:28.688] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 2260ms\r\n",
+      "bootstrapMs": 2237,
+      "firstScreenMs": 2260,
+      "reloadToUiMs": 2412,
+      "fingerprintsAtUi": 1000,
+      "migrationCompleteMs": 2495
+    },
+    "warm": {
+      "text": "[2026-10-04 21:16:29.462] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 21:16:29.788] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 326ms\r\n[2026-10-04 21:16:29.811] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 349ms\r\n",
+      "bootstrapMs": 326,
+      "firstScreenMs": 349
+    },
+    "limitations": "One sample per workload; cached filesystem, same process reload; not physical cold launch P95; fixture is binary, not audio decoding"
+  },
+  "after": {
+    "passed": true,
+    "package": "startup-fast-20261004",
+    "platform": "win32",
+    "electron": "25.3.0",
+    "isolatedProfile": true,
+    "fixture": {
+      "records": 1000,
+      "logicalBytesPerFile": 1048576,
+      "hardLinks": true,
+      "legacyWithoutFingerprints": true
+    },
+    "empty": {
+      "text": "[2026-10-04 21:21:55.047] [info]  [Perf Main]: App Ready [Offset]: 0ms\r\n[2026-10-04 21:21:55.101] [info]  [Perf Main]: Create Main Window [Offset]: 54ms\r\n[2026-10-04 21:21:55.754] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 21:21:55.778] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":0}\r\n[2026-10-04 21:21:55.779] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":1}\r\n[2026-10-04 21:21:55.852] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":71}\r\n[2026-10-04 21:21:55.864] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":85}\r\n[2026-10-04 21:21:55.872] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":7}\r\n[2026-10-04 21:21:55.884] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":9}\r\n[2026-10-04 21:21:55.885] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 131ms\r\n[2026-10-04 21:21:55.983] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 229ms\r\n",
+      "bootstrapMs": 131,
+      "firstScreenMs": 229
+    },
+    "legacy": {
+      "text": "[2026-10-04 21:21:56.325] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 21:21:56.332] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":2}\r\n[2026-10-04 21:21:56.333] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":2}\r\n[2026-10-04 21:21:56.339] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":6}\r\n[2026-10-04 21:21:56.340] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":7}\r\n[2026-10-04 21:21:56.345] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":5}\r\n[2026-10-04 21:21:56.363] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":17}\r\n[2026-10-04 21:21:56.364] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 39ms\r\n[2026-10-04 21:21:56.383] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 58ms\r\n",
+      "bootstrapMs": 39,
+      "firstScreenMs": 58,
+      "reloadToUiMs": 220,
+      "fingerprintsAtUi": 0,
+      "migrationCompleteMs": 8625
+    },
+    "warm": {
+      "text": "[2026-10-04 21:22:05.458] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 21:22:05.467] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":4}\r\n[2026-10-04 21:22:05.467] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":4}\r\n[2026-10-04 21:22:05.474] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":7}\r\n[2026-10-04 21:22:05.475] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":8}\r\n[2026-10-04 21:22:05.480] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":5}\r\n[2026-10-04 21:22:05.499] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":18}\r\n[2026-10-04 21:22:05.499] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 41ms\r\n[2026-10-04 21:22:05.513] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 55ms\r\n",
+      "bootstrapMs": 41,
+      "firstScreenMs": 55
+    },
+    "limitations": "One sample per workload; cached filesystem, same process reload; not physical cold launch P95; fixture is binary, not audio decoding"
+  },
+  "nodeRegression": [
+    {
+      "name": "node-player",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2394
+    },
+    {
+      "name": "node-service",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 770
+    },
+    {
+      "name": "node-scanner",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3030
+    },
+    {
+      "name": "node-audio",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 590
+    },
+    {
+      "name": "node-store",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 435
+    },
+    {
+      "name": "node-startup",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 761
+    },
+    {
+      "name": "node-ci",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 653
+    },
+    {
+      "name": "node-download-resource",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3359
+    }
+  ],
+  "electronRegression": [
+    {
+      "name": "electron-downloader",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2695
+    },
+    {
+      "name": "electron-audio",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1561
+    },
+    {
+      "name": "electron-playlist",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1250
+    },
+    {
+      "name": "electron-startup",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1033
+    },
+    {
+      "name": "electron-relocation",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2586
+    },
+    {
+      "name": "electron-download-resource",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 5833
+    },
+    {
+      "name": "electron-vinyl",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 9762
+    }
+  ],
+  "additionalStartupActionRegression": "out/.correctness-regression-download-resource-1791120025923/result.json",
+  "typecheckPassed": true,
+  "formatCheckPassed": true,
+  "sourceSha256": {
+    "src/renderer/document/bootstrap.ts": "8cf64a26d5215d898ce77c2212ea81eac2a791114a002b86325346b0e5595ebf",
+    "src/renderer/core/downloader/downloaded-sheet.ts": "35d9cf0fb745c64a6f3034d9d3eb035fb0bf78c05242a7c1702dca5a622c0438",
+    "src/renderer/core/downloader/index.ts": "f29dbaffa8881bfac25283bf99409ab9c103e32f5fbe61fa4517873b756eb1f9",
+    "src/renderer/components/MusicDownloaded/index.tsx": "66b984f422f12b3430e01ff52fe0b4ddecac5e927fa591a0ee4ce69dda2cacf4",
+    "scripts/tests/startup-regression.cjs": "de3136547da437c2df92a26218cd7ea1b29c925a9562c5730fa58c4df7c1e5fc",
+    "scripts/tests/download-resource-renderer.cjs": "6ce6121a48144115ddba4949a39082a9ff51202db0c136ba78d7a073e7ce840a",
+    "scripts/tests/electron-regression-main.cjs": "f19fd49085e0f3062471c898472dc120a5b605def5569c281e725085f2481be9",
+    "res/lang/zh-CN.json": "4e11567d4a66fe27d59aadd4b45eb8d2e8ffa8ba1e35a6dccafec8224208bef7",
+    "res/lang/zh-TW.json": "1c6942c628c21f428003bd3d96dbd5ae028d1bac2f66b91e5514a6d8b3c92d11",
+    "res/lang/en-US.json": "30989e1782b428f5c504f7a5709a0b5fabf37a064270f1645d822eedbd4899f4",
+    "docs/knowledge-base/evidence/packaged-startup-benchmark.cjs": "877e7d9ae2252436c4e0c14355f57914c6a3c89218dfae3ed42032a9362a63f6"
+  },
+  "packagedRendererSha256": "7736161fb9549d91cf8da47fe2fe434de8abce217c0eedd4b71f0a78f407566e",
+  "packagedPlaybackSmoke": {
+    "passed": true,
+    "packagedMainPreloadRenderer": true,
+    "isolatedProfile": true,
+    "protocolRegistrationDisabled": true,
+    "localSilentWav": true,
+    "platform": "win32",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199",
+    "checks": [
+      "main bootstrap",
+      "local audio play",
+      "bottom circular cover",
+      "detail circular cover",
+      "real mini-window MessagePort state sync",
+      "pause reflected in both windows"
+    ],
+    "screenshots": [
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-startup-smoke-1791121736099\\bottom-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-startup-smoke-1791121736099\\detail-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-startup-smoke-1791121736099\\mini-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-startup-smoke-1791121736099\\detail-paused.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-startup-smoke-1791121736099\\mini-paused.png"
+    ]
+  },
+  "knowledgeBaseBrowser": {
+    "platform": "win32",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199",
+    "initial": {
+      "total": 13,
+      "rendered": 13,
+      "failed": 0
+    },
+    "narrowDiagrams": 13,
+    "printDiagrams": 13,
+    "network": "HTTP(S) blocked; no requests attempted"
+  }
+}

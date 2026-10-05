@@ -1,0 +1,900 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MusicFreeDesktop 知识库</title><style>
+:root{--ink:#17243a;--muted:#52647d;--accent:#0f766e;--line:#dbe4ef}*{box-sizing:border-box}
+body{margin:0;font:16px/1.85 "Segoe UI","Microsoft YaHei",sans-serif;background:#f3f6fb;color:var(--ink)}
+aside{position:fixed;inset:0 auto 0 0;width:274px;background:#15283d;color:#fff;padding:32px 22px;overflow:auto}
+.brand{font-size:24px;font-weight:750;line-height:1.4}.sub{font-size:13px;color:#b6c9db;margin:12px 0 26px}
+nav a{display:block;padding:11px 14px;margin:4px 0;color:#d3e1ef;text-decoration:none;border-radius:8px;font-size:14px}
+nav a.active{background:#1e5461;color:#fff;border-left:3px solid #5eead4}nav a:hover{background:#28465f}
+main{margin-left:274px;padding:30px 40px 70px;max-width:1740px}.top{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:24px}
+input{flex:1;min-width:210px;font:inherit;border:1px solid var(--line);border-radius:9px;padding:9px 14px;background:white}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);border-radius:9px;background:white;padding:9px 16px;color:var(--ink)}
+.chapter{background:white;border:1px solid var(--line);border-radius:16px;padding:30px 38px;box-shadow:0 5px 22px #132a4d06}
+h1{font-size:30px;line-height:1.5;margin:0 0 24px}h2{font-size:23px;margin:40px 0 15px;border-top:1px solid var(--line);padding-top:26px}h3{font-size:19px;margin:28px 0 12px}
+p{margin:12px 0}a{color:#146077;text-underline-offset:3px}li{margin:7px 0}blockquote{margin:20px 0;padding:14px 20px;background:#edf7f6;border-left:4px solid #27968a;border-radius:0 8px 8px 0;color:#335363}
+figure{margin:26px 0}img{display:block;max-width:100%;height:auto;border-radius:12px}figcaption{font-size:13px;color:var(--muted);margin-top:8px;text-align:center}
+.table-wrap{overflow:auto;margin:20px 0;border:1px solid var(--line);border-radius:10px}table{border-collapse:collapse;width:100%;font-size:14px;line-height:1.75}
+th,td{padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);min-width:90px}th{background:#edf3f8;color:#23435d}tr:last-child td{border-bottom:0}tr:nth-child(even){background:#fafcfe}
+code{font:13px/1.75 Consolas,monospace;background:#edf2f7;border-radius:4px;padding:2px 5px;word-break:break-word}pre{overflow:auto;background:#14283d;color:#d9e7f2;padding:18px 22px;border-radius:10px}pre code{background:none;padding:0;color:inherit;white-space:pre}
+.diagram{border:1px solid var(--line);border-radius:10px;overflow:hidden}.diagram-output{padding:18px;overflow:auto;background:#fff;min-height:80px}.diagram-output svg{display:block;max-width:100%;height:auto;margin:auto}.diagram-source{border-top:1px solid var(--line);padding:10px 16px;font-size:13px}.diagram-source summary{cursor:pointer;color:#146077}.diagram-source pre{margin-bottom:6px}.diagram-error{margin:0;padding:12px 16px;color:#9f1239;background:#fff1f2}.diagram-measure{position:fixed;left:-100000px;top:0;visibility:hidden;pointer-events:none;background:white}.diagram-status{font-size:13px;color:var(--muted)}button:disabled{cursor:wait;opacity:.6}.note{margin-top:30px;font-size:13px;color:#b6c9db}.search-status{font-size:13px;color:var(--muted)}[hidden]{display:none!important}
+@media(max-width:1000px){aside{position:static;width:auto;padding:20px}nav{display:flex;flex-wrap:wrap}nav a{padding:7px 10px}main{margin:0;padding:20px}.chapter{padding:24px}h1{font-size:25px}}
+@media print{aside,.top,.diagram-source,.diagram-measure{display:none}main{margin:0;padding:0;max-width:none}.chapter{display:block!important;break-before:page;border:0;box-shadow:none;padding:0}.chapter:first-child{break-before:auto}body{font-size:11pt;background:white}figure,img{break-inside:avoid}h2,h3{break-after:avoid}.table-wrap{overflow:visible}table{font-size:9pt}a{color:inherit}pre{white-space:pre-wrap}.diagram-output{overflow:visible;padding:8px} }
+</style></head><body>
+<aside><div class="brand">MusicFreeDesktop<br>代码知识库</div><p class="sub">2026-10-04 · 提交审查 4e7b711<br>源码 / Mermaid / PlantUML / 三平台</p><nav aria-label="知识库章节"><a class="chapter-link" href="#guide" data-target="guide">阅读入口</a><a class="chapter-link" href="#codebase" data-target="codebase">01 代码知识地图</a><a class="chapter-link" href="#flows" data-target="flows">02 流程与开发</a><a class="chapter-link" href="#product" data-target="product">03 对比与体验清单</a><a class="chapter-link" href="#audit" data-target="audit">04 Bug 与代码清单</a><a class="chapter-link" href="#architecture" data-target="architecture">05 Windows 架构</a><a class="chapter-link" href="#roadmap" data-target="roadmap">06 路线与验收</a><a class="chapter-link" href="#commit-convention" data-target="commit-convention">07 代码提交规范</a><a class="chapter-link" href="#commit-review" data-target="commit-review">08 Brraida 提交审查</a><a class="chapter-link" href="#review-evidence" data-target="review-evidence">09 审查验证与复现</a><a class="chapter-link" href="#download-file-state" data-target="download-file-state">10 下载文件状态同步</a><a class="chapter-link" href="#vinyl-player-preview" data-target="vinyl-player-preview">11 唱片播放效果</a><a class="chapter-link" href="#jiangnan-porcelain-theme" data-target="jiangnan-porcelain-theme">12 江南 · 青花主题预览</a></nav><p class="note">第一阶段：保留现有架构。<br>历史 BUG-01～14 已修复并验证。<br>近期提交另发现 3 项 P1 数据风险，见 08。<br>Mermaid / PlantUML 图均可查看源码。<br>渲染库随文档保存，可离线阅读。</p></aside>
+<main><div class="top"><input id="search" type="search" aria-label="搜索章节全文" placeholder="搜索：下载、Windows、BUG-01、插件…"><button id="print" disabled>打印 / 导出 PDF</button><a href="README.md">Markdown 原稿</a><span id="diagram-status" class="diagram-status" role="status">流程图：正在准备…</span><span id="search-status" class="search-status" role="status"></span></div><article id="guide" class="chapter"><h1 id="guide-h1">MusicFreeDesktop 知识库与优化评估</h1>
+<blockquote>历史审阅：<code>6bb1e21</code>（等价整理版 <code>5c2d332</code>）· 第一阶段修复：<code>5806cdf</code> · 本轮基线：<code>dev@4e7b711</code> ；本轮实现按下载同步、播放恢复、启动优化和唱片效果分别提交 · 更新：2026-10-05。<br>面向有 C/C++ 和嵌入式开发经验、了解 HTML/CSS/JavaScript 的维护者。第一阶段保留现有架构，先修复与验证。</blockquote>
+<h2 id="guide-h2">阅读入口</h2>
+<p>以 Markdown 文档为主，架构、状态和时序使用可编辑的 Mermaid 或 PlantUML 定义。<a href="index.html">离线阅读页</a>显示流程图，支持章节切换、搜索和打印；每张图下方可展开对应源码。Mermaid 在网页中渲染；第 10 章的 PlantUML 使用本地预生成 SVG，并提供“打开大图”。也可在支持 Mermaid 的 Markdown 预览中阅读原稿。</p>
+<p>直接用浏览器打开 <code>index.html</code>，不需要安装浏览器扩展、Java、PlantUML、Mermaid CLI 或启动服务器。渲染库已保存在 <code>vendor/mermaid</code>，PlantUML 图形保存在 <code>assets/plantuml</code>；复制文档时请保留整个 <code>knowledge-base</code> 目录，离线也能显示图形。</p>
+<div class="table-wrap"><table><thead><tr><th>文档</th><th>回答的问题</th></tr></thead><tbody><tr><td><a href="#codebase">01 代码库知识地图</a></td><td>软件由哪些模块组成，入口和数据在哪里？</td></tr><tr><td><a href="#flows">02 核心流程与 Windows 开发指南</a></td><td>如何播放、下载、扫描、构建和排查？</td></tr><tr><td><a href="#product">03 播放器对比与体验优化清单</a></td><td>与 foobar2000、MusicBee、AIMP 相比，优先补什么？</td></tr><tr><td><a href="#audit">04 Bug、风险与代码优化清单</a></td><td>哪些问题已复现，哪些仍需实测，如何验收？</td></tr><tr><td><a href="#architecture">05 Windows 架构与语言选型</a></td><td>要不要重构，Electron、Tauri、C#、C++ 如何选择？</td></tr><tr><td><a href="#roadmap">06 实施路线与性能验收</a></td><td>先做什么，如何判断真的更流畅？</td></tr><tr><td><a href="#commit-convention">07 代码提交规范</a></td><td>今后如何拆分、命名、验证和提交改动？</td></tr><tr><td><a href="#commit-review">08 Brraida 提交审查（2026-10-04）</a></td><td>最近 28 个提交有哪些需要优先处理的问题？</td></tr><tr><td><a href="#review-evidence">09 审查验证与复现</a></td><td>哪些检查通过了，问题如何复现，哪些尚未验证？</td></tr><tr><td><a href="#download-file-state">10 下载文件状态同步</a></td><td>当前如何监听、核对和恢复文件？本地播放失败如何回退？有哪些验证和限制？</td></tr><tr><td><a href="#vinyl-player-preview">11 唱片播放效果</a></td><td>查看已接入的写实金属唱臂与黑胶素材、实际截图、三处适配与状态规则</td></tr><tr><td><a href="#jiangnan-porcelain-theme">12 江南 · 青花主题预览</a></td><td>查看歌单、唱片详情、底部栏与迷你窗口效果图；待确认后开发</td></tr></tbody></table></div>
+<p><strong>最新视觉提案：</strong> <a href="#jiangnan-porcelain-theme">12 江南 · 青花</a>。本轮仅提供主题效果图，播放器主题尚未修改。</p>
+<h2 id="guide-h3">主要结论</h2>
+<ol><li><strong>仓库是跨平台项目。</strong> README、构建工作流和平台分支均支持这一判断；当前 Windows 构建不代表整个仓库只支持 Windows。</li><li><strong>第一阶段不做架构重构。</strong> 在现有模块内修复播放竞态、扫描、服务生命周期和资源释放，补充回归与性能基线。</li><li><strong>继续使用 TypeScript、React、Electron 与当前数据库。</strong> 第一阶段不拆进程、不迁移数据库、不换语言；接口的必要小修以具体问题为边界。</li><li><strong>架构与语言选型留作后续备选。</strong> C/C++ 可用于未来有明确需求的原生音频/系统模块；Windows 专用 UI、Tauri 和其他方案均需单独验证收益与兼容成本，尚未决定采用。</li><li><strong>第一阶段 BUG-01～13 已修复，并补修短损坏文件的 BUG-14。</strong> 已通过 Windows Node 回归、真实 Electron 音频/歌单/启动/下载验证及类型检查。仍需保留设备、音源、Linux/macOS 验收和安全迁移的边界，详见 <a href="#audit">04 的状态表</a>。</li><li><strong>本轮已实现下载文件状态同步。</strong> 外部删歌、目录删除/恢复、修改下载目录、暂不可用和实际打开失败均有核对或恢复路径；任务进度与资源可用性分别维护。实现、状态机和验证统一收录在 <a href="#download-file-state">10</a>。</li></ol>
+<ol><li><strong>本轮已优化启动等待。</strong> 下载文件核对在后台分批执行，点播和下载优先检查目标；唱片效果保留。流程、测量与边界见 <a href="#flows">02</a>。</li></ol>
+<p><strong>最新提交审查：</strong> <a href="#commit-review">08</a>以 <code>master..dev@4e7b711</code> 的 Brraida 提交为范围，列出 3 项 P1 数据风险和 2 项 P2 功能问题；<a href="#commit-convention">07</a>给出适合本仓库的提交规范，<a href="#review-evidence">09</a>记录验证过程。04 是较早基线的代码审查，问题编号和范围分别保留。</p>
+<figure class="diagram" id="guide-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart LR
+    Start[&quot;想快速了解&quot;] --&gt; Map[&quot;01：模块与平台&quot;] --&gt; Flow[&quot;02：调用流程&quot;]
+    Flow --&gt; Current[&quot;10：当前文件同步实现与验证&quot;]
+    Start --&gt; Audit[&quot;04 / 08 / 09：历史审查与证据&quot;]
+    Start --&gt; Future[&quot;03 / 05 / 06：体验、架构与后续路线&quot;]
+    Start --&gt; Commit[&quot;07：提交规范&quot;]</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<h2 id="guide-h4">图定义与证据说明</h2>
+<ul><li>Mermaid 定义直接保存在 Markdown 中，便于随源码修改；视觉方案与实际截图保存在 <code>assets/previews</code>，正文区分开发前示意与当前实现。</li><li>网页使用随文档保存的 Mermaid 库渲染 SVG；隐藏章节通过独立测量容器完成布局，切换章节无需重新绘图。渲染失败会保留错误与源码，不显示为空白。</li><li>第 10 章的两份 PlantUML 源码保存在 <code>docs/design/download-file-state</code>，本地生成 SVG 后嵌入网页。生成器检查源码和 SVG 校验值，避免图与源码不同步；详见 <a href="#download-file-state">图维护步骤</a>。</li><li><a href="evidence/audit-repro.cjs">历史复现脚本</a>通过 <code>git show</code> 加载原基线 TypeScript 方法，模拟音频、子进程和数据库边界；<a href="evidence/audit-results.json">历史结果</a>记录基线和环境。</li><li><a href="../../scripts/tests/README.md">当前回归方法</a>和 <a href="evidence/bugfix-results.json">第一阶段验证结果</a>覆盖修复后的行为。本轮未测量完整播放器性能，也未把隔离实验视为全设备实机测试。</li><li><a href="evidence/download-file-sync-results.json">下载文件同步结果</a>记录本轮门禁；Windows 执行完整回归，WSL Linux 执行文件检查与原生监听回归，macOS 尚未运行验收。</li><li><a href="evidence/vinyl-player-results.json">唱片效果结果</a>记录后续的 7 组 Windows Electron 门禁与编译页面验收，第 11 章展示实际截图。</li></ul>
+<h2 id="guide-h5">评估口径</h2>
+<div class="table-wrap"><table><thead><tr><th>标签</th><th>含义</th></tr></thead><tbody><tr><td>隔离复现</td><td>实际源码在明确的模拟条件下出现问题，有脚本和断言</td></tr><tr><td>静态确认</td><td>源码路径或缺失行为可确认，尚未完成端到端复现</td></tr><tr><td>待实测</td><td>影响程度、设备相关表现或异常时序需实际验证</td></tr><tr><td>建议</td><td>新功能、架构方案或性能目标，尚未实现</td></tr><tr><td>已完成</td><td>已在基线中实现，并有此前的测试或用户验证</td></tr></tbody></table></div>
+<p>优先级：<strong>P0</strong> 为发布前应处理的高影响边界；<strong>P1</strong> 为播放、数据和任务可靠性；<strong>P2</strong> 为日常体验与可维护性；<strong>P3</strong> 为有需求后再做的能力。优先级是本次建议，不是测得的事故频率。</p>
+<h2 id="guide-h6">基线与维护方式</h2>
+<ul><li>当前版本为 <code>0.0.80</code>；本轮保留此前确认的版本号，并同步 <code>package-lock.json</code> 的两处根版本字段，依赖图未变化。开发前基线 <code>4e7b711</code> 的版本为 <code>0.0.8</code>。</li><li>当前扫描 <code>src</code>：463 个文件，其中 162 个 <code>.ts</code>、121 个 <code>.tsx</code>、105 个 <code>.scss</code>。数量只说明规模，不说明质量。</li><li>竞品与框架能力依据官方资料，在对应段落给出链接。官网宣称的内存数字未用于横向性能结论。</li><li>后续修复时更新问题状态、证据和基线；同一问题编号保持稳定。性能结果须同时注明机器、操作系统、数据规模和测量方法。</li></ul>
+<p>修改 Markdown 或 Mermaid 定义后，可在仓库根目录重新生成离线阅读页：</p>
+<p>07、08、09 的 Markdown 是入口页，正文只维护一份：原稿分别在仓库根目录的 <code>COMMIT_CONVENTION.md</code>、<code>CODE_REVIEW_2026-10-04.md</code> 和 <code>docs/reviews/2026-10-04/README.md</code>。生成器直接读取原稿并转换相对链接，避免复制正文后漏同步。历史审查保留当时结论；当前文件同步统一维护第 10 章。</p>
+<pre><code class="language-powershell">python docs/knowledge-base/evidence/build-docs.py</code></pre>
+<p>生成器仅依赖 Python 3 标准库。历史复现脚本需要 npm 依赖和保留的基线 Git 对象，会更新 <code>evidence/audit-results.json</code>；当前修复验收请运行 scripts/tests 下的回归。</p>
+<h3 id="guide-h7">网页流程图回归</h3>
+<p>已有 Windows Electron 依赖时，在仓库根目录运行：</p>
+<pre><code class="language-powershell">.\node_modules\.bin\electron.cmd docs/knowledge-base/evidence/browser-render-test.cjs</code></pre>
+<p>测试使用独立 profile，以 <code>file://</code> 加载真实阅读页并阻止 HTTP(S) 请求；检查 13 张图（11 张 Mermaid、2 张 PlantUML）的 SVG、尺寸和标签、章节切换、窄屏、打印、源码展开、大图链接，以及单图失败时其他图继续渲染。<a href="evidence/browser-render-results.json">结果</a>记录实际浏览器版本，截图路径位于忽略提交的 <code>out</code> 目录。</p>
+<p>渲染库的版本、许可证和校验值见 <a href="vendor/mermaid/README.md">vendor 说明</a>。</p>
+<p><strong>推荐阅读顺序：</strong> 01 的执行模型与平台矩阵 → 02 的调用流程 → 10 的当前实现与验证。查历史风险再看 04、08、09；规划后续工作看 03、05、06；提交前看 07。</p></article><article id="codebase" class="chapter" hidden><h1 id="codebase-h1">01 · 代码库知识地图</h1>
+<p><a href="#guide">返回目录</a></p>
+<h2 id="codebase-h2">1. 软件定位与平台</h2>
+<p>MusicFreeDesktop 是以插件提供在线音源、以本地存储保存个人歌单的桌面播放器。它具备本地音乐、搜索、歌单、歌词、桌面歌词、迷你窗口、主题、备份和下载能力。在线功能取决于已安装插件的方法和返回数据，不应把播放器 UI 有入口等同于任意插件都支持它。</p>
+<p>代码以 <strong>Electron + TypeScript + React + SCSS</strong> 为主。README 明确说明 Windows、macOS、Linux；<a href="../../.github/workflows/build.yml">构建工作流</a>包含 Windows、macOS x64/ARM64 和 Ubuntu 作业，<a href="../../forge.config.ts">Forge 配置</a>包含相应打包器。这是代码和构建意图；本次没有验证 macOS、Linux 当前构建能否成功。</p>
+<h3 id="codebase-h3">平台支持矩阵</h3>
+<div class="table-wrap"><table><thead><tr><th>平台</th><th>仓库声明与构建配置</th><th>平台适配证据</th><th>本轮验证程度</th></tr></thead><tbody><tr><td>Windows</td><td>普通与 legacy 构建作业；安装器和便携 ZIP，产物命名为 x64</td><td>main 的 portable 分支；任务栏缩略图与原生 <code>.node</code> 模块</td><td>文件同步阶段 8 组 Node 通过；加入唱片效果后 7 组 Electron、编译页面验收通过；并非全功能验证</td></tr><tr><td>macOS</td><td>x64 与 arm64 作业；DMG，Forge 另配置 ZIP</td><td>main 的 darwin 生命周期、窗口与托盘分支</td><td>已审查配置和源码，未在 Mac 上重新构建/运行</td></tr><tr><td>Linux</td><td>Ubuntu 作业；amd64 DEB；RPM maker 未启用</td><td>tray-manager 的 linux 分支</td><td>WSL Linux 文件检查与真实目录监听回归通过；未重新构建/运行 Linux GUI</td></tr></tbody></table></div>
+<p>结论：<strong>代码库设计支持 Linux、Windows、macOS。</strong> 这不等于当前 CI 都能成功或每个平台功能完全一致。Linux 现有打包路径主要面向 Debian/Ubuntu 系列；本轮不据此承诺所有发行版、桌面环境或 Wayland/X11 组合。Windows ARM64、Linux ARM64 也不在当前列出的构建矩阵中。</p>
+<p>证据：<a href="../../README.md#L26">README</a>、<a href="../../.github/workflows/build.yml">构建作业</a>、<a href="../../forge.config.ts">Forge</a>、<a href="../../src/main/index.ts">平台入口</a>、<a href="../../src/main/tray-manager/index.ts">托盘适配</a>、<a href="../../src/common/thumb-bar-util.ts#L76">任务栏模块加载</a>。Windows 原生缩略图模块在调用前检查 <code>win32</code>，不能因为它存在就推断其他平台无法运行。</p>
+<h2 id="codebase-h4">2. 技术栈与职责</h2>
+<div class="table-wrap"><table><thead><tr><th>层</th><th>当前技术</th><th>承担的职责</th></tr></thead><tbody><tr><td>桌面宿主</td><td>Electron，依赖声明 <code>^25.3.0</code></td><td>窗口、托盘、快捷键、协议、任务栏、文件系统与进程</td></tr><tr><td>界面</td><td>React，依赖声明 <code>^18.3.1</code>；React Router</td><td>页面、歌曲表格、弹窗、歌词、状态展示</td></tr><tr><td>播放</td><td><code>HTMLAudioElement</code> + hls.js</td><td>普通音频与 HLS 播放，设备选择、音量、倍速</td></tr><tr><td>状态</td><td>自定义 Store + EventEmitter</td><td>业务状态更新、组件订阅、下载状态通知</td></tr><tr><td>多窗口通信</td><td>IPC + MessagePort</td><td>主窗口、歌词窗口、迷你窗口的命令与状态同步</td></tr><tr><td>当前业务存储</td><td>Dexie / IndexedDB、localStorage、JSON</td><td>歌单、歌曲、下载元数据、偏好与设置</td></tr><tr><td>后台任务</td><td>Web Worker + Comlink；子进程</td><td>下载、目录扫描、请求转发</td></tr><tr><td>构建</td><td>Electron Forge + Webpack + 原生模块重建</td><td>平台包与资源处理</td></tr></tbody></table></div>
+<p>依赖版本范围来自 <a href="../../package.json">package.json</a>，不等于安装时必然解析到的精确版本。需要升级的是受支持的 Electron 版本及相关兼容性；不能单独改版本号后直接发布。</p>
+<h2 id="codebase-h5">3. 进程与模块地图</h2>
+<figure class="diagram" id="codebase-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart TB
+    subgraph Main[&quot;Electron 主进程&quot;]
+        Host[&quot;应用 / 窗口 / 托盘 / 快捷键&quot;]
+        Plugin[&quot;JS 插件执行与系统桥接&quot;]
+    end
+    subgraph Renderer[&quot;主窗口渲染进程&quot;]
+        UI[&quot;React 页面与 MusicList&quot;]
+        Core[&quot;TrackPlayer / 下载队列 / 本地音乐&quot;]
+        DB[&quot;Dexie / IndexedDB / localStorage&quot;]
+        Audio[&quot;HTMLAudio / hls.js&quot;]
+        UI --&gt; Core
+        Core --&gt; DB
+        Core --&gt; Audio
+    end
+    Host &lt;--&gt;|IPC / MessagePort| UI
+    Core --&gt;|插件委托| Plugin
+    Core --&gt;|Comlink| Download[&quot;下载 Web Worker：网络与文件写入&quot;]
+    Scan[&quot;扫描 Web Worker：chokidar / metadata&quot;] --&gt;|Comlink 回调| Core
+    Audio --&gt;|HTTP| Forward[&quot;请求转发子进程&quot;]
+    Host --&gt;|服务管理器启动| Forward</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>图中的后台区域同时包含 Worker 和请求转发子进程，它们不是同一种进程。图中省略 Chromium 自己的 GPU、网络和音频服务进程。</p>
+<h3 id="codebase-h6">用 C/C++ 与嵌入式经验理解执行模型</h3>
+<div class="table-wrap"><table><thead><tr><th>本项目概念</th><th>可以借用的经验</th><th>必须区分的地方</th></tr></thead><tbody><tr><td>主进程 / Renderer</td><td>系统宿主与界面进程，边界通过消息通信</td><td><code>src/main</code> 是 JS 运行环境，业务并非全在这里；Electron 还有内部服务进程</td></tr><tr><td>Web Worker</td><td>将工作提交到独立执行上下文，接收消息结果</td><td>不是共享全部对象的 C++ 线程；Comlink 代理调用返回 Promise，跨边界的数据有复制/传输约束</td></tr><tr><td>Promise / async / await</td><td>异步 I/O 完成回调、状态机的挂起与恢复</td><td><code>await</code> 不等于创建线程；它让出当前异步函数，之后继续执行，结果可能已过时</td></tr><tr><td>Store / EventEmitter</td><td>状态容器与观察者回调</td><td>Store 已提交后通知并隔离订阅错误（BUG-09）；其他 EventEmitter 回调仍需自行处理异常</td></tr><tr><td>React state</td><td>状态变化驱动界面刷新</td><td>界面渲染与设备时钟不是同一个时钟；不能用渲染频率代替音频播放进度</td></tr><tr><td>资源生命周期</td><td>RAII、句柄所有权、退出清理</td><td>TS/JS 的 GC 不自动完成 <code>destroy</code>、取消请求、释放 Object URL 或移除监听器</td></tr><tr><td>TypeScript interface</td><td>编译期接口约束</td><td>编译后没有自动运行时校验；插件返回值和 IPC 输入仍需检查</td></tr></tbody></table></div>
+<p>因此，阅读播放/下载代码时先标记<strong>谁拥有状态、谁提交结果、谁负责取消和释放</strong>。单个 JS 执行上下文通常顺序执行回调，多个异步请求仍可乱序完成；BUG-01/02 属于这种竞态，而非一定存在两个线程同时写内存。</p>
+<h3 id="codebase-h7">主进程</h3>
+<p><a href="../../src/main/index.ts">src/main/index.ts</a>建立便携目录、单实例锁和 <code>musicfree://</code> 协议，初始化设置、插件、托盘、快捷键、服务和窗口。</p>
+<p><a href="../../src/main/window-manager/index.ts">window-manager</a>负责三类窗口及其关闭、大小、拖动等行为。主窗口关闭后的结果由设置和平台分支共同决定；托盘隐藏不等于程序退出。</p>
+<h3 id="codebase-h8">主界面与业务核心</h3>
+<p><a href="../../src/renderer/document/index.tsx">renderer/document/index.tsx</a>先等待 bootstrap，再挂载 React。业务集中在 <code>src/renderer/core</code>：播放、歌单、本地音乐、下载、最近播放、歌词关联和备份。</p>
+<p>当前播放核心和下载队列都由主窗口渲染侧管理。音频解码不是所有工作都在 JavaScript UI 线程执行，但播放命令、事件处理和状态组织依赖此渲染进程。后续应测量 UI 卡顿是否影响控制延迟，不能直接断言每次卡顿都会断音。</p>
+<h3 id="codebase-h9">插件与系统边界</h3>
+<p>插件委托调用经过 renderer / preload / main；<a href="../../src/shared/plugin-manager/main/plugin.ts">plugin.ts</a>使用 <code>Function</code> 执行 JavaScript 插件，并提供 axios、cheerio 等预置包。白名单 <code>require</code> 属于兼容接口，不能视为操作系统沙箱。</p>
+<p><code>src/shared</code> 的 main、preload、renderer 文件是按进程分拆的桥接和实现。阅读时应追踪具体调用，不宜仅按文件夹名称假定所有 shared 模块都在同一进程。</p>
+<h2 id="codebase-h10">4. 数据到底存在哪里？</h2>
+<figure class="diagram" id="codebase-diagram-2" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart LR
+    Core[&quot;歌曲 / 歌单 / 下载业务&quot;] --&gt; Sheets[&quot;musicSheetDB.sheets：歌单与歌曲键&quot;]
+    Core --&gt; Tracks[&quot;musicSheetDB.musicStore：详情与下载元数据&quot;]
+    Core --&gt; Local[&quot;musicSheetDB.localMusicStore：扫描结果&quot;]
+    Core --&gt; Prefs[&quot;userPerferenceDB.perference：索引与大型偏好&quot;]
+    Core --&gt; Small[&quot;localStorage：小型播放偏好&quot;]
+    Main[&quot;AppConfig 主进程&quot;] --&gt; Config[&quot;userData/config.json&quot;]
+    Worker[&quot;下载 Worker&quot;] --&gt; Files[&quot;临时 part / 完整音频文件&quot;]
+    Files -.-&gt;|路径与音质关联| Tracks
+    Tracks -.-&gt;|已下载索引可重建| Prefs</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<div class="table-wrap"><table><thead><tr><th>数据</th><th>实际位置/结构</th><th>读取入口</th></tr></thead><tbody><tr><td>应用设置</td><td><code>app.getPath(&#x27;userData&#x27;)/config.json</code></td><td><a href="../../src/shared/app-config/main.ts">AppConfig</a></td></tr><tr><td>歌单</td><td><code>musicSheetDB.sheets</code>，<code>id</code> 主键，<code>musicList</code> 保存歌曲键</td><td><a href="../../src/renderer/core/music-sheet/backend/index.ts">music-sheet/backend</a></td></tr><tr><td>歌曲详情</td><td><code>musicSheetDB.musicStore</code>，<code>[platform+id]</code> 复合键</td><td><a href="../../src/renderer/core/db/music-sheet-db.ts">music-sheet-db.ts</a></td></tr><tr><td>本地扫描结果</td><td><code>musicSheetDB.localMusicStore</code>，带 <code>$$localPath</code></td><td><a href="../../src/renderer/core/local-music/index.ts">local-music</a></td></tr><tr><td>大型偏好</td><td><code>userPerferenceDB.perference</code>，<code>key/value</code></td><td><a href="../../src/renderer/utils/user-perference.ts">user-perference.ts</a></td></tr><tr><td>小型偏好</td><td>localStorage：当前歌曲、播放位置、音量等</td><td>同上</td></tr><tr><td>已下载文件</td><td>用户配置的下载目录</td><td><a href="../../src/webworkers/downloader.ts">downloader worker</a></td></tr><tr><td>已下载记录</td><td>歌曲详情中的 <code>$</code> / <code>downloadData</code>：路径、音质与可选文件身份；偏好库保存可重建的列表索引</td><td><a href="../../src/renderer/core/downloader/downloaded-sheet.ts">downloaded-sheet.ts</a>、<a href="#download-file-state">10 状态同步</a></td></tr><tr><td>插件与主题</td><td>由对应 main 模块管理的本地目录</td><td><a href="../../src/shared/plugin-manager/main/index.ts">插件管理</a>、<a href="../../src/shared/themepack/main.ts">主题管理</a></td></tr></tbody></table></div>
+<p>IndexedDB 的物理文件属于 Electron 浏览器 profile；迁移时应通过业务导出/导入，避免直接把数据库底层文件当成稳定交换格式。</p>
+<p>歌曲的身份由来源 <code>platform</code> 和 <code>id</code> 确定；<a href="../../src/common/media-util.ts">media-util</a>统一比较和生成键。列表位置会因排序、过滤和分页改变，不能作为持久身份。</p>
+<h3 id="codebase-h11">SQLite 代码与当前主链路的区别</h3>
+<p>仓库有 <a href="../../src/shared/database/preload.ts">shared/database/preload.ts</a>、<code>preload-backup.ts</code> 和 <a href="../../src/webworkers/db-worker.ts">db-worker.ts</a> 等 SQLite 代码，但当前 preload 入口未导入上述数据库模块，主歌单入口走 Dexie。<code>db-worker.ts</code> 还有空数据库路径。它们应先做依赖和迁移核查，不能据此描述当前歌单已统一使用 SQLite。</p>
+<p>特别注意：<a href="../../src/renderer/core/music-sheet/frontend/index.ts">music-sheet/frontend/index.ts</a>仍然 <code>export * from &#x27;./index.old&#x27;</code>。<strong>文件名带 old 不意味着可以删除。</strong> 同样，备用下载实现需要核实导入关系后再归档。</p>
+<h2 id="codebase-h12">5. 源码导航：需求落点</h2>
+<div class="table-wrap"><table><thead><tr><th>要改什么</th><th>从哪里开始</th><th>需一起检查</th></tr></thead><tbody><tr><td>列表选择、批量操作</td><td><a href="../../src/renderer/components/MusicList/index.tsx">MusicList</a></td><td>分页、排序、过滤、虚拟列表、右键和键盘</td></tr><tr><td>播放/切歌/音质</td><td><a href="../../src/renderer/core/track-player/index.ts">track-player</a></td><td>异步请求时序、音频控制器、歌词</td></tr><tr><td>音频输出、HLS</td><td><a href="../../src/renderer/core/track-player/controller/audio-controller.ts">audio-controller</a></td><td>请求转发、设备、资源释放</td></tr><tr><td>歌单增删/收藏</td><td><a href="../../src/renderer/core/music-sheet/frontend/index.old.ts">frontend</a> → <a href="../../src/renderer/core/music-sheet/backend/index.ts">backend</a></td><td>去重、事务、引用计数、失败回传</td></tr><tr><td>扫描本地文件</td><td><a href="../../src/renderer/core/local-music/index.ts">local-music</a> → <a href="../../src/webworkers/local-file-watcher.ts">local-file-watcher</a></td><td>初始扫描、增删改、大小写、封面</td></tr><tr><td>下载任务</td><td><a href="../../src/renderer/core/downloader/index.ts">downloader</a> → <a href="../../src/webworkers/downloader.ts">worker</a></td><td>状态、暂停、HTTP、磁盘、记录提交</td></tr><tr><td>下载资源同步</td><td><a href="../../src/renderer/core/downloader/downloaded-sheet.ts">downloaded-sheet</a> → preload 文件检查/监听</td><td>独立资源状态、身份校验、移动恢复、播放回退；详见 <a href="#download-file-state">10</a></td></tr><tr><td>下载管理页面</td><td><a href="../../src/renderer/pages/main-page/views/download-view/index.tsx">download-view</a></td><td>已下载状态与待下载任务的一致性</td></tr><tr><td>搜索与插件</td><td><a href="../../src/shared/plugin-manager/renderer.ts">plugin-manager</a></td><td>方法能力、返回数据、超时与取消</td></tr><tr><td>桌面歌词/迷你窗口</td><td><a href="../../src/renderer-lrc/pages/index.tsx">renderer-lrc</a>、<a href="../../src/renderer-minimode/pages/index.tsx">renderer-minimode</a></td><td>MessagePort、窗口状态、DPI</td></tr><tr><td>Windows 任务栏</td><td><a href="../../src/common/thumb-bar-util.ts">thumb-bar-util</a></td><td><a href="../../src/main/native_modules/TaskbarThumbnailManager/TaskbarThumbnailManager.node.d.ts">原生模块</a>、窗口句柄</td></tr><tr><td>设置、快捷键、主题</td><td><code>src/shared/{app-config,short-cut,themepack}</code></td><td>多窗口更新、文件写入、权限边界</td></tr></tbody></table></div>
+<h2 id="codebase-h13">6. 已有优势与应保留的设计</h2>
+<ul><li>在线音源通过插件协议解耦，UI 和音源可以分别演进。</li><li>歌曲身份已有统一帮助函数，便于去重与稳定选择。</li><li>本地扫描和下载已有后台 Worker，适合继续引入批处理和限流。</li><li>主窗口、歌词窗口和迷你模式已有消息通信基础。</li><li>列表已虚拟化；应优化计算和订阅，不应简单改回全量 DOM。</li><li>本次基线已修复下载提交后的状态一致性，并补有实际 Windows Electron 回归测试。</li></ul>
+<h2 id="codebase-h14">7. 术语速查</h2>
+<div class="table-wrap"><table><thead><tr><th>术语</th><th>在本项目里的含义</th></tr></thead><tbody><tr><td>Renderer</td><td>React 界面及目前大部分业务所在的 Electron 渲染进程</td></tr><tr><td>Preload / IPC</td><td>连接界面与系统能力的边界代码/通信</td></tr><tr><td>Comlink</td><td>把 Worker 消息包装成类似异步函数调用</td></tr><tr><td>Dexie</td><td>IndexedDB 的访问库</td></tr><tr><td>HLS / m3u8</td><td>播放清单引用多个媒体分片，清单本身不等于完整音频</td></tr><tr><td>SMTC</td><td>Windows 的系统媒体播放控制；不是任务栏缩略图按钮</td></tr><tr><td>WASAPI</td><td>Windows 音频输出接口；共享和独占是不同模式</td></tr><tr><td>Gapless</td><td>正确消除曲目衔接中的非音乐空隙，与交叉淡化不同</td></tr></tbody></table></div></article><article id="flows" class="chapter" hidden><h1 id="flows-h1">02 · 核心流程与 Windows 开发指南</h1>
+<p><a href="#guide">返回目录</a></p>
+<h2 id="flows-h2">1. 启动顺序</h2>
+<ol><li><code>src/main/index.ts</code> 识别 Windows 便携目录，申请单实例锁。</li><li><code>app.whenReady()</code> 初始化全局路径、设置、语言、插件、托盘、快捷键和消息总线，创建主窗口。</li><li><code>renderer/document/bootstrap.ts</code> 先初始化设置/插件，再初始化歌单/播放器，随后建立扫描、下载记录索引、最近播放和服务状态。下载文件核对与旧记录 SHA-256 补建在后台分批执行。</li><li><code>renderer/document/index.tsx</code> 先挂载 React 的 Initialize 界面；bootstrap 成功后挂载播放器，失败则显示阶段与错误，提供整页重载重试。主窗口通过 IPC/MessagePort 向托盘、歌词窗口和迷你窗口同步状态。</li></ol>
+<p>源码入口：<a href="../../src/main/index.ts">main</a>、<a href="../../src/renderer/document/bootstrap.ts">bootstrap</a>、<a href="../../src/renderer/document/index.tsx">React 入口</a>、<a href="../../src/renderer/document/initialize.tsx">Initialize</a>。BUG-11 已修复并通过真实 React 首屏验证。</p>
+<h3 id="flows-h3">首屏与下载文件核对</h3>
+<figure class="diagram" id="flows-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart TD
+    subgraph Before[优化前]
+        A[配置 / 插件 / 歌单 / 播放状态 / 语言] --&gt; B[等待全部下载文件检查]
+        B --&gt; C[旧记录逐首读取文件并计算 SHA-256]
+        C --&gt; D[挂载主界面与唱片组件]
+    end
+    subgraph After[当前实现]
+        E[配置 / 插件 / 歌单 / 播放状态 / 语言] --&gt; F[读取下载记录索引，标记 CHECKING]
+        F --&gt; G[挂载可操作的主界面]
+        F --&gt; H[延后 100ms 启动后台核对]
+        H --&gt; Batch[每批核对 8 首]
+        Batch --&gt; I[批内最多 4 个文件检查并发]
+        I --&gt; J[事务提交，逐批更新图标与已下载列表]
+        J --&gt; K{还有未核对歌曲?}
+        K --&gt;|有，让出事件循环| Batch
+        K --&gt;|无| L[完成后台初始化，持续监听与补偿核对]
+        G --&gt; M[用户播放 / 下载某首歌曲]
+        M --&gt; N[在批次之间优先核对目标歌曲]
+        N --&gt; O[确认可用才本地播放 / 跳过重复下载]
+    end</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p><strong>拖慢首屏的是下载记录初始化中的磁盘检查。</strong> 没有文件指纹的旧记录还需要读取整首文件计算 SHA-256。唱片组件在主界面挂载后才出现，初始化等待期间没有旋转动画运行；因此本轮保留唱片效果。</p>
+<ul><li>首屏仍等待必要配置、歌单与播放状态、语言和下载记录索引，不等待全库文件核对。</li><li>未检查的记录保持 <code>CHECKING</code>，图标提示“正在核对本地文件”；不会直接宣称已下载。已下载列表在检查后逐批补全。</li><li>全库后台批次优先级为 -1，播放、下载和元数据写操作优先级为 1。同一批已经开始的文件检查会先完成；这不是抢占式取消，也不能保证断开的网络盘立即返回。</li><li>点播只等目标文件与已开始的一个小批次；下载前核对选中的已有记录，避免启动期间重复下载。外部删歌、改路径、同名文件身份检查和事务保护继续有效。</li><li>后台检查失败记录日志并进入补偿重试；每个启动阶段记录 <code>Startup stage</code> 与 <code>durationMs</code>，全库核对单独记录数量和时间。</li></ul>
+<p>隔离 Windows 编译版测试（1000 条记录，单次样本）：</p>
+<div class="table-wrap"><table><thead><tr><th>场景</th><th>优化前初始化等待</th><th>优化后初始化等待</th></tr></thead><tbody><tr><td>旧下载记录，无文件指纹</td><td>2237ms</td><td>39ms</td></tr><tr><td>已有文件指纹</td><td>326ms</td><td>41ms</td></tr></tbody></table></div>
+<p>计时从前端 <code>Create Bundle</code> 开始，<strong>不包含 exe、Electron 和静态模块加载</strong>。无指纹场景的首屏为 2260ms → 58ms；全部后台核对约 8.3 秒，已下载列表逐批补齐。完整测试条件、吞吐量变化与边界见下方验证记录。</p>
+<p>代码入口：<a href="../../src/renderer/document/bootstrap.ts">bootstrap</a>、<a href="../../src/renderer/core/downloader/index.ts">下载初始化</a>、<a href="../../src/renderer/core/downloader/downloaded-sheet.ts">分批核对与优先级</a>。性能测量与复现见 <a href="evidence/startup-performance.md">启动验证</a>。</p>
+<h2 id="flows-h4">2. 从点击歌曲到发出声音</h2>
+<div class="table-wrap"><table><thead><tr><th>步骤</th><th>调用/状态</th><th>关注点</th></tr></thead><tbody><tr><td>点击或双击</td><td>MusicList → TrackPlayer</td><td>选择行为、列表排序、当前播放队列</td></tr><tr><td>确定歌曲</td><td><code>playIndex</code> 设置当前歌曲与 Buffering</td><td>并发切歌需要请求序号；只检查歌曲键不能处理所有时序</td></tr><tr><td>获取音源</td><td><code>fetchMediaSource</code></td><td>先核对资源，优先使用确认可用的最新下载路径；否则按音质尝试插件</td></tr><tr><td>准备请求</td><td>AudioController</td><td>处理 headers、URL 认证与请求转发</td></tr><tr><td>开始播放</td><td>HTMLAudioElement；HLS 时使用 hls.js</td><td>源加载、play Promise、HLS 生命周期</td></tr><tr><td>更新界面</td><td>时间/状态事件 → Store 与歌词解析</td><td>进度持久化、歌词事件、多窗口订阅</td></tr><tr><td>输出系统状态</td><td>Media Session、托盘、任务栏</td><td>系统按钮命令与状态需一致</td></tr></tbody></table></div>
+<p>来源：<a href="../../src/renderer/core/track-player/index.ts">track-player</a>、<a href="../../src/renderer/core/track-player/controller/audio-controller.ts">audio-controller</a>。当前没有下一首预解码或明确的无缝衔接调度器；不能承诺无缝播放。HTMLAudio 的底层输出也不能直接等同于应用已经提供可选 WASAPI 独占模式。</p>
+<h3 id="flows-h5">切歌竞态的时序</h3>
+<p>下面描述 BUG-01 修复后的请求序号检查；异步完成顺序可以与调用顺序不同。</p>
+<figure class="diagram" id="flows-diagram-2" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">sequenceDiagram
+    participant UI as 列表
+    participant Player as TrackPlayer
+    participant Source as 音源请求
+    participant Audio as AudioController
+    UI-&gt;&gt;Player: 播放 A
+    Player-&gt;&gt;Source: 获取 A 音源
+    UI-&gt;&gt;Player: 播放 B
+    Player-&gt;&gt;Source: 获取 B 音源
+    Source--&gt;&gt;Player: B 成功
+    Player-&gt;&gt;Audio: 设置 B 并播放
+    Source--&gt;&gt;Player: A 晚到失败
+    Player-&gt;&gt;Player: 请求序号已过时，丢弃 A 的结果
+    Note over Player,Audio: 保持 B 的声音、音质和状态</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>已在当前 TrackPlayer 内增加独立音源/歌词请求序号，保护成功、失败、音质切换和延迟跳歌。</p>
+<p>本地文件在检查后仍可能被删除。实际打开失败时，在线歌曲尝试一次网络回退，保留进度与播放/暂停意图；纯本地歌曲不回退到网络。完整时序与验证见 <a href="#download-file-state">10 · 本地优先与打开失败回退</a>。</p>
+<h3 id="flows-h6">播放正确性的不变量</h3>
+<ul><li>只有当前播放请求可以更改声音、音质、歌词和播放错误状态。</li><li>成功分支和失败分支都应检查请求是否已经过时。</li><li>换音质是新请求；快速 A → B → A 需要请求序号，单纯比较 <code>platform/id</code> 不足以判定响应属于哪次操作。</li><li>旧 HLS、fetch、Object URL 和监听器应随轨道生命周期释放。</li></ul>
+<h2 id="flows-h7">3. 批量选择与歌单操作</h2>
+<p><a href="../../src/renderer/components/MusicList/index.tsx">MusicList</a>提供“批量选择”、复选框、“全选”“取消全选”、选中数量、“下载选中歌曲”和“添加到歌单”。选择集合存歌曲键，排序时不会因为行号变化而指向其他歌曲。</p>
+<p>当前全选范围是<strong>本列表已加载的歌曲</strong>，不代表远程歌单所有未加载分页。过滤后选择会按可用歌曲清理。批量选择期间避免双击播放和拖动改变选择。</p>
+<p><strong>“添加到歌单”会复制歌曲引用，尚不等同于“移动到歌单”。</strong> 完整移动应执行“目标添加成功 → 来源删除”，并支持失败回滚或可重试的操作日志；验收时不能仅检查目标中出现歌曲。</p>
+<h2 id="flows-h8">4. 下载流程与状态</h2>
+<figure class="diagram" id="flows-diagram-3" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">stateDiagram-v2
+    [*] --&gt; WAITING: 加入队列
+    WAITING --&gt; DOWNLOADING: 调度 / 获取音源 / 传输
+    DOWNLOADING --&gt; SAVING: 完整文件写入成功
+    SAVING --&gt; DONE: 下载元数据提交成功
+    WAITING --&gt; PAUSED: 全局暂停
+    DOWNLOADING --&gt; PAUSED: 取消当前传输
+    PAUSED --&gt; WAITING: 继续 / 从头传输
+    DOWNLOADING --&gt; ERROR: 音源 / 网络 / 文件错误
+    SAVING --&gt; ERROR: 元数据提交失败
+    ERROR --&gt; WAITING: 重试未完成文件
+    ERROR --&gt; SAVING: 同会话已有完整文件 / 补存记录
+    DONE --&gt; [*]: 从待下载列表移除
+    note right of DONE
+        已提交结果不能被晚到的错误或进度覆盖
+    end note</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<ol><li>renderer 队列按歌曲键去重，跳过本地、已下载或已在队列中的歌曲。</li><li>按音质获取插件音源，把任务交给下载 Worker。</li><li>Worker 检查 HTTP 响应与前缀，拒绝尚不支持的 HLS 清单；流式写 <code>.part</code>，完整写入后重命名，遇到中断清理临时文件。</li><li>renderer 进入 SAVING，检查完整文件并保存大小与 SHA-256 身份，串行提交歌曲下载元数据；已下载索引属于另一数据库，可在启动时重建。</li><li>提交后统一为 DONE，从待下载列表移除；通知异常不能把已提交的任务降为失败。</li></ol>
+<p>暂停会停止排队、取消当前文件传输，并结束对等待音源 Promise 的等待。<strong>插件内部网络请求并不因此必然被取消</strong>，需要插件接口支持 AbortSignal。继续时未完成文件从头下载。保存失败时，同一运行会话缓存已完成文件，重试只补元数据。</p>
+<p>当前限制：任务队列和完成文件重试缓存属于内存；没有跨重启的任务恢复、单任务暂停、取消队列、HTTP Range 续传或 HLS 分片下载。见产品清单 F-01～F-04、BUG-13。</p>
+<p>源码：<a href="../../src/renderer/core/downloader/index.ts">队列</a>、<a href="../../src/webworkers/downloader.ts">Worker</a>、<a href="../../src/renderer/core/downloader/downloaded-sheet.ts">提交与恢复</a>。</p>
+<p>上图描述一次任务。文件后续是否可用由独立资源状态机管理：监听外部变化，加启动/焦点/定时/手动核对；资源恢复不会提前结束活动下载。统一说明、代码入口与状态图见 <a href="#download-file-state">10 · 下载文件状态同步</a>。</p>
+<h2 id="flows-h9">5. 本地音乐扫描</h2>
+<p>当前链路：用户勾选目录 → local-music 创建 Worker → chokidar 发现文件 → music-metadata 解析 → 500ms 防抖批次 → Comlink 回调 → IndexedDB → 本地列表。</p>
+<p>需要认识的边界：</p>
+<ul><li>先读取现有库、注册并等待新增/删除回调，再启动 watcher；Worker 对尚未注册回调的批次保留缓冲。</li><li>监听 add/change/unlink；按路径合并事件并使过时的解析结果失效，Comlink 保存回调按顺序等待。</li><li>拖入、文件夹导入和扫描共用大小写无关的扩展名规则；缺失 stats 时安全 stat。</li><li>不足 128 字节的小文件使用 Buffer 解析，避免当前元数据库的短文件句柄泄漏。</li><li>封面以 base64 放入歌曲对象；大量高清封面会扩大内存和持久化数据，收益要通过实测确认。</li><li>Worker 已将文件解析移出界面线程，但主列表仍会按批次 <code>toArray()</code> 重读整个本地库。</li></ul>
+<p>来源：<a href="../../src/renderer/core/local-music/index.ts">local-music</a>、<a href="../../src/webworkers/local-file-watcher.ts">watcher</a>、<a href="../../src/common/file-util.ts">file-util</a>。</p>
+<h2 id="flows-h10">6. Windows / WSL 构建操作</h2>
+<h3 id="flows-h11">建议环境</h3>
+<p>正式 Windows 构建在 Windows PowerShell 或 Windows CI 中完成。同一工作目录中的 Electron、sharp、better-sqlite3 和任务栏 <code>.node</code> 文件有平台/架构/ABI 要求；避免 Windows 和 WSL 轮流安装同一份 <code>node_modules</code>。WSL 可用于编辑和纯 TypeScript 检查，调用 Windows Node 时仍应确认使用的是 Windows 依赖。</p>
+<p>当前工作流使用 Node 18，Windows legacy 作业另装 Electron 22；这是现有配置，不是推荐继续使用的支持策略。现代 Windows 分支应先明确最低系统版本，再升级运行时和 CI。<a href="https://releases.electronjs.org/schedule">Electron 版本时间表</a>列出相应支持期限。</p>
+<h3 id="flows-h12">原仓库构建命令</h3>
+<pre><code class="language-powershell"># 项目根目录；首次安装前确认锁文件、Node 和原生模块兼容策略
+npm ci
+npm start
+npm run package -- --platform=win32 --arch=x64</code></pre>
+<p><code>npm ci</code> 是建议的锁文件安装方式；目前 CI 使用 <code>npm install</code>，换用前应验证现有锁文件可安装。完整安装器还依赖 <a href="../../release/build-windows.iss">Inno Setup 脚本</a>，<code>package</code> 得到应用目录不代表安装器也已生成。</p>
+<h3 id="flows-h13">检查与回归</h3>
+<pre><code class="language-powershell">npx tsc --noEmit
+# 当前 npm run lint 含 --fix；审查阶段用不修改文件的检查
+npx eslint src
+.\node_modules\.bin\electron.cmd scripts/tests/downloader-main.cjs
+node docs/knowledge-base/evidence/audit-repro.cjs</code></pre>
+<p><code>npx eslint src</code> 可能包含既有问题，不承诺全仓库已通过。下载回归使用独立 profile 和本地 HTTP；隔离审阅脚本使用模拟边界并写入本目录的 <code>audit-results.json</code>。</p>
+<h3 id="flows-h14">测试版启动与数据目录</h3>
+<ul><li>软件有单实例锁；先从托盘完全退出旧实例，再打开目标目录的 <code>MusicFree.exe</code>。</li><li>免安装应用目录旁没有 <code>portable</code> 文件夹时，仍使用普通用户数据目录。</li><li>存在 <code>portable</code> 目录时，main 会重设 appData/userData 路径；排查“数据不见了”先比较这两种启动方式。</li><li>上轮最终测试版是 <code>out/download-status-fix-test/MusicFree-win32-x64</code>，构建产物不属于源码知识库。</li></ul>
+<h2 id="flows-h15">7. 排障速查</h2>
+<div class="table-wrap"><table><thead><tr><th>表现</th><th>第一项检查</th><th>下一项证据</th></tr></thead><tbody><tr><td>打开新版仍见旧错误</td><td>运行进程的 exe 路径、托盘实例</td><td>单实例锁与实际包内代码</td></tr><tr><td>切歌后突然停止</td><td>旧音源请求是否失败</td><td>BUG-01，请求序号/歌曲键/时间戳</td></tr><tr><td>新歌词突然清空</td><td>旧歌词请求是否晚到失败</td><td>BUG-02</td></tr><tr><td>部分本地歌未出现</td><td>初始扫描回调、扩展名大小写</td><td>BUG-05/06，新增事件与入库数量</td></tr><tr><td>带请求头歌曲无法播放</td><td>转发服务是否活着、headers 分支</td><td>BUG-03/08</td></tr><tr><td>已下载但不能离线播放</td><td>文件是否为真正音频、是否外部删除</td><td>BUG-13、RISK-02</td></tr><tr><td>首屏白屏</td><td>bootstrap Promise 拒绝和初始化日志</td><td>BUG-11，UI 挂载前异常</td></tr><tr><td>只有便携版缺歌单</td><td>当前 userData 是否不同</td><td>portable 分支与备份来源</td></tr></tbody></table></div></article><article id="product" class="chapter" hidden><h1 id="product-h1">03 · 播放器对比与体验优化清单</h1>
+<p><a href="#guide">返回目录</a></p>
+<h2 id="product-h2">1. 选择怎样的参照对象</h2>
+<p>本次选择 foobar2000、MusicBee、AIMP，分别观察音频能力、音乐库管理和 Windows 播放体验。对比的是官方说明与本仓库实现，未做三款竞品和本软件在同一机器上的性能测试。</p>
+<div class="table-wrap"><table><thead><tr><th>能力</th><th>MusicFreeDesktop 当前实现</th><th>foobar2000</th><th>MusicBee</th><th>AIMP</th></tr></thead><tbody><tr><td>核心方向</td><td>JS 音源插件、在线与本地播放、歌词与主题</td><td>音频播放、标签与组件扩展</td><td>本地音乐管理与播放</td><td>播放、本地/NAS/云音频工具</td></tr><tr><td>无缝播放</td><td>未见明确的下一首预解码/连续调度</td><td>官方列为功能</td><td>官方列为功能</td><td>本次不作确认</td></tr><tr><td>ReplayGain / DSP</td><td>未见相应应用实现</td><td>官方列出 ReplayGain 和 DSP</td><td>官方列出均衡器、DSP、音量归一化</td><td>本次只确认其输出能力</td></tr><tr><td>WASAPI / ASIO</td><td>HTMLAudio 设备选择；无应用层独占/ASIO 选项</td><td>本次不根据简介断言具体输出方式</td><td>官方列出 WASAPI、ASIO</td><td>官方列出 WASAPI、独占、ASIO</td></tr><tr><td>标签管理</td><td>能读取本地元信息；未见完整标签编辑器</td><td>官方列出高级标签操作</td><td>官方列出自动标签</td><td>本次不展开</td></tr><tr><td>JS 在线音源协议</td><td>现有核心优势</td><td>组件体系不同，不能当作兼容本项目</td><td>有插件 API，不能当作兼容本项目</td><td>不能推定兼容本项目插件</td></tr><tr><td>个性化与日常控制</td><td>主题、桌面歌词、迷你窗口、托盘/快捷键</td><td>官方列出界面布局与快捷键</td><td>官方列出皮肤</td><td>具备自身皮肤体系；本次重点比较音频输出</td></tr></tbody></table></div>
+<p>竞品依据：<a href="https://www.foobar2000.org/?page=Overview">foobar2000 功能</a>、<a href="https://getmusicbee.com/">MusicBee 功能</a>、<a href="https://www.aimp.ru/?do=features&amp;os=windows">AIMP Windows 功能</a>。表内“未见”限定为本次审查范围，“本次不确认”不代表对方不支持。</p>
+<p><strong>本仓库适合优先发展“插件音源 + 可靠播放/下载 + 个人音乐库”。</strong> 将每一款播放器的所有功能都搬入，会扩大维护范围，未必改善日常听歌体验。</p>
+<h2 id="product-h3">2. 优化方向图</h2>
+<figure class="diagram" id="product-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart LR
+    Fix[&quot;第一阶段：现有代码正确性与回归&quot;] --&gt; Needs[&quot;后续：确认日常体验需求&quot;]
+    Needs --&gt; Tasks[&quot;取消 / 恢复 / 歌单操作&quot;]
+    Needs --&gt; Measure[&quot;测量交互 / 切歌 / 资源&quot;]
+    Measure --&gt; Optimize[&quot;按瓶颈做局部优化&quot;]
+    Optimize -.-&gt;|仍有明确能力缺口再评估| Native[&quot;原生音频或架构原型&quot;]</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>“丝滑”至少有三种含义：点击/滚动及时响应、切歌和歌词稳定、曲目衔接自然。它们需要不同的改进手段，验收指标见 <a href="#roadmap">06</a>。</p>
+<h2 id="product-h4">3. 体验优化清单</h2>
+<p>所有项目默认为<strong>建议、尚未实现</strong>。成本为相对评估：低/中/高，前提是熟悉现有代码；不作为工期承诺。</p>
+<p>这是一份候选清单，不是第一阶段全量待办。第一阶段按 <a href="#roadmap">06</a>修复已识别问题并建立回归，新增功能另行排序。</p>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>优先级</th><th>建议</th><th>当前缺口与用户收益</th><th>验收重点</th><th>相对成本</th></tr></thead><tbody><tr><td>F-01</td><td>P1</td><td>单任务暂停、继续、取消与取消全部</td><td>已有全局暂停；误操作后可只取消不想要的歌曲</td><td>活动和排队任务都可取消，文件与状态一致</td><td>中</td></tr><tr><td>F-02</td><td>P1</td><td>持久化下载任务与崩溃恢复</td><td>当前队列在内存；重启后找回待下载和失败任务</td><td>强制退出后任务恢复，已成功歌曲不重下</td><td>中</td></tr><tr><td>F-03</td><td>P2</td><td>HTTP Range 续传</td><td>当前继续会从头传输</td><td>校验 206、Content-Range、ETag；不支持续传时安全重下</td><td>高</td></tr><tr><td>F-04</td><td>P1</td><td>完整 HLS 离线下载</td><td>当前已识别并拒绝清单；分片下载尚未支持</td><td>支持后验证分片、加密、合并与离线播放</td><td>高</td></tr><tr><td>F-05</td><td>P1</td><td>下一首音源预取与可靠切歌</td><td>提前解析可减少等待；先修 BUG-01/02</td><td>URL 过期重取，旧结果不覆盖新操作</td><td>中</td></tr><tr><td>F-06</td><td>P2</td><td>无缝播放/交叉淡化可选模式</td><td>当前无明确连续调度；专辑连播更自然</td><td>区分 gapless 与淡化；按格式和编码验证衔接</td><td>高</td></tr><tr><td>F-07</td><td>P2</td><td>ReplayGain、均衡器与响度控制</td><td>减少不同歌曲音量跳变</td><td>区分曲目/专辑增益；设限幅，避免削波</td><td>高</td></tr><tr><td>F-08</td><td>P3</td><td>可选 WASAPI 共享/独占输出</td><td>面向有音频设备需求的用户</td><td>设备占用、格式不支持和切换失败可恢复</td><td>高</td></tr><tr><td>F-09</td><td>P1</td><td>真正“移动到歌单”</td><td>当前批量按钮是添加/复制</td><td>添加成功才移除来源；重复歌曲和失败不丢数据</td><td>中</td></tr><tr><td>F-10</td><td>P2</td><td>远程歌单完整全选</td><td>当前全选仅已加载行</td><td>区分“已加载”与“整张歌单”，有加载进度和取消</td><td>中</td></tr><tr><td>F-11</td><td>P2</td><td>撤销删除/批量操作</td><td>误删歌单引用或歌曲后可恢复</td><td>区分删引用和删文件；撤销窗口与结果明确</td><td>中</td></tr><tr><td>F-12</td><td>P1</td><td>本地音乐扫描状态与修复</td><td>用户能看见扫描中、失败文件和新增数量</td><td>初始歌曲完整、标签 change 更新、扫描可重试</td><td>中</td></tr><tr><td>F-13</td><td>P2</td><td>标签编辑与批量整理</td><td>当前主要读取元信息</td><td>原文件备份/写失败处理；扫描同步更新</td><td>高</td></tr><tr><td>F-14</td><td>P2</td><td>智能歌单、评分、播放统计</td><td>大音乐库更容易筛选</td><td>规则可重复计算；统计不阻塞播放</td><td>中</td></tr><tr><td>F-15</td><td>P2</td><td>搜索取消、缓存与更明确空态</td><td>避免插件慢请求造成结果跳变</td><td>只展示最后一次查询；错误/无结果/缺能力分开</td><td>中</td></tr><tr><td>F-16</td><td>P1</td><td>Windows 系统控制一致性</td><td>已有 Media Session 和任务栏；需覆盖更多设备事件</td><td>媒体键、系统控制、托盘状态一致；无重复命令</td><td>中</td></tr><tr><td>F-17</td><td>P2</td><td>DPI、键盘与辅助功能</td><td>小窗口、多显示器、触屏和键盘用户体验</td><td>125%/150%/200% 缩放；焦点、读屏名称和对比度</td><td>中</td></tr><tr><td>F-18</td><td>P2</td><td>大列表计算与封面缓存</td><td>已虚拟化，但仍有全量读取、选择扫描和大对象</td><td>万首歌过滤/滚动及时响应，封面加载有界</td><td>中</td></tr><tr><td>F-19</td><td>P1</td><td>版本、日志与失败原因可见</td><td>上轮已出现新版启动却进入旧实例的混淆</td><td>关于页显示版本/提交/运行路径；诊断可导出并脱敏</td><td>低</td></tr><tr><td>F-20</td><td>P2</td><td>插件健康与能力展示</td><td>插件方法、网络和版本不一致影响使用</td><td>标记可搜索/可播放/可下载；超时/错误可追踪</td><td>中</td></tr></tbody></table></div>
+<p>源码落点：<a href="../../src/renderer/components/MusicList/index.tsx">MusicList</a>、<a href="../../src/renderer/core/downloader/index.ts">下载队列</a>、<a href="../../src/renderer/core/track-player/controller/audio-controller.ts">播放控制</a>、<a href="../../src/webworkers/local-file-watcher.ts">扫描</a>、<a href="../../src/shared/plugin-manager/main/plugin-methods.ts">插件方法</a>。</p>
+<h2 id="product-h5">4. 近期建议组合</h2>
+<h3 id="product-h6">第一阶段：现有行为可靠性</h3>
+<p>先处理 BUG-01/02/03/04/05/07/08/09/10/11，以及扫描扩展名与 change 一致性；保持现有模块、进程和数据库组织。具体任务与验收见 <a href="#roadmap">06</a>。</p>
+<h3 id="product-h7">后续候选：任务操作与可诊断性</h3>
+<p>F-01、F-02、F-09、F-12、F-19，可在第一阶段修复完成后按需求排序。这些项目解决“误下载、重启找不到任务、歌单移动不完整、歌曲扫描缺失、版本分不清”。</p>
+<h3 id="product-h8">然后提升响应与连续播放</h3>
+<p>F-05、F-15、F-18，以及歌词/进度订阅和封面缓存。修正状态和请求归属后，才适合增加预取，否则提前发更多请求会放大竞态。</p>
+<h3 id="product-h9">最后按需求增强音频</h3>
+<p>F-06～F-08 涉及输出和音频引擎。独占模式可能占用设备，不能设为所有用户默认；换成原生引擎也需保留 HLS、认证 headers、代理和插件返回音源的兼容性。</p>
+<h2 id="product-h10">5. 不应直接成立的性能结论</h2>
+<ul><li>“Electron 一定比某个原生播放器慢”：需要同机器、同库规模和同场景数据。</li><li>“Tauri 包小，所以内存一定更低”：WebView2、插件宿主和音频侧进程也要计入。</li><li>“C++/Rust 重写会解决卡顿”：全量读取、重复状态广播、封面复制和错误的并发顺序仍可能存在。</li><li>“独占输出一定更好听”：需要设备、格式和音频处理链支持，不是界面流畅度指标。</li></ul>
+<p>本项目应以实际交互延迟、资源使用与播放成功率决定投资顺序。Electron 官方同样强调先分析和测量瓶颈。<a href="https://www.electronjs.org/docs/latest/tutorial/performance">Electron 性能指南</a></p></article><article id="audit" class="chapter" hidden><h1 id="audit-h1">04 · Bug、风险与代码优化清单</h1>
+<p><a href="#guide">返回目录</a></p>
+<p>最近 28 个 Brraida 提交的独立审查见 <a href="#commit-review">08 · 提交审查（2026-10-04）</a>；以下保留较早基线的问题编号和修复历史。</p>
+<h2 id="audit-h2">1. 范围与结论等级</h2>
+<p>审阅基线 <code>6bb1e21</code>；历史整理后的等价基线为 <code>5c2d332</code>。第一阶段修复已落在本地 <code>dev</code>，代码及测试说明提交为 <code>5806cdf</code>。审阅不是覆盖所有输入的完整审计，也没有测试每个插件。</p>
+<p><strong>原审阅：10 项隔离复现、3 项静态确认、3 项边界风险、3 项安全/支持风险。</strong> 隔离复现执行真实源码，但音频、子进程与数据库采用模拟；不把模拟结果写成实机播放故障率。当前回归测试已按正确行为验收。下面的历史复现脚本通过 <code>git show</code> 加载原基线源码，不在当前修复版本上断言 Bug 仍然存在。</p>
+<pre><code class="language-powershell">node docs/knowledge-base/evidence/audit-repro.cjs</code></pre>
+<p><a href="evidence/audit-repro.cjs">脚本</a> · <a href="evidence/audit-results.json">结果与环境</a>。脚本不操作应用 profile、不启动网络监听器、不修改音乐文件。</p>
+<h2 id="audit-h3">第一阶段修复状态（2026-10-03）</h2>
+<p><strong>BUG-01～13 已修复并验证，保留原有架构。</strong> 本轮还复现并修复了短损坏文件导致元数据库遗留文件句柄的问题，记为 BUG-14。“已验证”包含可控时序与指定 Windows 运行测试，不代表所有音源、音乐格式和设备均已验收。</p>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>修复提交</th><th>验证证据</th></tr></thead><tbody><tr><td>BUG-01/02</td><td>7490d9d、5ad9caa</td><td>播放/歌词请求序号，成功/失败、A → B → A、音质竞态和撤回、reset、过时的延迟跳歌</td></tr><tr><td>BUG-03/04</td><td>d4b110f</td><td>重启/停止/backoff；真实 Windows 子进程和 HTTP，loopback、会话令牌、非法输入、Range/认证、断流与存活</td></tr><tr><td>BUG-05/06/12、RISK-01</td><td>380e08a</td><td>注册后扫描并缓冲；1/100/10000 条隔离测试，真实 Chokidar + 100 文件增删改，大写后缀、无 stats、文件夹导入</td></tr><tr><td>BUG-07/08</td><td>9ddf16e</td><td>HLS/fetch/URL 生命周期；真实 HTMLAudio 认证 Blob WAV、播放/暂停/seek、URL 撤销、HLS 片段取消后播放普通 WAV</td></tr><tr><td>BUG-09</td><td>1170510</td><td>Store 提交后通知；故障订阅不阻止状态更新和其他订阅</td></tr><tr><td>BUG-10、CODE-09 部分</td><td>bdc5e2b</td><td>真实 IndexedDB：20 个并发重复添加、增删竞态、引用计数、收藏索引、清空/删除、失败回滚</td></tr><tr><td>BUG-11</td><td>b4754cd</td><td>六阶段错误信息、真实 React 首屏加载/失败/成功；日志错误不抑制诊断；整页重载重试</td></tr><tr><td>BUG-13</td><td>1429598</td><td>真实 HTTP：HLS MIME、伪装后缀、分块清单拒绝；真实媒体不因 m3u8 后缀误拒绝；原完整下载回归通过</td></tr><tr><td>BUG-14（新增）</td><td>380e08a</td><td>music-metadata 8 对不足 128 字节文件的标签探测可能在关闭 tokenizer 前抛错；小文件改用 Buffer 解析，真实 Windows 损坏文件可删除，正常文件沿用原路径</td></tr></tbody></table></div>
+<p>运行方法：<a href="../../scripts/tests/README.md">scripts/tests/README</a>。汇总证据：<a href="evidence/bugfix-results.json">bugfix-results.json</a>。Windows TypeScript 检查通过；Linux/macOS 本轮未运行验收，完整 HLS 离线下载仍未实现。</p>
+<p>以下问题表保留原基线的触发条件与修复建议，作为历史对照。RISK-02 已在本轮工作区实现并验证，详见第 10 章；RISK-03、SEC-01/02/03 和未覆盖的维护/性能优化仍保留为后续任务。第 08 章的 R1～R5 是另一审查范围，不能据此视为全部已解决。</p>
+<h2 id="audit-h4">2. 已隔离复现的问题</h2>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>优先级</th><th>问题与触发条件</th><th>源码位置</th><th>建议修复/验收</th></tr></thead><tbody><tr><td>BUG-01</td><td>P1</td><td>A 获取音源未完成时播放 B；A 随后失败，catch 无条件 reset 音频控制器，影响 B</td><td><a href="../../src/renderer/core/track-player/index.ts#L366">track-player:366</a></td><td>请求序号覆盖成功与失败；A 晚失败不能重置 B</td></tr><tr><td>BUG-02</td><td>P1</td><td>A 歌词请求晚失败，catch 无条件设空歌词，清掉已加载的 B 歌词</td><td><a href="../../src/renderer/core/track-player/index.ts#L660">track-player:660</a></td><td>歌词请求序号；错误仅作用于所属请求</td></tr><tr><td>BUG-03</td><td>P1</td><td>转发子进程退出后定时调用 start，但 started 保持 true，start 提前返回</td><td><a href="../../src/shared/service-manager/main.ts#L29">service-manager:29</a></td><td>明确 starting/running/backoff/stopped；清句柄、去重定时器、恢复 host</td></tr><tr><td>BUG-04</td><td>P0</td><td>转发服务没有显式 loopback bind；无效目标 URL 在回调内抛出未捕获异常</td><td><a href="../../res/.service/request-forwarder.js#L10">request-forwarder:10</a>、<a href="../../res/.service/request-forwarder.js#L95">listen:95</a></td><td>仅监听 loopback；URL/协议/目标权限校验；非法请求返回 400，服务存活</td></tr><tr><td>BUG-05</td><td>P1</td><td>watcher 已开始扫描，回调尚未注册；防抖 flush 清队列后 <code>_onAdd?.</code> 没有接收者，丢掉批次</td><td><a href="../../src/renderer/core/local-music/index.ts#L45">local-music:45</a>、<a href="../../src/webworkers/local-file-watcher.ts#L52">watcher:52</a></td><td>先注册接收者或握手缓冲；初始 1/100/10000 文件都不漏</td></tr><tr><td>BUG-06</td><td>P2</td><td><code>song.MP3</code> 等大写后缀无法通过 <code>endsWith</code></td><td><a href="../../src/webworkers/local-file-watcher.ts#L27">watcher:27</a>、<a href="../../src/common/file-util.ts#L111">file-util:111</a></td><td>扩展名规范化；拖入和扫描使用同一规则</td></tr><tr><td>BUG-07</td><td>P1</td><td>HLS → 普通 MP3 时旧 Hls 仍 attach；销毁只出现在 destroy 路径</td><td><a href="../../src/renderer/core/track-player/controller/audio-controller.ts#L97">audio-controller:97</a>、<a href="../../src/renderer/core/track-player/controller/audio-controller.ts#L248">切源:248</a></td><td>切源/重置清 HLS；实际分片网络、旧错误与新轨道互不干扰</td></tr><tr><td>BUG-08</td><td>P1</td><td>转发不可用且 URL 含认证时，Blob fallback 用原 headers，丢生成的 Authorization；异步设 src 后没有恢复此前 play 意图，也未释放 Object URL</td><td><a href="../../src/renderer/core/track-player/controller/audio-controller.ts#L215">audio-controller:215</a>、<a href="../../src/renderer/core/track-player/controller/audio-controller.ts#L257">fallback:257</a></td><td>使用最终 headers；检查响应、取消/异常、保持播放意图并释放 URL</td></tr><tr><td>BUG-09</td><td>P1</td><td>Store 的 onValueChange 订阅者抛错，在 value 更新前中断 setValue</td><td><a href="../../src/common/store.ts#L54">store:54</a></td><td>明确提交与通知阶段；隔离订阅异常，其他订阅和数据更新仍成功</td></tr><tr><td>BUG-10</td><td>P1</td><td>向原来不含 A 的歌单传 <code>[A,A]</code>，过滤只比对旧歌单，产生两个相同引用</td><td><a href="../../src/renderer/core/music-sheet/backend/index.ts#L276">backend:276</a></td><td>按歌曲键去重，在事务内以最新状态判重；验证引用计数和删除</td></tr></tbody></table></div>
+<h3 id="audit-h5">BUG-01 / BUG-02：修复应涵盖 A → B → A</h3>
+<p>当前成功分支已比较歌曲是否仍为当前歌曲，但失败分支没有同等保护。即便补上歌曲键判断，相同歌曲的两次请求仍可能乱序。建议分别给播放与歌词请求分配递增序号/取消控制器，只有匹配当前序号才能提交任何状态。</p>
+<p>实验已验证旧 A 失败会调用 reset、旧 A 歌词失败会把新歌词 parser 清掉。真实网络慢响应、音质切换和 Windows 输出表现仍需端到端验收。</p>
+<h3 id="audit-h6">BUG-04：监听范围与实际暴露要分开判断</h3>
+<p>实验验证 <code>server.listen</code> 只传端口与回调；按 Node API 语义，省略 host 不限制为 127.0.0.1。当前服务也没有会话认证，允许跨源响应和可配置目标。是否能从局域网访问，还取决于 Windows 防火墙、地址和网络环境，本轮没有探测真实可达性。<a href="https://nodejs.org/api/net.html#serverlistenport-host-backlog-callback">Node listen 说明</a></p>
+<p>loopback 限制也不能单独完成授权，应使用会话令牌或仅接受已登记的短期音源票据；对必要的本地/NAS 音源使用明确授权，避免粗暴封禁全部内网地址而破坏合法使用。</p>
+<h3 id="audit-h7">BUG-07 / BUG-08：音源生命周期要完整</h3>
+<p>隔离实验确认 HLS 实例未销毁和 Blob 分支的三个行为缺口；未测量真实 HLS 是否在某个版本必然覆盖新 src、长期内存具体增加多少。建议用本地 HLS 服务、连续切歌、转发服务故障和内存快照验证实际后果。</p>
+<p>Blob 分支只在对应 fallback 条件成立时触发；转发服务正常时不能推定每首带 headers 的歌都有此问题。</p>
+<h2 id="audit-h8">3. 静态确认的问题</h2>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>优先级</th><th>证据与问题</th><th>改进和验收</th></tr></thead><tbody><tr><td>BUG-11</td><td>P1</td><td><a href="../../src/renderer/document/index.tsx#L25">React 入口:25</a>仅 <code>bootstrap().then(...)</code>；ErrorBoundary 在成功后才挂载，初始化拒绝无法进入该 UI 边界</td><td>首屏先挂载；各初始化阶段显示失败/重试；注入数据库或路径错误仍可诊断</td></tr><tr><td>BUG-12</td><td>P2</td><td><a href="../../src/webworkers/local-file-watcher.ts">watcher</a>只监听 add/unlink，没有 change，标签或封面修改不会触发更新</td><td>change 合并成受限批次；删除/修改/重命名相互不冲突</td></tr><tr><td>BUG-13</td><td>P1</td><td><a href="../../src/webworkers/downloader.ts">下载 Worker</a>按普通 HTTP 响应保存，不解析 m3u8 分片；非空清单也可能返回 DONE</td><td>识别 HLS 清单，未支持时明确拒绝歌曲下载；实现后必须能断网离线播放</td></tr></tbody></table></div>
+<p>BUG-13 是“完整歌曲下载”的语义缺口；某些 URL 仍可能返回真正媒体，应以响应内容和源能力判断，不仅看扩展名。没有做完整 Windows HLS 下载实测。</p>
+<h2 id="audit-h9">4. 需要实测的边界风险</h2>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>优先级</th><th>风险、证据与适用边界</th><th>应补验证</th></tr></thead><tbody><tr><td>RISK-01</td><td>P2 · 已处理</td><td>原 watcher 未处理 stats 缺失</td><td>已设置 alwaysStat，缺失时安全 stat，Windows 回归通过；网络盘兼容性仍待额外实测</td></tr><tr><td>RISK-02</td><td>P2 · 本轮已验证</td><td>历史基线：外部删除/移动后当前会话图标可能仍为完成</td><td>已实现监听、补偿核对、身份匹配恢复和播放回退；见 <a href="#download-file-state">10 当前实现</a>与 <a href="evidence/download-file-sync-results.json">回归结果</a>；未覆盖设备边界保留</td></tr><tr><td>RISK-03</td><td>P1</td><td><a href="../../src/renderer/core/backup-resume/index.ts">备份恢复</a>依赖多次业务调用，而部分 backend 错误会被吞掉；覆盖模式可能在未完整导入时删除旧歌单</td><td>用独立库注入导入失败；先校验备份 schema、试运行和可回滚，再提交覆盖</td></tr></tbody></table></div>
+<h2 id="audit-h10">5. 安全与运行时支持风险</h2>
+<p>此处只报告可见边界和支持状态；没有完成漏洞利用测试或依赖 CVE 扫描。</p>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>优先级</th><th>当前证据</th><th>建议</th></tr></thead><tbody><tr><td>SEC-01</td><td>P0</td><td><a href="../../src/main/window-manager/index.ts#L101">主窗口配置:101</a>开启 Node/Worker Node、关闭 webSecurity/sandbox，主题 <a href="../../src/shared/themepack/preload.ts">preload</a>创建无显式 sandbox 的 iframe</td><td>先迁移文件/网络能力到受控桥接，再开启安全默认；限制导航、新窗口、主题权限和 IPC sender/schema</td></tr><tr><td>SEC-02</td><td>P0</td><td><a href="../../src/shared/plugin-manager/main/plugin.ts#L113">插件执行:113</a>使用 Function，代码在主进程执行；require 白名单不隔离 globalThis 等全局能力</td><td>明确插件信任模型、安装来源和权限；移到可终止宿主，限制桥接。普通子进程也不是 OS 沙箱</td></tr><tr><td>SEC-03</td><td>P0</td><td><a href="../../package.json">依赖</a>仍在 Electron 25 系列；官方时间表显示该系列已于 2023-12-05 结束支持</td><td>升级到发布时仍受支持的稳定系列；重建原生模块并回归插件、HLS、设备、主题和窗口</td></tr></tbody></table></div>
+<p><strong>准确性说明：</strong> window 配置没有显式设置 <code>contextIsolation: false</code>，不能把它描述成已关闭。风险来自上述明确配置和代码执行/桥接范围。安全模式调整需要迁移依赖，直接删配置可能使 Worker、插件和文件功能失效。</p>
+<p>官方依据：<a href="https://www.electronjs.org/docs/latest/tutorial/security">Electron 安全指南</a>、<a href="https://releases.electronjs.org/schedule">版本时间表</a>。</p>
+<h2 id="audit-h11">6. 可维护性与性能优化清单</h2>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>优先级</th><th>观察</th><th>建议与验收</th></tr></thead><tbody><tr><td>CODE-01</td><td>P1</td><td><a href="../../src/shared/app-config/main.ts#L217">AppConfig:217</a>同步整文件写入，没有临时文件替换；写失败时内存状态已改</td><td>串行异步保存、原子替换、错误结果回传；模拟写失败/退出不生成坏 JSON</td></tr><tr><td>CODE-02</td><td>P2</td><td><a href="../../src/renderer/core/local-music/index.ts">本地库</a>每批重读 toArray；封面 <a href="../../src/common/file-util.ts#L77">base64</a>随歌曲对象复制</td><td>增量索引、分页/过滤、缩略图缓存、受限扫描并发；衡量 1万/5万首的耗时与内存</td></tr><tr><td>CODE-03</td><td>P2</td><td><a href="../../src/renderer/core/track-player/index.ts#L743">进度:743</a>每次写 localStorage；多窗口进度另以 800ms 节流</td><td>分离音频时钟、视觉插值和持久化；暂停/退出时补存；实际响应收益待测</td></tr><tr><td>CODE-04</td><td>P2</td><td><a href="../../src/common/store.ts">Store</a>使用 useState/useEffect 订阅，没有 useSyncExternalStore 快照协议</td><td>增量迁移并增加 selector；验证订阅间隙更新和 React 并发下的一致性</td></tr><tr><td>CODE-05</td><td>P2</td><td>活跃 frontend 名为 index.old，旁边又有多份 SQLite/下载备用实现</td><td>标明 active/legacy/experimental；查依赖后归档，统一 Repository 接口</td></tr><tr><td>CODE-06</td><td>P1</td><td><a href="../../package.json">提交配置</a>的 lint-staged 运行全 src <code>--fix</code> 和 <code>git add .</code></td><td>限定暂存文件，lint 检查和格式化分开；提交不改/带入无关文件</td></tr><tr><td>CODE-07</td><td>P2</td><td><a href="../../.github/workflows/build.yml">CI</a>用 npm install、旧 Node，缺显式下载回归 gate</td><td>锁定可复现安装与版本矩阵；Windows smoke、核心回归和构建产物检查</td></tr><tr><td>CODE-08</td><td>P2</td><td><a href="../../src/hooks/useVirtualList.ts">虚拟列表</a>闭包初始化一次、没有 ResizeObserver，固定渲染数和高度</td><td>用稳定参数引用、布局变化通知和 overscan；DPI/工具栏/容器变化验证</td></tr><tr><td>CODE-09</td><td>P1 · 部分处理</td><td>添加/删除/清空已改为事务内读取与更新、提交后同步缓存，错误向调用方传播；其他后台方法和 frontend 仍有吞错路径</td><td>增删与回滚已验证；其余错误契约和备份恢复仍属后续任务</td></tr></tbody></table></div>
+<p>这些条目中，同步写入、全量读和备用代码属于可确认实现事实；卡顿幅度、崩溃概率及迁移收益尚未测量。</p>
+<h2 id="audit-h12">7. 本轮不再作为未修复问题的内容</h2>
+<ul><li>批量下载、复选框选择、选中歌曲添加歌单：已实现。</li><li>缺少全局暂停/继续：已补齐。</li><li>文件成功但下载记录函数返回值不正确、并发索引遗漏、成功记录仍保留失败状态：已在基线中修复。</li><li>部分文件/HTTP 错误、同名覆盖、暂停和记录补存：已有 <a href="../../scripts/tests/README.md">下载回归</a>。</li></ul>
+<p>本轮清单以当前基线为准，不重复把已修问题算入未完成数量。建议的修复顺序见 <a href="#roadmap">06</a>。</p></article><article id="architecture" class="chapter" hidden><h1 id="architecture-h1">05 · Windows 架构与语言选型</h1>
+<p><a href="#guide">返回目录</a></p>
+<blockquote>本章为后续选型参考。当前决定是第一阶段保留现有架构，先修复与验证；以下目录分层、进程拆分、音频引擎和数据库迁移均不属于第一阶段任务。</blockquote>
+<h2 id="architecture-h2">1. 是否有必要针对 Windows 重构？</h2>
+<p><strong>第一阶段无需先重构架构。</strong> 切歌竞态、服务恢复、扫描回调和提交/通知可以先在当前模块内修复。保留现有调用链，补上请求序号、生命周期检查、资源清理和回归测试，随后测量剩余瓶颈。</p>
+<p>后续是否重构 Windows 平台层或播放/任务架构，再由明确的能力需求与测量结果决定。使用另一语言仍需要相同的正确性设计。</p>
+<p>是否全面改成 Windows 原生产品，取决于三个决定：是否放弃 macOS/Linux、是否要求专业音频输出、团队是否能长期维护新的 UI 和音频技术。当前仓库已经跨平台，因此“Windows 专用”应被视为未来产品选择。</p>
+<h2 id="architecture-h3">2. 已有 Windows 能力与应补的平台层</h2>
+<div class="table-wrap"><table><thead><tr><th>能力</th><th>已有实现</th><th>后续可评估方向</th></tr></thead><tbody><tr><td>托盘、全局快捷键</td><td>main/tray-manager、shared/short-cut</td><td>统一生命周期与命令来源</td></tr><tr><td>任务栏缩略图控制</td><td>thumb-bar-util 与 <code>.node</code> 模块</td><td>Win32 句柄、架构、ABI 和窗口重建归属平台适配器</td></tr><tr><td>系统媒体信息</td><td>HTMLAudio + Media Session</td><td>验证完整媒体键/状态/进度；必要时增加原生 SMTC 适配</td></tr><tr><td>无边框窗口/桌面歌词</td><td>window-manager、window-drag</td><td>DPI、焦点、穿透、置顶、多显示器等用专门适配器处理</td></tr><tr><td>便携模式</td><td>main/index 的 portable 分支</td><td>数据目录统一查询，关于页可见，迁移与备份可诊断</td></tr><tr><td>音频设备选择</td><td>HTMLAudio.setSinkId</td><td>输出设备变化、默认设备迁移与恢复；原生输出按需求新增</td></tr></tbody></table></div>
+<p>SMTC 与任务栏缩略图控制是两套能力；不能以已有任务栏按钮证明完整系统控制已通过。Microsoft 文档提供状态、元数据、时间线和控制事件的集成方式。<a href="https://learn.microsoft.com/en-us/windows/apps/develop/media-playback/system-media-transport-controls">SMTC 文档</a></p>
+<h2 id="architecture-h4">3. 四条路线的取舍</h2>
+<div class="table-wrap"><table><thead><tr><th>路线</th><th>保留什么</th><th>必须重做什么</th><th>适合的前提</th><th>主要风险</th></tr></thead><tbody><tr><td>A：优化 Electron + TS/React</td><td>界面、主题、插件协议、大部分业务</td><td>请求状态、后台任务归属、桥接、平台层、受支持运行时</td><td>希望连续迭代、保留现有生态</td><td>Chromium 资源底座仍在；业务边界若不改变收益有限</td></tr><tr><td>B：Electron 界面 + 原生音频侧核心</td><td>A 的兼容性和 UI</td><td>AudioEngine 实现、控制协议、设备/缓冲/DSP</td><td>需要更可靠后台播放或 WASAPI 等能力</td><td>多进程协议、原生库发布和调试成本</td></tr><tr><td>C：Tauri + Rust + React</td><td>可复用不少页面/样式与业务设计</td><td>Electron API、Node 插件宿主、文件/网络桥接、IPC、系统适配</td><td>跨平台且愿意维护 Rust 与 WebView 差异</td><td>现有 JS 插件需要完整兼容层；WebView 与侧进程需计入资源</td></tr><tr><td>D：C# + WinUI 3 + 可替换音频引擎</td><td>协议、数据模型、产品流程</td><td>UI、宿主、业务实现、插件兼容、迁移、主题体系</td><td>明确只面向现代 Windows，重视原生交互</td><td>重写范围大；新 UI 不自动获得 gapless/DSP/插件兼容</td></tr></tbody></table></div>
+<p><strong>当前先保留现有 Electron/TS/React 实现，只做必要修复。</strong> 表中的 A 也包含较大的职责调整，不能把整条路线当作第一阶段必须完成的任务。</p>
+<p>结合维护者的 C/C++ 背景，若以后确实需要原生输出、解码或系统能力，可优先验证 B 中的小型 C/C++ 核心并保留界面和 JS 插件。D 需要学习新的 UI/业务技术，仅在确定 Windows 专用产品方向后作为候选；C 在有跨平台/Web UI 需求时评估。尚未选择全面重写方案。</p>
+<p>依据：Tauri 允许 Web 前端结合 Rust，Windows 使用 WebView2；WinUI 3 提供 C#/C++ 与 XAML，官方支持 Windows 10 1809 及之后系统。<a href="https://v2.tauri.app/start/">Tauri 架构</a>、<a href="https://v2.tauri.app/reference/webview-versions/">WebView 版本</a>、<a href="https://learn.microsoft.com/en-us/windows/apps/winui/winui3/">WinUI 3</a></p>
+<h3 id="architecture-h5">关于 C++ 与 Rust</h3>
+<ul><li><strong>C/C++</strong> 是当前维护者最熟悉的语言，适合未来的原生适配器、音频核心和已有库集成。全 UI 改写仍涉及桌面 UI、JS 插件协议、跨平台发布与迁移；语言熟悉能降低学习成本，但不缩小需要重新验证的产品范围。</li><li><strong>Rust</strong> 适合下载、索引、解析和原生核心，但学习和 FFI/Windows API 集成仍有成本。将原生部分控制在清晰接口后比全仓库迁移容易验收。</li><li><strong>C#</strong> 适合 Windows 桌面应用与业务维护。它仍须处理异步竞态、UI 线程、资源生命周期和音频缓冲；不能把语言名称当作性能保证。</li></ul>
+<h2 id="architecture-h6">4. 后续可评估的目标架构</h2>
+<figure class="diagram" id="architecture-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart TB
+    UI[&quot;Presentation：React / 可选其他 UI&quot;] --&gt; API[&quot;受控桥接：命令 / 快照 / 事件&quot;]
+    API --&gt; UseCases[&quot;Application：播放 / 下载 / 歌单用例&quot;]
+    UseCases --&gt; Domain[&quot;Domain：身份 / 请求序号 / 状态规则&quot;]
+    UseCases --&gt; Ports[&quot;AudioEngine / Repository / PluginHost 接口&quot;]
+    Ports --&gt; Audio[&quot;HTMLAudio / 可选 C/C++ 音频实现&quot;]
+    Ports --&gt; Storage[&quot;当前 Dexie / 可选后续数据库&quot;]
+    Ports --&gt; Plugins[&quot;JS 插件兼容宿主&quot;]
+    API --&gt; Platform[&quot;平台适配：Windows / macOS / Linux&quot;]</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>这是<strong>后续方案图</strong>，不代表仓库已按此改造。图中节点表示代码职责和接口关系，不是进程部署图；是否拆成进程需另行决定。Domain/Application 也不能简单全部放到 main 主线程。</p>
+<h3 id="architecture-h7">职责划分</h3>
+<div class="table-wrap"><table><thead><tr><th>层</th><th>职责</th><th>禁止形成的依赖</th></tr></thead><tbody><tr><td>Presentation</td><td>React 页面、歌词显示、选择/焦点、视觉插值</td><td>直接访问文件、执行插件、写数据库</td></tr><tr><td>Application</td><td>Play/Pause、Download、MoveToSheet、ImportBackup 等用例</td><td>依赖具体页面、DOM 或 Win32 句柄</td></tr><tr><td>Domain</td><td>歌曲身份、队列规则、任务状态、请求序号、错误结果</td><td>Electron、IndexedDB、HTMLAudio 的具体实现</td></tr><tr><td>Infrastructure</td><td>Repository、下载网络、索引、音频引擎、插件宿主</td><td>反向调用任意 UI 逻辑</td></tr><tr><td>Windows Adapter</td><td>SMTC、任务栏、窗口、设备、电源恢复、便携目录</td><td>把平台判断散布到歌单/下载用例</td></tr></tbody></table></div>
+<p>后续方案的示例目录（第一阶段保持原目录）：</p>
+<pre><code class="language-text">src/
+  domain/            # media identity, playback session, download states
+  application/       # use cases + ports
+  presentation/      # React components and view models
+  infrastructure/
+    audio/            # HTMLAudioEngine / optional NativeAudioEngine
+    storage/          # IndexedDB repositories / optional SQLite
+    download/         # durable tasks + transport
+    plugins/          # compatibility adapter + host protocol
+  platform/          # windows / macos / linux adapters
+    windows/          # taskbar, SMTC, windows, devices
+  host/               # Electron composition + validated IPC</code></pre>
+<p>目录不是目标本身；验收依据是可替换实现、独立测试和明确状态归属。小型模块不必强行增加五层转发。</p>
+<h3 id="architecture-h8">播放控制契约示例</h3>
+<pre><code class="language-ts">interface AudioEngine {
+  load(source: ResolvedSource, options: { requestId: number; signal: AbortSignal }): Promise&lt;void&gt;;
+  play(): Promise&lt;void&gt;;
+  pause(): void;
+  seek(seconds: number): Promise&lt;void&gt;;
+  selectDevice(deviceId: string): Promise&lt;void&gt;;
+  dispose(): Promise&lt;void&gt;;
+}</code></pre>
+<p>示例为后续设计契约，未新增代码。还需事件订阅/释放、快照、buffering/ended/error、能力枚举、音量/速度和预加载约定。当前已有 <a href="../../src/types/audio-controller.d.ts">IAudioController</a>，后续评估时可从它入手；第一阶段不要求替换接口体系。</p>
+<p>状态事件建议带 <code>requestId</code>、递增 <code>revision</code> 和结构化错误；跨进程只有歌曲键不足以区分快速重播。读取快照和订阅更新应有一致顺序，避免 UI 读到互相冲突的状态。</p>
+<h2 id="architecture-h9">5. 后台播放与插件进程怎么安排？</h2>
+<h3 id="architecture-h10">音频</h3>
+<p>先用现有 HTMLAudioEngine 校准基线。若只是避免界面重建影响控制，可验证独立播放 renderer；它仍有浏览器进程成本。若需要专业音频能力，再验证原生音频侧进程或模块。Electron utilityProcess 提供 Node 子进程能力，但不是 HTMLAudio 播放环境。<a href="https://www.electronjs.org/docs/latest/api/utility-process">utilityProcess API</a></p>
+<p>原生侧应负责解码、缓冲、设备输出和曲目调度；界面接收节流快照并本地插值。UI 卡顿时不能靠不断提高 IPC 频率补救。</p>
+<h3 id="architecture-h11">插件</h3>
+<p>现有插件依赖 JavaScript、axios、cheerio、webdav、storage 和环境约定。Tauri 或 C# 不会自动提供相同 Node 环境。可选：</p>
+<ol><li>保留受控 Node 插件宿主，尽量兼容现有接口。</li><li>引入另一个 JS 运行时，但必须实现网络、包、异步、存储和用户变量兼容层。</li><li>使用新插件协议并制作迁移工具，接受生态兼容成本。</li></ol>
+<p>普通子进程主要提供崩溃/阻塞隔离。它仍可能继承用户权限；真正的权限限制需要独立的权限设计和系统边界验证。插件宿主至少应支持超时、取消、终止、并发上限、响应 schema 校验和脱敏日志。</p>
+<h2 id="architecture-h12">6. 音频能力的选型边界</h2>
+<div class="table-wrap"><table><thead><tr><th>候选</th><th>可以验证的方向</th><th>不能直接保证</th></tr></thead><tbody><tr><td>Windows MediaPlayer / Media Foundation</td><td>常见格式与 Windows 媒体控制集成</td><td>所有插件音源、gapless、特殊格式或独占输出都自动支持</td></tr><tr><td>.NET 音频库，例如 NAudio</td><td>C# 下的设备与 WASAPI 等集成</td><td>完整播放器引擎、全格式解码和无缝调度已现成完成</td></tr><tr><td>Rust/C++ 的原生音频核心</td><td>输出模式、缓冲、预解码、DSP 的可控性</td><td>低成本迁移、各设备天然稳定</td></tr></tbody></table></div>
+<p>WASAPI 有共享和独占模式，选择涉及设备占用和格式支持。NAudio 官方提供 .NET 音频基础能力，仍需构建播放器调度。<a href="https://learn.microsoft.com/en-us/windows/win32/coreaudio/wasapi">WASAPI</a>、<a href="https://github.com/naudio/NAudio">NAudio</a></p>
+<p>下载、播放和解码应共享“已解析音源”模型，明确 URL 有效期、认证 headers、代理、HLS 类型与取消能力；原生库的分发与授权约束应在选定依赖后核查。</p>
+<h2 id="architecture-h13">7. 数据库要不要一起换 SQLite？</h2>
+<p>如果目标是长期后台任务、大型本地库和多宿主共用数据，SQLite + 单一写入服务值得验证。若只是修复当前 Bug，保留 Dexie 更容易保证兼容。现有 SQLite 备用代码不应直接启用成主库。</p>
+<p>迁移至少包含：</p>
+<ol><li>从当前业务 API 导出版本化 JSON；保留歌曲键、歌单次序、偏好、下载路径与歌词关联。</li><li>对歌单引用重新计算，而非无条件沿用可能不一致的 <code>$$ref</code>。</li><li>建立规范表：tracks、playlists、playlist_tracks、download_records、download_jobs、preferences、schema_migrations。</li><li>在临时新库导入并核对数量、次序、关联与文件存在；成功后切换，不破坏原 profile。</li><li>记录迁移版本与可回滚状态；对重复项、损坏备份、权限失败、磁盘满和旧便携目录测试。</li></ol>
+<h2 id="architecture-h14">8. 重写前的决策门槛</h2>
+<ul><li>A 路线优化后，在约定机器和数据规模上仍不能达到响应/资源目标。</li><li>D 原型完成播放、HLS/headers、搜索插件、歌词窗口、系统控制和数据导入的关键链路。</li><li>C 原型测量包括 WebView2、Node 插件宿主和音频侧进程的总资源。</li><li>新旧架构在同数据、同插件和同设备条件下比较，保留失败场景与迁移成本。</li><li>选定是否继续支持 legacy Windows；WinUI 3 不替代当前 Win7/8 分支。</li></ul>
+<p>满足这些条件后再决定长期路线，能够使语言/架构选择有实际证据。</p></article><article id="roadmap" class="chapter" hidden><h1 id="roadmap-h1">06 · 实施路线与性能验收</h1>
+<p><a href="#guide">返回目录</a></p>
+<h2 id="roadmap-h2">1. 推进顺序</h2>
+<figure class="diagram" id="roadmap-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart TB
+    subgraph Phase1[&quot;第一阶段：保留现有架构&quot;]
+        G0[&quot;G0：核对基线 / 平台 / 测试环境&quot;] --&gt; G1[&quot;G1：修复已识别问题 / 补回归&quot;]
+        G1 --&gt; Baseline[&quot;建立正确性与性能对照&quot;]
+    end
+    Baseline --&gt; G2[&quot;后续 G2：按需求补任务与交互功能&quot;]
+    G2 --&gt; G3[&quot;后续 G3：测量并做局部性能优化&quot;]
+    G3 --&gt; Gate{&quot;现有实现是否仍有明确能力或性能缺口？&quot;}
+    Gate --&gt;|没有| Keep[&quot;继续维护现有实现&quot;]
+    Gate --&gt;|有且愿意投入| G4[&quot;可选 G4：架构 / 原生能力原型&quot;]</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>阶段表示先后依赖，不是已确定工期。建议以小范围、可回滚的提交推进，每阶段保留上一版本的数据兼容与核心回归。</p>
+<p><strong>已确定的方向：第一阶段不重构。</strong> 保持现有语言、框架、目录、进程布局和数据库，在原模块中完成必要修复与针对性回归。G2～G4 是后续候选，尤其 G4 没有启动承诺。</p>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>工作包</th><th>完成门槛</th></tr></thead><tbody><tr><td>G0 · 第一阶段准备</td><td>核对构建与实际运行版本、三平台范围、独立测试目录；记录 SEC-01/02/03 的当前边界与升级需求</td><td>有可复现基线；清楚已验证与未验证的范围</td></tr><tr><td>G1 · 第一阶段修复</td><td>BUG-01～12 按下述任务卡分批处理；BUG-13 先识别并明确拒绝不支持的 HLS 下载</td><td>旧结果不影响新请求；服务/扫描正常；状态、文件、记录一致；已有下载回归通过</td></tr><tr><td>G2 · 后续功能候选</td><td>F-01/02/09/19 等按实际需求排序；优先沿用原模块</td><td>下载可取消/恢复；移动不丢引用；版本和运行路径可识别</td></tr><tr><td>G3 · 后续响应与资源</td><td>F-05/15/18；按测量处理 CODE-01～04、08，选取可以局部实施的改进</td><td>有基线与同场景改善证据；正确性不回退</td></tr><tr><td>G4 · 可选架构/原生原型</td><td>单独决策分层、宿主、音频或数据库方案；先验证与 C/C++ 经验相符的小范围实现</td><td>兼容、迁移和维护成本可接受，资源与体验有实测收益</td></tr></tbody></table></div>
+<p>第一阶段中的接口修改仅服务于具体修复，如请求序号、watcher 回调顺序、错误结果或服务句柄清理；不以新增 Domain/Application/Repository 层为验收要求。</p>
+<p>第一阶段 G1 的 BUG-01～13 已在 <code>dev</code> 修复，并补修 BUG-14；对应提交和 Windows 回归证据见 <a href="#audit">04 状态表</a>。当前架构保留。G1 的正确性验证已经完成，性能对照、全插件/设备兼容性和 Linux/macOS 实机验收仍应按各自范围开展。</p>
+<h3 id="roadmap-h3">本轮完成项</h3>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>状态与统一入口</th><th>下一步边界</th></tr></thead><tbody><tr><td>下载文件可用性同步（RISK-02）</td><td>当前工作区已实现；文件事件、补偿核对、安全搬迁恢复、任务隔离和本地打开失败回退均有回归；见 <a href="#download-file-state">10</a></td><td>用户 Windows 手测；Linux/macOS GUI、实际外接盘/网络盘仍需平台实测</td></tr></tbody></table></div>
+<p>以下任务卡保留第一阶段的历史拆分；新增下载同步的机制与验收只维护第 10 章，避免在路线图重复设计正文。</p>
+<p>SEC-01/02 的完整桥接与插件权限迁移仍需后续专门方案；SEC-03 需要运行时升级与兼容验证。此次修复没有完成这些迁移。</p>
+<h2 id="roadmap-h4">2. 建议的首批任务卡</h2>
+<ol><li><strong>播放与歌词请求序号</strong>：同时处理成功、失败、音质切换和 A → B → A；挂在 BUG-01/02。</li><li><strong>转发服务生命周期</strong>：重启标志、backoff、host 清理、非法 URL、loopback 与会话授权；挂在 BUG-03/04。</li><li><strong>扫描握手与增量更新</strong>：先接收后扫描；扩展名统一，处理 change；挂在 BUG-05/06/12。</li><li><strong>音源资源释放</strong>：HLS、fetch 取消、Object URL、play 意图；挂在 BUG-07/08。</li><li><strong>提交/通知结果规范化</strong>：Store 和 Repository 错误契约，事务内去重；挂在 BUG-09/10、CODE-09。</li><li><strong>可诊断启动</strong>：当前启动链增加失败/重试反馈，避免 bootstrap 拒绝后无诊断首屏；挂在 BUG-11。完整构建标识页面 F-19 可另排后续功能。</li><li><strong>HLS 下载能力边界</strong>：识别清单，明确拒绝尚未支持的完整歌曲下载；挂在 BUG-13。分片、加密、合并等完整支持 F-04 不属于首批任务。</li></ol>
+<p>每张卡都包含：重现输入、现状断言、修复断言、影响模块、失败分支、数据兼容和回滚方法。仓库现有的下载回归作为持续保护，修复不得使它退化。完成单项修复后把审阅脚本的“问题存在”断言转换为相应回归断言。</p>
+<h2 id="roadmap-h5">3. “更丝滑”的可测定义</h2>
+<p>以下为<strong>建议验收目标，尚未测得，也不承诺所有设备都可达到</strong>。先建立本机基线，再按最低支持设备调整。</p>
+<div class="table-wrap"><table><thead><tr><th>指标</th><th>如何测量</th><th>建议目标/判定</th></tr></thead><tbody><tr><td>点击反馈</td><td>用户操作至视觉状态变化；本地操作和网络等待分开</td><td>本地反馈 P95 ≤ 100ms；网络任务立即显示进度</td></tr><tr><td>列表流畅度</td><td>60Hz 下滚动录制；统计长帧和主线程长任务</td><td>大多数帧 ≤ 16.7ms；长任务 &gt;50ms 的来源可解释并减少</td></tr><tr><td>冷启动可交互</td><td>从启动 exe 到可以操作首屏；冷/热分开</td><td>首轮参考 P95 ≤ 3s；旧机器需依据基线校准</td></tr><tr><td>本地切歌</td><td>点击下一首至音频起声；固定本地文件</td><td>P95 ≤ 200ms 作为原型目标；不等同无缝播放</td></tr><tr><td>网络切歌</td><td>获取 URL、首字节、缓冲、起声分别计时</td><td>比较 P50/P95，并按服务器/网络分类，禁止把服务器等待归为 UI 慢</td></tr><tr><td>长时内存</td><td>全部相关进程私有内存与 JS heap，稳定暖机后循环切歌</td><td>100次切歌/30分钟后不持续单向增长；若设增长阈值须解释缓存</td></tr><tr><td>空闲资源</td><td>默认主题、播放、歌词、扫描、下载分别测 CPU/内存</td><td>与自身基线比较；不规定未经实测的绝对 MB 数</td></tr><tr><td>歌词同步</td><td>音频时钟、当前行与桌面歌词显示偏差</td><td>参考 ≤100ms；后台和设备切换单独验证</td></tr><tr><td>下载一致性</td><td>成功任务、文件、下载记录、列表状态核对</td><td>所有测试任务一致；真实失败不报成功</td></tr><tr><td>无缝播放</td><td>拼接测试音频波形，识别额外静音/重叠</td><td>仅对支持的格式承诺；编码 padding 与播放调度分别验证</td></tr></tbody></table></div>
+<p>P95 指 95% 的样本不超过该值。16.7ms 对应 60Hz，120Hz 应用自己的帧预算。第一阶段只建立可复现基线与比较方法；这些后续目标不作为要求立即换架构的理由。隔离实验不提供以上性能数值。</p>
+<h2 id="roadmap-h6">4. 统一测试场景</h2>
+<div class="table-wrap"><table><thead><tr><th>场景</th><th>数据/操作</th><th>核心观察</th></tr></thead><tbody><tr><td>普通使用</td><td>100首，本地和一个稳定插件，默认主题</td><td>冷启动、搜索、播放、暂停、歌词</td></tr><tr><td>大音乐库</td><td>1万首/5万首元数据；单独记录封面规模</td><td>过滤、排序、全选、导入、扫描增删改、内存</td></tr><tr><td>下载压力</td><td>100个任务；并发 1/5/20</td><td>排队/传输/保存/取消/暂停；401/404/超时/磁盘失败</td></tr><tr><td>快速操作</td><td>A → B、A → B → A，连续换音质和搜索</td><td>过时成功/错误不影响当前请求</td></tr><tr><td>混合源</td><td>MP3/FLAC/HLS、URL 认证、headers、代理</td><td>HLS 资源释放、Blob fallback、文件完整性</td></tr><tr><td>Windows 行为</td><td>托盘隐藏、歌词/迷你、媒体键、多显示器/DPI</td><td>状态一致、焦点、句柄、系统控制</td></tr><tr><td>设备与电源</td><td>USB/蓝牙拔插、默认设备切换、睡眠/唤醒</td><td>自动恢复/错误提示；不将蓝牙固有延迟归为 UI</td></tr><tr><td>异常数据</td><td>损坏备份、写入失败、重复歌曲、旧便携目录</td><td>原始库可恢复，失败回传准确</td></tr></tbody></table></div>
+<p>测试应使用独立数据目录和可控本地 HTTP/HLS 服务；不要在正常音乐库上做覆盖恢复、磁盘失败或大量删文件测试。</p>
+<h2 id="roadmap-h7">5. 工具与记录模板</h2>
+<ul><li>Electron/Chrome DevTools：Performance、React 重渲染、Heap Snapshot、网络时序。</li><li>Windows 任务管理器/Performance Monitor：按进程记录 CPU、私有工作集与 I/O；复杂问题再用系统性能追踪。</li><li>主进程和 Worker 日志：请求序号、阶段耗时、任务/插件标识；认证 headers、URL 凭据和用户变量必须脱敏。</li><li>音频能力验证：固定测试文件、设备、采样率和输出模式；记录波形/回环测量条件，避免只凭听感给精确延迟。</li></ul>
+<p>建议记录字段：</p>
+<pre><code class="language-text">commit / build-id / executable-path
+Windows version / CPU / RAM / storage / GPU / audio device
+Electron or WebView / plugin set / theme / output mode
+dataset size / cover size / cold-or-warm / network conditions
+scenario / sample count / P50 / P95 / process memory / CPU
+failure cases / trace files / comparison build / conclusion</code></pre>
+<p>Electron 官方建议先定位实际资源消耗，再持续优化。本计划的测量顺序与此一致。<a href="https://www.electronjs.org/docs/latest/tutorial/performance">性能指南</a></p>
+<h2 id="roadmap-h8">6. 后续若启动原型，如何决策</h2>
+<ol><li>以经过 G1～G3 修复的 Electron 版为对照，避免用仍有 Bug 的版本人为放大新架构收益。</li><li>测量新方案的完整进程树；Tauri 的 WebView2、JS 插件宿主和音频侧进程都计入。</li><li>核对在线插件、HLS、认证、桌面歌词、歌单次序、已下载路径与备份迁移。</li><li>如果收益主要来自封面缓存/增量查询，优先把这部分改进带回现有架构。</li><li>如果 Windows 原型在关键指标有稳定收益，且迁移/维护成本可接受，再决定是否建立原生产品分支。</li></ol>
+<h2 id="roadmap-h9">7. 实施文档清单</h2>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>应补的文档</th><th>用途</th></tr></thead><tbody><tr><td>G0</td><td>三平台范围、实际构建/测试记录、现有权限边界、运行时升级待办</td><td>说明测试基线和仍待处理的风险</td></tr><tr><td>G1</td><td>播放/歌词时序、扫描回调顺序、服务恢复、每项 Bug 的复现与回归记录</td><td>让现有实现的正确性可测试</td></tr><tr><td>G2</td><td>下载任务 schema、歌单移动操作、构建标识；根据实施范围补接口说明</td><td>让新功能的状态与数据归属明确</td></tr><tr><td>G3</td><td>性能基线、优化实验记录、封面缓存策略</td><td>证明收益并方便回归</td></tr><tr><td>G4</td><td>架构决策记录、原型比较、数据迁移与回滚指南</td><td>支持语言/架构取舍</td></tr></tbody></table></div>
+<p>本知识库完成了仓库解释、产品清单、代码问题清单和路线评估。上表是未来实际开发阶段应补的设计与验收资料，不能误认为这些重构已实施。</p></article><article id="commit-convention" class="chapter" hidden><h1 id="commit-convention-h1">07 · 代码提交规范</h1>
+<p><a href="#guide">返回目录</a></p>
+<p>适用仓库：当前 Electron + React + TypeScript 项目。依据：<code>dev@4e7b711</code> 的目录结构、ESLint、测试入口、CI 和 PR 模板。编写日期：2026-10-04。</p>
+<p>本文供维护者审阅；尚未安装 commitlint、修改 Git hooks 或更改 CI 门禁。已有 28 个 Brraida 提交基本采用下述标题格式，无需仅为了统一标题重写已共享的历史。</p>
+<h2 id="commit-convention-h2">1. 分支与改动边界</h2>
+<ul><li>日常功能、修复从最新 <code>dev</code> 创建短期分支，例如 <code>fix/download-file-collision</code>、<code>feat/playlist-batch-actions</code>。</li><li>PR 提交到 <code>dev</code>，遵循现有 <a href="../../.github/PULL_REQUEST_TEMPLATE.md">.github/PULL_REQUEST_TEMPLATE.md</a>。<code>master</code> 是本次历史审查的基线，不代表日常 PR 应提交到 master。</li><li><code>master</code> 的发布合并由维护者安排；不要在已经共享的 dev/master 上为整理历史执行强制推送。</li><li>一个提交解决一个可描述、可验证、可回滚的问题。修复及其必要回归测试应在同一提交；无关格式化、依赖更新和功能改动拆开。</li><li>不要求机械地按文件拆提交：主进程、preload、renderer、worker 和类型声明的配套修改属于同一行为变更时，应一起提交，避免中间提交无法运行。</li></ul>
+<h2 id="commit-convention-h3">2. 提交信息</h2>
+<pre><code class="language-text">&lt;type&gt;(&lt;scope&gt;): &lt;具体行为变化&gt;
+
+&lt;为什么需要修改；原来的触发条件和结果&gt;
+&lt;修改后的行为；必要时说明兼容性、数据处理和限制&gt;
+
+Test: &lt;实际执行的检查及结果&gt;
+Refs: #&lt;issue&gt;                       # 有关联时填写
+BREAKING CHANGE: &lt;不兼容影响与迁移&gt;   # 有不兼容变更时填写</code></pre>
+<p><code>scope</code> 可省略，但业务修复建议保留。标题建议不超过 72 个字符，不加句号；中文或英文均可，同一 PR 保持一致。使用明确的动作与对象，避免 <code>update</code>、<code>fix bug</code>、<code>优化代码</code> 等无法判断内容的标题。<code>Test</code>、<code>Refs</code> 是本文建议的正文约定，目前没有自动校验器。</p>
+<div class="table-wrap"><table><thead><tr><th>type</th><th>使用场景</th><th>本仓库示例</th></tr></thead><tbody><tr><td><code>feat</code></td><td>用户可见的新能力</td><td><code>feat(playlist): add checkbox selection and batch actions</code></td></tr><tr><td><code>fix</code></td><td>纠正已存在的错误行为</td><td><code>fix(download): preserve playlist references when removing downloads</code></td></tr><tr><td><code>perf</code></td><td>行为不变、可说明收益的性能改动</td><td><code>perf(window): reduce rendering work while hidden</code></td></tr><tr><td><code>refactor</code></td><td>行为不变的内部结构调整</td><td><code>refactor(service): centralize forwarder lifecycle state</code></td></tr><tr><td><code>style</code></td><td>仅格式变化</td><td><code>style: align build scripts with shared formatting rules</code></td></tr><tr><td><code>test</code></td><td>独立补充或调整测试</td><td><code>test(download): cover case-insensitive filename collisions</code></td></tr><tr><td><code>docs</code></td><td>文档变更</td><td><code>docs: document commit rules and review findings</code></td></tr><tr><td><code>build</code></td><td>编译、原生模块和安装包配置</td><td><code>build(windows): configure the Squirrel installer</code></td></tr><tr><td><code>ci</code></td><td>Actions、检查与产物流水线</td><td><code>ci: verify packages on all supported platforms</code></td></tr><tr><td><code>chore</code></td><td>不改变产品行为的维护</td><td><code>chore(deps): normalize lockfile registry URLs</code></td></tr><tr><td><code>revert</code></td><td>撤销已提交变更</td><td>正文注明被撤销的 SHA 和原因</td></tr></tbody></table></div>
+<p>建议 scope：<code>player</code>、<code>audio</code>、<code>lyrics</code>、<code>playlist</code>、<code>download</code>、<code>local-music</code>、<code>plugin</code>、<code>service</code>、<code>startup</code>、<code>window</code>、<code>i18n</code>、<code>deps</code>、<code>windows</code>、<code>linux</code>、<code>macos</code>、<code>git</code>。沿用现有命名，不为每个组件发明一个 scope。</p>
+<p>修复提交示例：</p>
+<pre><code class="language-text">fix(download): distinguish local files from owned downloads
+
+Local watcher items also contain downloadData.path. Rebuilding the
+download index from this field alone exposes original local files to
+the downloaded-file deletion action.
+
+Only records owned by the downloader participate in index recovery.
+Keep playlist references intact when removing a download record.
+
+Test: Node regressions passed; Electron playlist and relocation passed
+Test: local-file ownership regression passed</code></pre>
+<p>上例展示信息结构，不表示示例中的修复已经实现。</p>
+<h2 id="commit-convention-h4">3. 按仓库架构审查代码</h2>
+<div class="table-wrap"><table><thead><tr><th>改动位置</th><th>提交前重点核查</th></tr></thead><tbody><tr><td><code>src/main</code>、<code>src/shared/*/main*</code></td><td>窗口/子进程生命周期；退出清理；平台分支；IPC 参数；安装器事件是否提前处理</td></tr><tr><td><code>src/preload</code>、<code>src/shared/*/{preload,renderer}*</code></td><td>暴露接口与类型同步；事件取消订阅；调用方错误传播；保持现有进程职责</td></tr><tr><td><code>src/renderer/core/track-player</code></td><td>过期请求不得覆盖当前歌曲；切歌/切音质保留播放与暂停意图；Blob/HLS/请求及时释放</td></tr><tr><td><code>src/renderer/core/music-sheet</code>、<code>downloader</code></td><td>读、改、引用计数在同一写事务内；事务提交后更新缓存；下载与歌单跨模块并发</td></tr><tr><td><code>src/webworkers</code></td><td>明确开始/进度/完成/取消协议；异常反馈；监听器与临时文件清理；大小写与路径边界</td></tr><tr><td><code>src/renderer/components</code>、<code>pages</code></td><td>状态依赖、主键稳定性、排序/筛选/分页、多选、空态、错误提示与键盘操作</td></tr><tr><td><code>res/lang</code></td><td>普通界面文案同步 <code>zh-CN</code>、<code>zh-TW</code>、<code>en-US</code>；启动前诊断若不能依赖 i18n，说明原因</td></tr><tr><td><code>config</code>、<code>forge.config.ts</code>、<code>scripts/ci</code>、workflows</td><td>操作系统与 CPU 架构；原生库；隐藏资源；真实安装/启动；版本与产物来源一致</td></tr></tbody></table></div>
+<p>数据与异步代码必须说明的不变量：</p>
+<ul><li>“存在本地路径”与“由下载器创建并持有一份引用”分别建模；本地扫描、下载缓存、歌单引用不能只凭同一字段混用。</li><li>IndexedDB 事务外可以执行文件 I/O；进入写事务后须重新读取最新记录，校验身份、下载路径及所有权，再决定减引用或删除。</li><li>一条下载只有在文件写入完成且记录提交成功后才向 UI 宣布完成。重试必须区分网络失败和记录保存失败。</li><li>防覆盖必须考虑目标文件系统是否区分大小写，并处理检查后出现文件的情况；临时文件的 <code>wx</code> 不等于最终文件不会被覆盖。</li><li>请求版本号负责判断结果是否过期，播放意图负责判断应播放还是暂停，不能只凭瞬时 <code>Playing</code> 状态推断用户意图。</li></ul>
+<h2 id="commit-convention-h5">4. 格式与依赖</h2>
+<ul><li>TypeScript/JavaScript 遵循现有 ESLint：四空格、双引号、分号、多行尾逗号等。SCSS、JSON、YAML、Markdown 沿用各文件已有格式。</li><li><code>format:check</code> 目前检查 JS/TS 等源码与脚本，不覆盖全部 JSON/YAML/SCSS/Markdown；它也不代替完整代码质量检查。</li><li>不在业务修复里全仓库格式化或统一行尾。建议后续独立提交 <code>.gitattributes</code> 确定 LF/CRLF 策略，并单独评审首次归一化差异。</li><li>修改依赖时同步提交 <code>package.json</code> 和 <code>package-lock.json</code>；只替换 registry 时核对包版本和 integrity 未发生意外变化。</li><li>改版本时同步 package 与 lockfile 根版本。发布标签严格匹配已提交的 <code>package.json</code>：例如 <code>v0.0.80</code> 对应 <code>0.0.80</code>。</li><li>CI 使用 Node 22、Python 3.11。涉及原生库时在对应平台安装和构建，不跨 Windows/WSL 共用原生二进制来判断打包是否成功。</li><li>不提交 <code>node_modules</code>、<code>.webpack</code>、<code>out</code>、测试 profile、构建日志、个人配置和令牌。可长期保留的审查证据应筛选到文档目录。</li></ul>
+<h2 id="commit-convention-h6">5. 验证要求与准确命令</h2>
+<p>以下命令从仓库根目录执行；检查命令不自动修改源码：</p>
+<pre><code class="language-sh">npm run format:check
+npx --no-install tsc --noEmit
+npx --no-install eslint src
+node scripts/ci/run-tests.cjs node
+node scripts/ci/run-tests.cjs electron
+git diff --check
+git diff --cached --check</code></pre>
+<p>Linux Electron 回归使用：</p>
+<pre><code class="language-sh">xvfb-run -a node scripts/ci/run-tests.cjs electron</code></pre>
+<p>需要先具备本平台 Electron、显示/沙箱环境及 Python。CI 环境准备以 <a href="../../.github/workflows/build.yml">.github/workflows/build.yml</a> 为准；环境失败应记录，不能记作测试通过，也不能直接归因于业务代码。</p>
+<p><strong>注意现有命令副作用：</strong> <code>npm run lint</code> 实际执行 <code>eslint ./src --fix</code>，会修改文件；只检查请使用上面的 <code>npx --no-install eslint src</code>。<code>npm run format:fix</code> 也是修改操作，执行后重新检查差异。</p>
+<p>2026-10-04 的 HEAD 基线：完整 ESLint 为 <strong>0 error / 138 warning</strong>，格式检查与类型检查通过。建议先要求不增加所改代码中的告警，再单独治理存量；目前不宜把全仓库 <code>eslint src --max-warnings=0</code> 描述成已经可通过的检查。</p>
+<div class="table-wrap"><table><thead><tr><th>改动类型</th><th>本地最低验证</th><th>PR/发布要求</th></tr></thead><tbody><tr><td>纯文档</td><td>核实命令、路径、链接、版本与 diff</td><td>不声称执行未运行的测试</td></tr><tr><td>普通 UI/样式/文案</td><td>格式、类型、相关页面手动验证</td><td>说明空态、窄窗口、多语言；行为变化提供截图或录像</td></tr><tr><td>播放/下载/歌单/Store/服务</td><td>格式、类型、相关 Node/Electron 回归；为实际缺陷增加有效复现</td><td>合并前现有全部回归通过；注明替身与真实运行边界</td></tr><tr><td>主进程/worker/原生库/打包</td><td>上述检查 + 对应平台编译和产物验证</td><td>四个现有平台作业通过；安装器变化另做安装/升级/卸载验收</td></tr></tbody></table></div>
+<p>编译和包内运行检查：</p>
+<pre><code class="language-sh">npm run package
+node scripts/ci/verify-build.cjs</code></pre>
+<p>这两个命令会生成 <code>out</code> 产物，且可能重建原生模块。<code>verify-build</code> 检查入口和原生模块等，不等于打开完整播放器，也不等于安装器验收。正式产物流程见 <a href="../../release/README.md">release/README.md</a>。</p>
+<p>回归测试应验证用户可观察的行为或数据不变量：真实 IndexedDB 回滚、交错调用后的引用完整性、文件是否被覆盖、过期请求是否影响播放。不要只断言某个内部函数被调用。</p>
+<h2 id="commit-convention-h7">6. 暂存与 Git hook 的现状</h2>
+<p>当前 <code>.husky/pre-commit</code> 调用 lint-staged；<code>package.json</code> 内的规则对源码执行全目录 <code>npm run lint</code>，随后执行 <strong><code>git add .</code></strong>。这属于已有流程风险：在混合改动工作区提交一个源码文件时，可能把无关文件一起暂存，破坏提交边界。</p>
+<p>建议另建 <code>chore(git)</code> 提交：仅格式化传入的暂存文件，移除 <code>git add .</code>，交给 lint-staged 管理其处理文件。本文没有修改 hook。在该问题解决前，不应依赖当前 hook 保证“部分暂存”的准确性；不要为了整理本轮改动直接进行提交。</p>
+<p>正常提交前检查：</p>
+<pre><code class="language-sh">git status --short
+git diff --stat
+git diff -- path/to/changed-file
+git add -- path/to/changed-file path/to/related-test
+git diff --cached --stat
+git diff --cached
+git diff --cached --check</code></pre>
+<p>提交完成后再核对 <code>git show --stat HEAD</code> 和 <code>git status --short</code>。若发现意外文件，先判断提交是否已共享，再选择修正方式，不默认重写公共历史。</p>
+<p>本次工作区有大量 CRLF/LF 差异，以及未提交的版本变化。审查时可用 <code>git diff --ignore-space-at-eol</code> 辅助辨别；提交前仍须查看普通 diff，不能把忽略空白后的结果当作完整审核。</p>
+<h2 id="commit-convention-h8">7. PR 信息与合并标准</h2>
+<p>沿用现有模板，补充以下信息即可：</p>
+<pre><code class="language-text">问题：具体操作、原行为和影响
+修改：现在的行为；涉及的数据/进程/平台
+验证：实际命令、结果、手动验证平台；未覆盖内容
+兼容与回滚：旧记录、旧配置、安装升级是否受影响
+关联：issue / review 条目编号</code></pre>
+<ul><li>运行代码变更不使用 <code>[skip ci]</code>；纯文档是否跳过取决于仓库 required checks，不把跳过 CI 当作默认流程。</li><li>修复已确认的 P0/P1 后再合并或发布相关功能。P2 明确本次解决还是登记后续；P3 可独立维护。</li><li>成功打包不代表已测试安装，单个平台通过不代表四个平台通过，替身测试不代表真实设备兼容。</li><li>对已有数据可能造成误删、覆盖或引用丢失的修复，PR 明确恢复策略与回归场景；不要只写“测试通过”。</li></ul>
+<p>建议优先落地顺序：处理 <a href="#commit-review">本轮审查</a> 的 P1 → 修正暂存 hook → 在日常提交中采用本文 → 视需要增加 commitlint/行尾策略。工具化各自独立提交。</p>
+<h2 id="commit-convention-h9">8. 2026-10-05 本轮执行记录</h2>
+<p>本轮按维护者要求直接在 <code>dev</code> 整理提交。下载文件同步、播放恢复、启动优化、唱片效果及版本元数据分别提交，修复所需的回归用例随对应代码一起提交。共享文件的中间状态经过独立验证，再恢复到已验收的最终实现。</p>
+<p>现有 lint-staged 配置会执行 <code>git add .</code>。本轮提交前明确列出暂存文件、检查暂存 diff，并单独执行回归、类型和格式检查；提交命令使用一次性的 <code>HUSKY=0</code>，保证提交边界。该环境变量仅作用于本轮提交命令。配置本身的后续修改继续作为独立维护事项管理。</p>
+<p>详细拆分记录见 <a href="../history/2026-10-05-functional-commits.md">本轮提交整理</a>。</p></article><article id="commit-review" class="chapter" hidden><h1 id="commit-review-h1">08 · Brraida 提交审查（历史基线）</h1>
+<p><a href="#guide">返回目录</a></p>
+<blockquote>历史审查基线：<code>dev@4e7b711</code>。本轮下载文件同步已实现并验证，见 <a href="#download-file-state">10</a>；其他审查项继续按原状态管理。</blockquote>
+<p><strong>建议先处理 3 项 P1 数据风险，再发布相关下载功能；另有 2 项 P2 功能问题值得调整。</strong> 未发现可确认的 P0。以下是本轮发现，不代表已穷尽全仓库问题。</p>
+<p>本次只生成规范、审查文档和独立复现证据，没有修改业务实现、Git hooks、CI，也没有创建提交。提交规范见 <a href="#commit-convention">COMMIT_CONVENTION.md</a>。</p>
+<h2 id="commit-review-h2">1. 范围和归因</h2>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>本轮范围</th></tr></thead><tbody><tr><td>当前分支/审查终点</td><td><code>dev</code> / <code>4e7b711</code></td></tr><tr><td>基线</td><td>本地 <code>master</code> / <code>d39e8f4</code>；也是 <code>merge-base(master, HEAD)</code></td></tr><tr><td>作者</td><td><code>master..HEAD</code> 的 28 个提交全部为 Brraida</td></tr><tr><td>时间</td><td>2026-02-20 至 2026-10-03</td></tr><tr><td>文件范围</td><td>74 个文件；<code>git diff -w</code> 后仍有差异的为 66 个</td></tr><tr><td>远端引用</td><td>本地保存的 <code>origin/master=f3b526a</code> 比本地 master 多 2 个提交；本轮未 fetch、未合并这 2 个提交</td></tr><tr><td>工作区</td><td>审查开始已有 459 个 tracked 文件显示修改，及未跟踪 <code>docs/</code>；忽略行末空白后只有 <code>package.json</code> 的 <code>0.0.8 → 0.0.80</code> 变化</td></tr></tbody></table></div>
+<p>结论基于已提交的 HEAD。Node、类型、格式和完整 ESLint 检查在 HEAD 的临时快照执行；Windows Electron 检查在当前工作区执行，其相关测试与业务源码相对 HEAD 仅有行尾差异。未提交的版本调整不计入本轮新增缺陷。</p>
+<p><strong>归因原则：</strong> R1、R4、R5 属于本轮引入或新启用功能的配套缺口；R2、R3 在 master 已有同类风险，本轮重写/修复后仍未消除，单独标明，不能把它们当成 Brraida 新造成的问题。</p>
+<h2 id="commit-review-h3">2. 问题清单与处理建议</h2>
+<p>P1：可能丢失/覆盖文件或破坏持久化数据，建议合并/发布相关功能前修复。P2：影响功能完整性，在对应发布前修复或明确安排。优先级不等于所有用户都会遇到。</p>
+<div class="table-wrap"><table><thead><tr><th>编号</th><th>级别</th><th>问题</th><th>归因</th><th>证据</th><th>是否建议调整</th></tr></thead><tbody><tr><td>R1</td><td>P1</td><td>本地扫描歌曲被恢复为下载记录，删除下载会删除原文件并留下歌单悬空引用</td><td>新增</td><td>真实 Windows 文件 + IndexedDB 复现</td><td><strong>需要，优先</strong></td></tr><tr><td>R2</td><td>P1</td><td>删除下载与加入歌单交错时，旧引用计数删除了仍被引用的歌曲记录</td><td>原有风险残留</td><td>真实 IndexedDB + 受控文件删除时序复现</td><td><strong>需要</strong></td></tr><tr><td>R3</td><td>P1</td><td>不区分大小写的文件系统上，并发下载同名变体会互相覆盖</td><td>原有风险未完全修复</td><td>实际文件系统 + 真实写入/rename 复现</td><td><strong>需要</strong></td></tr><tr><td>R4</td><td>P2</td><td>启用 Squirrel 安装包，但主进程没有安装/更新/卸载事件处理</td><td>新启用功能缺口</td><td>源码核查 + 官方说明；未实际安装</td><td><strong>需要，发布 Windows 安装包前</strong></td></tr><tr><td>R5</td><td>P2</td><td>初次播放仍在取音源时切换音质，丢失自动播放意图</td><td>新增</td><td>实际 TrackPlayer 源码 + 音频替身复现</td><td><strong>建议本轮调整</strong></td></tr></tbody></table></div>
+<h3 id="commit-review-h4">R1：本地文件与下载器拥有的文件混用了同一字段</h3>
+<p><strong>位置：</strong> <a href="../../src/renderer/core/downloader/downloaded-sheet.ts">downloaded-sheet.ts</a> 第 55–63 行；相关调用为 <a href="../../src/webworkers/local-file-watcher.ts">local-file-watcher.ts</a> 第 55–58 行、<a href="../../src/renderer/components/MusicList/index.tsx">MusicList</a> 第 228–237 行。</p>
+<p><strong>关联提交：</strong> <code>0e6d40b</code> 开始从全部 musicStore 记录重建下载索引；<code>753e675</code> 将该规则沿用于下载目录协调。master 只按下载索引恢复，不会自动把未下载的本地歌单记录纳入。</p>
+<p>本地扫描也给歌曲写入 <code>downloadData.path</code>。将该歌曲加入一个歌单时，musicStore 保存这份数据，<code>$$ref=1</code> 只代表歌单引用。新恢复逻辑扫描整个 musicStore，只要有该路径且文件存在，就判定为“已下载”，没有区分下载器所有权，也没有增加下载引用。</p>
+<p><strong>触发：</strong> 扫描本地文件 → 加入收藏/歌单 → 重启或触发下载目录刷新 → 该歌曲出现在下载集合 → 右键“删除本地下载”。菜单仅检查 <code>isDownloaded</code>，随后调用 <code>removeDownloadedMusic(item, true)</code>。</p>
+<p><strong>结果：</strong> 删除的是用户原来的本地文件；删除逻辑还把唯一的歌单引用从 1 减到 0，移除歌曲详情，但歌单中的 platform/id 仍在。真实 Windows 复现观察到：<code>originalLocalFileExists=false</code>、<code>recordExistsAfter=false</code>、<code>playlistStillReferences=true</code>。</p>
+<p><strong>建议：</strong> 为下载器所有权设置独立、可迁移的标记；重建索引时排除仅来自本地扫描的记录，删除入口也验证所有权。若当前产品明确禁止下载本地平台歌曲，可先按 <code>localPluginName</code> 加保护，但不要仅隐藏 UI 而保留后端误判。旧版本已污染的下载索引也需要清理，不能盲目多减一次引用。</p>
+<p><strong>验收：</strong> 本地扫描歌曲收藏后重启不进入下载管理；保留原文件与歌单详情；正常远程下载仍可恢复、删除与重下。</p>
+<h3 id="commit-review-h5">R2：下载队列的串行化没有覆盖歌单写入</h3>
+<p><strong>位置：</strong> <a href="../../src/renderer/core/downloader/downloaded-sheet.ts">downloaded-sheet.ts</a> 第 201–223 行；<a href="../../src/renderer/core/music-sheet/backend/index.ts">music-sheet/backend/index.ts</a> 第 236–253 行。</p>
+<p><strong>关联提交：</strong> <code>0e6d40b</code>、<code>bdc5e2b</code>。master 同样在写事务前读取歌曲记录；属于本轮所改路径中的存量漏洞。</p>
+<p><code>removeDownloadedMusic</code> 在事务外 <code>bulkGet</code>，等待删文件后，将这份旧对象带入写事务减引用。<code>mutations</code> 队列只协调下载模块，<code>addMusicToSheet</code> 不在同一队列内。</p>
+<p><strong>可复现顺序：</strong> 下载独占记录 <code>$$ref=1</code> → 开始删除并停在文件 I/O → 将同一歌曲加入歌单，事务提交后 <code>$$ref=2</code> → 删除继续，仍使用旧值 1 → 减为 0，删除整个 musicStore 记录。歌单保留指向已删除记录的主键。</p>
+<p><strong>结果：</strong> 下载删除成功，刚加入的歌单歌曲却失去详情。复现使用真实 Dexie/IndexedDB，只在假音频文件删除处加等待点，稳定制造合法的交错执行；最终 <code>refsAfterConcurrentAdd=2</code>、<code>recordExistsAfterRemove=false</code>。</p>
+<p><strong>建议：</strong> 文件操作结束后，在最终写事务内重新获取最新记录，校验下载路径/所有权是否仍对应本次删除，再减下载引用。只串行化下载函数不能保证跨模块一致性；还应测试重复删除、并发移除歌单和重新下载。</p>
+<p><strong>验收：</strong> 上述顺序最终保留 <code>$$ref=1</code> 的歌单详情，清除下载数据；事务失败不提前发布成功状态。</p>
+<h3 id="commit-review-h6">R3：文件路径预留使用了区分大小写的字符串集合</h3>
+<p><strong>位置：</strong> <a href="../../src/webworkers/downloader.ts">webworkers/downloader.ts</a> 第 35–50 行、167 行。</p>
+<p><strong>关联提交：</strong> <code>7daec95</code>。master 会直接写同名文件；本次预留路径和临时文件方案已改善普通同名覆盖，但大小写边界仍有漏洞。</p>
+<p>两首不同来源/ID 的歌生成 <code>Song.mp3</code> 和 <code>song.mp3</code>。并发任务都在最终文件出现前完成 <code>stat</code> 检查，而 <code>reservedPaths</code> 将两者视作不同字符串。各自临时文件写完后，<code>rename</code> 指向同一个实际文件位置。</p>
+<p><strong>复现：</strong> 在本仓库所在的不区分大小写的文件系统创建独立临时目录，加载 HEAD 的实际 worker；只替换 fetch 返回两个不同的 4 字节内容，确保两项传输重叠，文件写入、pipeline、rename 全部使用真实实现。两个结果均为 <code>DONE</code>，目录仅有 <strong>1 个文件</strong>。复现目录执行后已清理。</p>
+<p><strong>影响：</strong> 下载记录可能有两首歌曲，但实际共享一个文件，至少一首内容被覆盖；这是静默数据错误。常见触发包括标题、歌手或扩展名仅大小写不同。</p>
+<p><strong>建议：</strong> 路径预留需与目标文件系统的等价规则一致；可采用保守大小写归一化避免碰撞，或验证文件系统行为。最终落盘采用不会覆盖已存在目标的发布方案，遇到冲突重新分配文件名。仅给 <code>.part</code> 使用 <code>wx</code> 不足以保护最终目标。</p>
+<p><strong>验收：</strong> 两种大小写名称并发时各自保留不同内容和不同实际文件；已有目标文件、下载期间外部创建目标文件的情况也不覆盖。Windows 与 macOS 常用不区分大小写卷应实际验证。</p>
+<h3 id="commit-review-h7">R4：Squirrel 安装器启用了，事件处理没有配套</h3>
+<p><strong>位置：</strong> <a href="../../forge.config.ts">forge.config.ts</a> 第 27–31 行；<a href="../../src/main/index.ts">src/main/index.ts</a> 正常初始化和单实例锁之前。</p>
+<p><strong>关联提交：</strong> <code>cd84209</code> 启用 maker，<code>86ff29b</code> 将其作为 Windows 安装产物输出。</p>
+<p>仓库没有 <code>electron-squirrel-startup</code> 运行时依赖，也没有等效的 <code>--squirrel-install</code>、<code>--squirrel-updated</code>、<code>--squirrel-uninstall</code>、<code>--squirrel-obsolete</code> 分支。被安装器带这些参数启动时，程序仍走正常播放器启动、注册协议和单实例处理，缺少安装器期望的生命周期动作与及时退出。</p>
+<p><strong>影响判断：</strong> 存在安装/升级/卸载期间意外启动播放器、快捷方式生命周期未正确管理的风险。该结论来自源码及 <a href="https://www.electronforge.io/config/makers/squirrel.windows">Electron Forge 官方 Squirrel 说明</a> 和 <a href="https://github.com/electron/windows-installer#handling-squirrel-events">electron/windows-installer 的事件说明</a>；本轮没有真实安装/卸载应用，不把具体安装失败现象写成已复现。</p>
+<p><strong>建议：</strong> 在正常初始化与单实例锁之前处理这些事件，可使用标准模块或等效实现，并明确处理后不继续正常启动。提交应包含依赖锁同步和相关入口测试。</p>
+<p><strong>验收：</strong> Windows 干净用户环境执行安装、更新、卸载，检查快捷方式、异常弹窗、残留进程、正常首次启动与协议唤起。现有 <code>verify-runtime.cjs</code> 以 <code>ELECTRON_RUN_AS_NODE</code> 检查包内资源，无法覆盖这个问题。</p>
+<h3 id="commit-review-h8">R5：切换音质取消了取源请求，却没接续播放意图</h3>
+<p><strong>位置：</strong> <a href="../../src/renderer/core/track-player/index.ts">track-player/index.ts</a> 第 592–603 行；<code>playIndex</code> 第 338–339 行的过期请求检查。</p>
+<p><strong>关联提交：</strong> <code>7490d9d</code> 引入源请求版本号；<code>5ad9caa</code> 继续完善音质请求取消逻辑。</p>
+<p><strong>触发：</strong> 用户点击播放 A，初次音源返回较慢；在这段时间切换为高音质。<code>setQuality</code> 增加 <code>sourceRequestId</code>，使原本会 <code>autoPlay: true</code> 的 <code>playIndex</code> 结果失效；新音质却只在瞬时状态是 <code>Playing</code> 时自动播放。此时仍在准备/缓冲，因此自动播放为 false。</p>
+<p><strong>复现结果：</strong> 使用实际 TrackPlayer 及现有测试的音频替身，挂起初次取源、高音质先返回、最后释放初次取源。最终选中高音质且已设置音源，但 <code>audioController.play()</code> 调用次数为 <strong>0</strong>。用户还需要再次点击播放。替身状态停在 Buffering；本轮未把该状态显示视为真实 UI 实测。</p>
+<p><strong>建议：</strong> 维护明确的播放/暂停意图，在替换请求时继承它；不能简单把所有 Buffering 都视为应播放，因为用户可能已在等待期间主动暂停。</p>
+<p><strong>验收：</strong> 取源中切音质继续播放；取源中主动暂停再切音质保持暂停；A→B→A、连续切音质、重置和过期失败回归继续通过。</p>
+<h2 id="commit-review-h9">3. 验证结果和边界</h2>
+<div class="table-wrap"><table><thead><tr><th>检查</th><th>本轮结果</th></tr></thead><tbody><tr><td>HEAD 格式检查</td><td>通过，退出码 0</td></tr><tr><td>HEAD <code>tsc --noEmit</code></td><td>通过，退出码 0</td></tr><tr><td>HEAD 完整 ESLint（不带 fix）</td><td>0 error、138 warning；不是格式错误</td></tr><tr><td>Node 回归</td><td>player / service / scanner / audio / store / startup / ci 全部通过</td></tr><tr><td>Windows Electron 25.3.0 回归</td><td>downloader / audio / playlist / startup / relocation 全部通过</td></tr><tr><td><code>git diff --check master...HEAD</code></td><td>通过</td></tr><tr><td>R1 / R2 定向复现</td><td>真实 Windows 文件和 IndexedDB 已复现；使用独立 profile 和测试文件</td></tr><tr><td>R3 定向复现</td><td>实际不区分大小写文件系统已复现；网络响应为替身</td></tr><tr><td>R5 定向复现</td><td>实际 TrackPlayer 已复现；音频控制器、插件等边界为替身</td></tr><tr><td>本轮未执行</td><td>全新 <code>npm ci</code>、完整打包、真实安装/卸载、Linux/macOS 图形运行、全部在线插件和设备测试</td></tr></tbody></table></div>
+<p>Node 使用 WSL 的 Node 24.20.0，CI 配置是 Node 22。最初沙箱阻止本地服务/子进程，放行测试执行后通过；CI 回归所需的 <code>python</code> 命令在本机不存在，临时用 <code>python3</code> 提供同名入口后单独重跑通过。没有为此修改项目依赖或脚本。</p>
+<p>既有测试通过与新问题复现并不矛盾：现有 playlist 测试检查歌单内部并发，download 测试检查下载内部串行化，尚未覆盖二者交错；文件碰撞测试没有覆盖大小写变体；player 测试没有断言初次取源中切换音质后的播放意图。</p>
+<p>详细结果与诊断脚本见 <a href="#review-evidence">复现证据</a>。这些诊断脚本验证的是“当前缺陷可复现”，修复后应改为断言正确行为再纳入正式回归。</p>
+<h2 id="commit-review-h10">4. 独立于本轮新增缺陷的维护建议</h2>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>判断</th><th>建议</th></tr></thead><tbody><tr><td>pre-commit 执行全量 <code>lint --fix</code> 后 <code>git add .</code></td><td>master 已有；可能把无关改动一起提交</td><td>优先独立修正；详见提交规范第 6 节</td></tr><tr><td>459 个 tracked 文件的工作区差异</td><td>大部分是行尾；本轮不认为是功能缺陷</td><td>单独确定行尾策略，勿混入业务修复；未重置任何原有改动</td></tr><tr><td>未提交版本 <code>0.0.80</code></td><td>不属于这 28 个提交；与已提交版本 <code>0.0.8</code> 不同</td><td>真正发布前同步锁文件根版本，并核对标签</td></tr><tr><td>完整 ESLint 的 138 条 warning</td><td>当前质量基线，不等于 138 个运行错误</td><td>不新增所改代码告警，按模块渐进处理</td></tr><tr><td>启动失败界面与后台错误传播</td><td>新 UI 能呈现向上传播的错误；部分旧初始化函数仍吞错</td><td>后续补真实服务拒绝测试；不把全部初始化失败都已覆盖当作结论</td></tr></tbody></table></div>
+<p>建议修复顺序：R1 → R2 → R3；Windows 安装包发布前处理 R4；R5 可独立小提交。保留本轮已有的下载落盘、事务去重、请求竞态与回归测试改进，在此基础上补足边界即可，无需整体回退。</p>
+<h2 id="commit-review-h11">5. 审查提交索引</h2>
+<div class="table-wrap"><table><thead><tr><th>提交</th><th>内容</th></tr></thead><tbody><tr><td><code>bb875c1</code></td><td>忽略 Windows 构建日志</td></tr><tr><td><code>cd84209</code></td><td>启用 Squirrel maker</td></tr><tr><td><code>dc10376</code></td><td>隐藏窗口渲染节流</td></tr><tr><td><code>e6c883e</code></td><td>保存桌面歌词窗口实际尺寸</td></tr><tr><td><code>4a122bf</code></td><td>歌曲或来源变化时刷新筛选</td></tr><tr><td><code>0e6d40b</code></td><td>下载记录串行提交与索引重建</td></tr><tr><td><code>7daec95</code></td><td>下载完整落盘后完成</td></tr><tr><td><code>57f92a1</code></td><td>全局暂停、继续、重试下载</td></tr><tr><td><code>bd7348d</code></td><td>歌单多选与批量操作</td></tr><tr><td><code>5c2d332</code></td><td>下载回归测试</td></tr><tr><td><code>7490d9d</code></td><td>忽略过期音源和歌词请求</td></tr><tr><td><code>d4b110f</code></td><td>请求转发授权及进程恢复</td></tr><tr><td><code>380e08a</code></td><td>本地扫描和文件变更可靠投递</td></tr><tr><td><code>1170510</code></td><td>Store 提交后通知及订阅隔离</td></tr><tr><td><code>9ddf16e</code></td><td>清理音频资源与延迟播放</td></tr><tr><td><code>bdc5e2b</code></td><td>歌单事务去重与引用计数</td></tr><tr><td><code>b4754cd</code></td><td>初始化失败界面</td></tr><tr><td><code>1429598</code></td><td>拒绝将 HLS 清单当歌曲下载</td></tr><tr><td><code>5ad9caa</code></td><td>取消过期音质选择和延迟跳歌</td></tr><tr><td><code>5806cdf</code></td><td>第一阶段回归覆盖说明</td></tr><tr><td><code>753e675</code></td><td>下载目录变化后协调文件路径</td></tr><tr><td><code>d0f862c</code></td><td>lockfile registry 统一</td></tr><tr><td><code>86ff29b</code></td><td>跨平台 CI、编译与打包</td></tr><tr><td><code>eef4dd3</code></td><td>Linux 测试沙箱辅助程序配置</td></tr><tr><td><code>5024d0a</code></td><td>macOS 系统工具生成 DMG</td></tr><tr><td><code>9d7116e</code></td><td>记录跨平台打包试跑</td></tr><tr><td><code>8e68b5f</code></td><td>对齐格式规则</td></tr><tr><td><code>4e7b711</code></td><td>CI 强制共享格式检查</td></tr></tbody></table></div></article><article id="review-evidence" class="chapter" hidden><h1 id="review-evidence-h1">09 · 历史审查验证与复现</h1>
+<p><a href="#guide">返回目录</a></p>
+<blockquote>历史审查基线：<code>dev@4e7b711</code>。本轮下载文件同步已实现并验证，见 <a href="#download-file-state">10</a>；其他审查项继续按原状态管理。</blockquote>
+<p>对应 <a href="#commit-review">审查报告</a>，基线 <code>d39e8f4</code>，终点 <code>4e7b711</code>。机器可读结果见 <a href="../reviews/2026-10-04/results.json">results.json</a>。</p>
+<h2 id="review-evidence-h2">已执行检查</h2>
+<p>HEAD 通过 <code>git archive HEAD</code> 提取为独立临时快照，复用现有 npm 依赖；未重新安装依赖。下列检查在快照中执行：</p>
+<pre><code class="language-sh">node node_modules/typescript/bin/tsc --noEmit
+node node_modules/eslint/bin/eslint.js --config eslint.format.config.mjs src scripts config res/.service forge.config.ts &#x27;eslint*.mjs&#x27; --max-warnings=0
+node node_modules/eslint/bin/eslint.js src --format json
+node scripts/ci/run-tests.cjs node</code></pre>
+<p>类型、格式检查退出码均为 0。完整 ESLint 为 0 error / 138 warning：未使用 <code>--fix</code>。</p>
+<p>Node 首次执行受沙箱对子进程/localhost 的限制，允许执行后六组通过；<code>ci</code> 组另因本机缺少名为 <code>python</code> 的命令失败，临时在 PATH 前加入指向 <code>/usr/bin/python3</code> 的同名链接后重跑 <code>node scripts/tests/ci-regression.cjs</code> 通过。<code>results.json</code> 记录了该次重跑，未把环境失败当成业务缺陷。</p>
+<p>Windows Electron 使用工作区安装的 <code>electron.exe</code>，源码与 HEAD 的相关差异仅为行尾，五组均退出 0：</p>
+<pre><code class="language-powershell">.\node_modules\.bin\electron.cmd scripts/tests/downloader-main.cjs
+.\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs audio
+.\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs playlist
+.\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs startup
+.\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs relocation</code></pre>
+<p>本轮实际从 WSL 调用 <code>./node_modules/electron/dist/electron.exe</code> 执行上述入口，使用独立 profile。没有运行普通播放器，没有使用正常音乐库数据。</p>
+<h2 id="review-evidence-h3">定向复现</h2>
+<p><strong>这些是诊断脚本，断言“缺陷存在”。退出 0 表示成功复现，不表示代码正确。</strong> 修复后应反转相应断言并补充边界，再迁入 <code>scripts/tests</code>，不要原样加入 CI。</p>
+<p>以下从仓库根目录运行，使用当前 checkout 的源码和已有测试工具；证据对应 <code>4e7b711</code>，后续源码变化可能使脚本不再适用。</p>
+<h3 id="review-evidence-h4">R1 / R2：文件所有权与数据库并发</h3>
+<pre><code class="language-powershell">.\node_modules\.bin\electron.cmd docs/reviews/2026-10-04/database-main.cjs</code></pre>
+<p><a href="../reviews/2026-10-04/database-main.cjs">database-main.cjs</a> 创建隐藏 Electron 窗口和 <code>out/.review-evidence-时间戳</code> 独立 profile，运行 <a href="../reviews/2026-10-04/renderer.cjs">renderer.cjs</a>。后者沿用现有 relocation 测试的加载方式，调用真实下载模块、歌单 backend 与 Dexie/IndexedDB，文件由脚本在测试目录中创建。</p>
+<ul><li>R1 构造与 watcher 写入字段一致的本地歌曲，添加进真实歌单后初始化下载索引，再按实际菜单参数 <code>removeFile=true</code> 删除。</li><li>R2 下载记录初始只有一份引用，暂停其文件删除操作，在此间隙用真实 backend 加入歌单，然后继续删除。</li><li><code>fsUtil</code> 等进程边界使用适配器；文件读写和 IndexedDB 是实际操作。没有通过真实鼠标完成扫描或菜单操作。</li></ul>
+<p>本次输出关键字段：</p>
+<pre><code class="language-json">{
+  &quot;local&quot;: {
+    &quot;originalLocalFileExists&quot;: false,
+    &quot;recognized&quot;: true,
+    &quot;refsBefore&quot;: 1,
+    &quot;remove&quot;: [true],
+    &quot;recordExistsAfter&quot;: false,
+    &quot;playlistStillReferences&quot;: true
+  },
+  &quot;concurrentRemove&quot;: {
+    &quot;refsAfterConcurrentAdd&quot;: 2,
+    &quot;recordExistsAfterRemove&quot;: false,
+    &quot;playlistStillReferences&quot;: true
+  }
+}</code></pre>
+<p>脚本将本次结果写入自己的测试目录，保留 profile 供诊断；只删除它创建的假音频，不访问用户音乐目录。</p>
+<h3 id="review-evidence-h5">R3：大小写文件名碰撞</h3>
+<pre><code class="language-sh">node docs/reviews/2026-10-04/collision.cjs</code></pre>
+<p><a href="../reviews/2026-10-04/collision.cjs">collision.cjs</a> 加载实际 worker，fetch 用两个不同内容的 Response 替代，以控制并发时序；pipeline、临时文件和 rename 使用真实文件系统。需要支持 Response 的 Node（本轮为 Node 24，CI 的 Node 22 也具备此 API）。</p>
+<p>脚本先检测测试目录是否不区分大小写；区分大小写时输出 <code>SKIP</code>，不能据此证明 Windows/macOS 常用卷安全。复现时两个 <code>DONE</code> 结果对应 <code>Song.mp3</code> / <code>song.mp3</code>，目录最终只有一个文件。所有本脚本临时文件在 finally 中清理。</p>
+<h3 id="review-evidence-h6">R5：初次取源期间切换音质</h3>
+<pre><code class="language-sh">node docs/reviews/2026-10-04/quality.cjs</code></pre>
+<p><a href="../reviews/2026-10-04/quality.cjs">quality.cjs</a> 复用现有 <code>player-regression.cjs</code> 的 fixture，挂起初次取源，在高音质先完成后释放旧请求，记录实际 TrackPlayer 对替身音频控制器的调用。</p>
+<p>本次结果：<code>quality=&quot;high&quot;</code>、高音质源已设置、<code>playCalls=0</code>。这验证控制逻辑丢失播放意图；不用于证明浏览器的具体状态文字或实际扬声器输出。</p>
+<p>R4 仅做源码和官方资料交叉核查，没有执行应用安装/卸载。完整打包、Linux/macOS 图形运行及真实设备兼容性也不在本轮执行结果中。</p></article><article id="download-file-state" class="chapter" hidden><h1 id="download-file-state-h1">10 · 下载文件状态同步（当前实现）</h1>
+<p><a href="#guide">返回目录</a></p>
+<blockquote>本轮已实现并验证，并按下载同步、播放恢复和启动优化分别提交到 <code>dev</code>。开发前基线为 <code>4e7b711</code>，旧状态保留在第 8 节；其他章节以本章为下载资源同步的统一说明。提交边界与验证见 <a href="../history/2026-10-05-functional-commits.md">整理记录</a>。</blockquote>
+<h2 id="download-file-state-h2">1. 先看结果</h2>
+<div class="table-wrap"><table><thead><tr><th>你的操作</th><th>当前结果</th></tr></thead><tbody><tr><td>在资源管理器里删除歌曲</td><td>自动核对；收藏和歌单中改为可下载，下载列表移除缺失项</td></tr><tr><td>删除整个下载目录，再恢复目录和歌曲</td><td>自动重新建立监听并核对，完整且身份匹配的歌曲恢复已下载图标</td></tr><tr><td>移动歌曲后修改下载目录</td><td>原路径缺失时，尝试当前目录中的同名候选；唯一且 SHA-256 匹配才恢复关联</td></tr><tr><td>外接盘离线、读取权限不足、I/O 故障</td><td>标记暂不可用，保留关联和收藏；图标显示原因，恢复后重新核对</td></tr><tr><td>正在下载时，外部恢复了原文件</td><td>本地资源可用，但不会提前结束正在执行的下载或移除暂停控制</td></tr><tr><td>不确定是否已更新</td><td>下载管理页点击“刷新本地文件状态”</td></tr><tr><td>播放时本地文件可用</td><td>音频本地优先；歌词、封面等仍可能联网</td></tr><tr><td>检查后文件被删除，实际打开失败</td><td>更新资源状态；在线歌曲尝试一次网络回退，保留进度和播放/暂停意图</td></tr></tbody></table></div>
+<p><strong>两个生命周期分别维护：</strong> <code>DownloadState</code> 管一次下载任务；<code>DownloadResourceState</code> 管当前本地文件是否可用。任务提交成功，不保证文件以后永远存在。</p>
+<h2 id="download-file-state-h3">2. 同步链路</h2>
+<figure class="diagram" id="download-file-state-diagram-1" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">flowchart TB
+    Events[&quot;文件新增 / 修改 / 删除&lt;br/&gt;目录删除与重建&quot;] --&gt; Watch[&quot;preload：一个有边界的目录监听器&quot;]
+    Watch --&gt; Batch[&quot;250ms 合并路径；保留待核对集合&quot;]
+    Triggers[&quot;启动 / 配置变化 / 手动刷新&lt;br/&gt;前台焦点 / 每 5 分钟补偿 / 监听 ready&quot;] --&gt; Queue
+    Batch --&gt; Queue[&quot;downloaded-sheet：串行更新队列&quot;]
+    Play[&quot;播放取源 / 实际打开失败&quot;] --&gt; Queue
+    Queue --&gt; Disk[&quot;Node 文件检查&lt;br/&gt;读取、大小、必要时 SHA-256&quot;]
+    Disk --&gt; Decision{&quot;文件状态与关联是否确认？&quot;}
+    Decision --&gt;|&quot;需恢复路径或更新指纹&quot;| DB[&quot;IndexedDB 事务；配置代次检查&quot;]
+    Decision --&gt;|&quot;无需改关联&quot;| Publish
+    DB --&gt;|&quot;提交成功&quot;| Publish[&quot;统一更新缓存、资源 Store、下载列表与事件&quot;]
+    DB --&gt;|&quot;失败 / 配置已过期&quot;| Keep[&quot;保留上次确认结果；安排核对&quot;]
+    Publish --&gt; UI[&quot;我喜欢 / 各歌单图标 / 已下载列表&quot;]</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>监听回调只报变化，实际文件核对后才发布结论。可以类比嵌入式中的“事件通知 → 工作队列 → 状态读回 → 发布状态”。</p>
+<h2 id="download-file-state-h4">3. 当前资源状态机</h2>
+<figure class="diagram" id="download-file-state-diagram-2" data-diagram-language="plantuml" data-diagram-state="rendered"><div class="diagram-output" role="img" aria-label="当前实现：独立的下载资源可用性状态机"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" data-diagram-type="STATE" style="background:#FFFFFF;" width="1445px" height="697px" viewBox="0 0 1445 697" zoomAndPan="magnify" preserveAspectRatio="none" contentStyleType="text/css"><?plantuml 1.2026.8?><defs/><g font-family="sans-serif" lengthAdjust="spacing"><g class="title" data-source-line="1"><text x="537.307" y="24.813" fill="#000" font-size="14" textLength="364" font-weight="700" font-family="Microsoft YaHei">当前实现：本地下载资源状态（与下载任务进度分开维护）</text></g><rect x="577.68" y="619.858" width="96.481" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="582.68" y="639.671" fill="#000" font-size="14" textLength="70" font-family="Microsoft YaHei">无下载关联</text><text x="582.68" y="658.149" fill="#000" font-size="14" textLength="86.481" font-family="Microsoft YaHei">NO_RECORD</text><rect x="624.9" y="61.318" width="82.051" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="629.9" y="81.131" fill="#000" font-size="14" textLength="42" font-family="Microsoft YaHei">核对中</text><text x="629.9" y="99.609" fill="#000" font-size="14" textLength="72.051" font-family="Microsoft YaHei">CHECKING</text><rect x="336.93" y="478.058" width="94" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="341.93" y="497.871" fill="#000" font-size="14" textLength="84" font-family="Microsoft YaHei">本地文件可用</text><text x="341.93" y="516.349" fill="#000" font-size="14" textLength="73.985" font-family="Microsoft YaHei">AVAILABLE</text><rect x="933.99" y="352.108" width="69.862" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="938.99" y="371.921" fill="#000" font-size="14" textLength="56" font-family="Microsoft YaHei">确认缺失</text><text x="938.99" y="390.399" fill="#000" font-size="14" textLength="59.862" font-family="Microsoft YaHei">MISSING</text><rect x="520.02" y="352.108" width="105.819" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="525.02" y="371.921" fill="#000" font-size="14" textLength="56" font-family="Microsoft YaHei">暂不可用</text><text x="525.02" y="390.399" fill="#000" font-size="14" textLength="95.819" font-family="Microsoft YaHei">UNAVAILABLE</text><g class="entity" data-qualified-name="PREVIOUS" id="download-file-state-diagram-2-ent0006"><polygon points="812.93,226.108,824.93,238.108,812.93,250.108,800.93,238.108,812.93,226.108" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;stroke-linejoin:miter;stroke-miterlimit:10;"/></g><g class="start_entity" data-qualified-name=".start." id="download-file-state-diagram-2-ent0007" data-source-line="12"><ellipse cx="545.93" cy="501.538" rx="10" ry="10" fill="#222" style="stroke:#222;stroke-width:1;"/></g><g class="entity" data-qualified-name="GMN27" id="download-file-state-diagram-2-ent0028" data-source-line="35"><path d="M741.9,45.478 L741.9,80.788 L707.18,84.788 L741.9,88.788 L741.9,124.108 A0,0 0 0 0 741.9,124.108 L1029.946,124.108 A0,0 0 0 0 1029.946,124.108 L1029.946,55.478 L1019.946,45.478 L741.9,45.478 A0,0 0 0 0 741.9,45.478" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><path d="M1019.946,45.478 L1019.946,55.478 L1029.946,55.478 L1019.946,45.478" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><text x="747.9" y="64.233" fill="#000" font-size="13" textLength="177.22" font-family="Microsoft YaHei">核对时 UI 保留上次确认图标。</text><text x="747.9" y="81.391" fill="#000" font-size="13" textLength="234" font-family="Microsoft YaHei">文件事件先合并，再进入串行更新队列。</text><text x="747.9" y="98.548" fill="#000" font-size="13" textLength="267.046" font-family="Microsoft YaHei">SHA-256 匹配搬迁文件；同名不算同一首歌。</text><text x="747.9" y="115.706" fill="#000" font-size="13" textLength="185.415" font-family="Microsoft YaHei">监听重建 ready 时做全量补偿。</text></g><g class="entity" data-qualified-name="GMN30" id="download-file-state-diagram-2-ent0031" data-source-line="42"><path d="M6,604.018 L6,682.648 L341.85,682.648 L341.85,614.018 L331.85,604.018 L6,604.018" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><path d="M331.85,604.018 L331.85,614.018 L341.85,614.018 L331.85,604.018" style="stroke:#181818;stroke-width:1;" fill="#FEFFDD"/><text x="12" y="622.773" fill="#000" font-size="13" textLength="265.783" font-family="Microsoft YaHei">ResourcesChanged 只表示资源可用性变化。</text><text x="12" y="639.931" fill="#000" font-size="13" textLength="278.205" font-family="Microsoft YaHei">Downloaded 表示下载器成功提交了完成记录。</text><text x="12" y="657.088" fill="#000" font-size="13" textLength="260" font-family="Microsoft YaHei">外部恢复文件不能提前结束正在执行的下载。</text><text x="12" y="674.246" fill="#000" font-size="13" textLength="314.85" font-family="Microsoft YaHei">PREVIOUS 是绘图判定节点，不是代码中的额外枚举。</text></g><!--link *start* to NO_RECORD--><g class="link" data-entity-1="ent0007" data-entity-2="ent0001" id="download-file-state-diagram-2-lnk8" data-source-line="12" data-link-type="dependency"><path d="M550.69,510.868 C562.73,531.908 592.237,583.458 610.387,615.178" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-*start*-to-NO_RECORD"/><polygon points="612.87,619.518,611.872,609.719,610.387,615.178,604.928,613.692,612.87,619.518" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/></g><!--link NO_RECORD to CHECKING--><g class="link" data-entity-1="ent0001" data-entity-2="ent0002" id="download-file-state-diagram-2-lnk9" data-source-line="13" data-link-type="dependency"><path d="M674.61,642.648 C829.84,642.358 1302.93,630.958 1302.93,502.538 C1302.93,237.108 1302.93,237.108 1302.93,237.108 C1302.93,106.008 847.5,167.858 723.93,124.108 C713.69,120.478 707.63,117.457 698.69,111.447" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-NO_RECORD-to-CHECKING"/><polygon points="694.54,108.658,699.777,116.998,698.69,111.447,704.241,110.359,694.54,108.658" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1321.148" y="372.343" fill="#000" font-size="13" textLength="91.248" font-family="Microsoft YaHei">启动 / 全量核对</text><text x="1303.93" y="389.501" fill="#000" font-size="13" textLength="125.684" font-family="Microsoft YaHei">[数据库存在下载关联]</text></g><!--link NO_RECORD to AVAILABLE--><g class="link" data-entity-1="ent0001" data-entity-2="ent0003" id="download-file-state-diagram-2-lnk10" data-source-line="14" data-link-type="dependency"><path d="M577.54,636.268 C533.03,628.508 467.37,611.298 422.93,574.018 C407.76,561.298 399.35,545.771 393.18,530.081" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-NO_RECORD-to-AVAILABLE"/><polygon points="391.35,525.428,390.921,535.267,393.18,530.081,398.366,532.339,391.35,525.428" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="423.93" y="569.773" fill="#000" font-size="13" textLength="143" font-family="Microsoft YaHei">下载校验与记录提交成功</text></g><!--link AVAILABLE to NO_RECORD--><g class="link" data-entity-1="ent0003" data-entity-2="ent0001" id="download-file-state-diagram-2-lnk24" data-source-line="30" data-link-type="dependency"><path d="M336.44,510.748 C288.97,520.988 226.64,541.268 253.93,574.018 C264.27,586.438 474.046,619.449 572.456,634.349" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-AVAILABLE-to-NO_RECORD"/><polygon points="577.4,635.098,569.1,629.795,572.456,634.349,567.903,637.705,577.4,635.098" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="254.93" y="569.773" fill="#000" font-size="13" textLength="143.248" font-family="Microsoft YaHei">用户移除关联 / 事务成功</text></g><!--link AVAILABLE to CHECKING--><g class="link" data-entity-1="ent0003" data-entity-2="ent0002" id="download-file-state-diagram-2-lnk11" data-source-line="15" data-link-type="dependency"><path d="M336.75,485.208 C253.03,455.178 91.63,383.018 139.93,286.108 C229.92,105.498 511.98,85.966 619.63,85.146" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-AVAILABLE-to-CHECKING"/><polygon points="624.63,85.108,615.6,81.176,619.63,85.146,615.661,89.176,624.63,85.108" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="173.678" y="300.863" fill="#000" font-size="13" textLength="91" font-family="Microsoft YaHei">文件或目录事件</text><text x="140.93" y="318.021" fill="#000" font-size="13" textLength="156.495" font-family="Microsoft YaHei">配置变化 / 刷新 / 播放取源</text></g><!--link CHECKING to AVAILABLE--><g class="link" data-entity-1="ent0002" data-entity-2="ent0003" id="download-file-state-diagram-2-lnk14" data-source-line="19" data-link-type="dependency"><path d="M624.54,94.598 C547.54,113.618 385.59,166.848 335.93,286.108 C308.21,352.668 345.128,433.47 367.638,473.48" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-CHECKING-to-AVAILABLE"/><polygon points="370.09,477.838,369.163,468.032,367.638,473.48,362.191,471.955,370.09,477.838" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="343.43" y="300.863" fill="#000" font-size="13" textLength="125.684" font-family="Microsoft YaHei">[读取与指纹检查通过]</text><text x="336.93" y="318.021" fill="#000" font-size="13" textLength="138.684" font-family="Microsoft YaHei">[必要的记录更新已提交]</text></g><!--link MISSING to CHECKING--><g class="link" data-entity-1="ent0004" data-entity-2="ent0002" id="download-file-state-diagram-2-lnk12" data-source-line="16" data-link-type="dependency"><path d="M966.14,351.788 C963.22,333.308 957.52,306.998 946.93,286.108 C939.08,270.628 931.31,270.708 921.93,256.108 C894.73,213.798 912.63,184.978 872.93,154.108 C819.59,112.648 786.37,149.868 723.93,124.108 C714.22,120.108 708.575,117.163 699.855,111.373" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-MISSING-to-CHECKING"/><polygon points="695.69,108.608,700.975,116.918,699.855,111.373,705.4,110.254,695.69,108.608" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="929.554" y="234.863" fill="#000" font-size="13" textLength="117.248" font-family="Microsoft YaHei">恢复事件 / 配置变化</text><text x="922.93" y="252.021" fill="#000" font-size="13" textLength="130.495" font-family="Microsoft YaHei">启动 / 刷新 / 补偿核对</text></g><!--link CHECKING to MISSING--><g class="link" data-entity-1="ent0002" data-entity-2="ent0004" id="download-file-state-diagram-2-lnk15" data-source-line="20" data-link-type="dependency"><path d="M695.29,108.658 C704.08,114.528 714.03,120.258 723.93,124.108 C867.87,180.108 974.17,90.328 1057.93,220.108 C1087.3,265.618 1038.736,317.867 1002.656,348.417" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-CHECKING-to-MISSING"/><polygon points="998.84,351.648,1008.293,348.884,1002.656,348.417,1003.124,342.779,998.84,351.648" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1113.02" y="234.863" fill="#000" font-size="13" textLength="60.684" font-family="Microsoft YaHei">[确认缺失]</text><text x="1067.52" y="252.021" fill="#000" font-size="13" textLength="151.684" font-family="Microsoft YaHei">[没有唯一的指纹匹配文件]</text></g><!--link UNAVAILABLE to CHECKING--><g class="link" data-entity-1="ent0005" data-entity-2="ent0002" id="download-file-state-diagram-2-lnk13" data-source-line="17" data-link-type="dependency"><path d="M549.6,351.868 C516.19,319.188 458.42,262.178 455.93,256.108 C449.85,241.308 448.24,234.138 455.93,220.108 C491.67,154.818 569.473,118.315 619.773,100.285" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-UNAVAILABLE-to-CHECKING"/><polygon points="624.48,98.598,614.658,97.869,619.773,100.285,617.358,105.4,624.48,98.598" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="456.93" y="234.863" fill="#000" font-size="13" textLength="91.248" font-family="Microsoft YaHei">恢复事件 / 刷新</text><text x="456.93" y="252.021" fill="#000" font-size="13" textLength="91.248" font-family="Microsoft YaHei">启动 / 补偿核对</text></g><!--link CHECKING to UNAVAILABLE--><g class="link" data-entity-1="ent0002" data-entity-2="ent0005" id="download-file-state-diagram-2-lnk16" data-source-line="21" data-link-type="dependency"><path d="M655.07,108.658 C642.85,135.058 623,179.988 609.93,220.108 C594.97,265.988 584.133,316.421 578.163,346.851" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-CHECKING-to-UNAVAILABLE"/><polygon points="577.2,351.758,582.858,343.696,578.163,346.851,575.007,342.156,577.2,351.758" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="610.93" y="234.863" fill="#000" font-size="13" textLength="172.396" font-family="Microsoft YaHei">[离线 / 权限 / I/O / 内容改变]</text><text x="612.863" y="252.021" fill="#000" font-size="13" textLength="168.53" font-family="Microsoft YaHei">或 [实际音频打开或解码失败]</text></g><!--link CHECKING to PREVIOUS--><g class="link" data-entity-1="ent0002" data-entity-2="ent0006" id="download-file-state-diagram-2-lnk17" data-source-line="22" data-link-type="dependency"><path d="M677.71,108.568 C690.2,131.178 711.6,165.868 736.93,190.108 C758.44,210.708 785.894,224.735 800.544,231.525" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-CHECKING-to-PREVIOUS"/><polygon points="805.08,233.628,798.596,226.214,800.544,231.525,795.232,233.472,805.08,233.628" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="737.93" y="168.863" fill="#000" font-size="13" textLength="130.248" font-family="Microsoft YaHei">提交失败 / 配置已过期</text><text x="738.054" y="186.021" fill="#000" font-size="13" textLength="130" font-family="Microsoft YaHei">恢复原结论并补偿核对</text></g><!--link PREVIOUS to NO_RECORD--><g class="link" data-entity-1="ent0006" data-entity-2="ent0001" id="download-file-state-diagram-2-lnk18" data-source-line="23" data-link-type="dependency"><path d="M814.27,249.348 C818.87,288.358 830.82,430.138 775.93,525.018 C751.59,567.078 710.07,597.017 675.44,617.017" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-PREVIOUS-to-NO_RECORD"/><polygon points="671.11,619.518,680.904,618.48,675.44,617.017,676.903,611.553,671.11,619.518" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="810.65" y="443.813" fill="#000" font-size="13" textLength="86.684" font-family="Microsoft YaHei">[原结论无关联]</text></g><!--link PREVIOUS to AVAILABLE--><g class="link" data-entity-1="ent0006" data-entity-2="ent0003" id="download-file-state-diagram-2-lnk19" data-source-line="24" data-link-type="dependency"><path d="M807.92,245.038 C781.58,276.098 658.42,419.648 607.93,448.058 C578.08,464.858 492.614,481.829 436.194,491.779" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-PREVIOUS-to-AVAILABLE"/><polygon points="431.27,492.648,440.828,495.024,436.194,491.779,439.439,487.145,431.27,492.648" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="711.67" y="380.843" fill="#000" font-size="13" textLength="73.684" font-family="Microsoft YaHei">[原结论可用]</text></g><!--link PREVIOUS to MISSING--><g class="link" data-entity-1="ent0006" data-entity-2="ent0004" id="download-file-state-diagram-2-lnk20" data-source-line="25" data-link-type="dependency"><path d="M816.42,246.918 C823.88,262.838 842.73,299.448 867.93,322.108 C887.17,339.418 908.573,350.781 929.373,359.681" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-PREVIOUS-to-MISSING"/><polygon points="933.97,361.648,927.269,354.43,929.373,359.681,924.122,361.785,933.97,361.648" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="868.93" y="309.363" fill="#000" font-size="13" textLength="73.684" font-family="Microsoft YaHei">[原结论缺失]</text></g><!--link PREVIOUS to UNAVAILABLE--><g class="link" data-entity-1="ent0006" data-entity-2="ent0005" id="download-file-state-diagram-2-lnk21" data-source-line="26" data-link-type="dependency"><path d="M805.33,242.948 C797.59,246.728 785.16,252.458 773.93,256.108 C715.06,275.228 689.8,252.338 637.93,286.108 C613.17,302.228 596.904,326.841 586.074,347.251" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-PREVIOUS-to-UNAVAILABLE"/><polygon points="583.73,351.668,591.482,345.592,586.074,347.251,584.415,341.843,583.73,351.668" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="638.93" y="309.363" fill="#000" font-size="13" textLength="86.684" font-family="Microsoft YaHei">[原结论不可用]</text></g><!--link MISSING to AVAILABLE--><g class="link" data-entity-1="ent0004" data-entity-2="ent0003" id="download-file-state-diagram-2-lnk22" data-source-line="28" data-link-type="dependency"><path d="M957.64,399.508 C948.16,416.078 932.94,437.358 912.93,448.058 C835.29,489.568 605.31,467.438 517.93,478.058 C489.01,481.578 461.721,486.053 436.141,490.653" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-MISSING-to-AVAILABLE"/><polygon points="431.22,491.538,440.786,493.881,436.141,490.653,439.37,486.008,431.22,491.538" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="936.85" y="443.813" fill="#000" font-size="13" textLength="117" font-family="Microsoft YaHei">重新下载并提交成功</text></g><!--link UNAVAILABLE to AVAILABLE--><g class="link" data-entity-1="ent0005" data-entity-2="ent0003" id="download-file-state-diagram-2-lnk23" data-source-line="29" data-link-type="dependency"><path d="M530.63,399.348 C514.8,408.218 496.8,418.738 480.93,429.058 C457.43,444.348 435.919,460.177 416.979,474.687" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-UNAVAILABLE-to-AVAILABLE"/><polygon points="413.01,477.728,422.587,475.429,416.979,474.687,417.722,469.079,413.01,477.728" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="481.93" y="443.813" fill="#000" font-size="13" textLength="117" font-family="Microsoft YaHei">重新下载并提交成功</text></g><!--link MISSING to NO_RECORD--><g class="link" data-entity-1="ent0004" data-entity-2="ent0001" id="download-file-state-diagram-2-lnk25" data-source-line="31" data-link-type="dependency"><path d="M1004.3,386.748 C1037.37,398.248 1079.38,419.208 1062.93,448.058 C982.6,588.878 775.57,627.349 679.47,637.949" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-MISSING-to-NO_RECORD"/><polygon points="674.5,638.498,683.884,641.487,679.47,637.949,683.007,633.535,674.5,638.498" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1040.01" y="506.793" fill="#000" font-size="13" textLength="143.248" font-family="Microsoft YaHei">用户移除关联 / 事务成功</text></g><!--link UNAVAILABLE to NO_RECORD--><g class="link" data-entity-1="ent0005" data-entity-2="ent0001" id="download-file-state-diagram-2-lnk26" data-source-line="32" data-link-type="dependency"><path d="M589.25,399.318 C594.83,408.198 600.52,418.708 603.93,429.058 C625.88,495.708 627.519,574.838 626.809,614.568" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-2-UNAVAILABLE-to-NO_RECORD"/><polygon points="626.72,619.568,630.88,610.64,626.809,614.568,622.881,610.498,626.72,619.568" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="623.88" y="506.793" fill="#000" font-size="13" textLength="143.248" font-family="Microsoft YaHei">用户移除关联 / 事务成功</text></g><!--link AVAILABLE to GMN30--><g class="link" data-entity-1="ent0003" data-entity-2="ent0031" id="download-file-state-diagram-2-lnk32" data-source-line="42" data-link-type="association"><path d="M336.76,503.008 C294.17,506.028 232.71,517.288 195.93,555.018 C183.38,567.888 177.66,586.818 175.17,603.758" style="stroke:#181818;stroke-width:1;stroke-dasharray:7,7;" fill="none" id="download-file-state-diagram-2-AVAILABLE-GMN30"/></g><?plantuml-src bLNVJzjM57xtNt7LnqceqgJkOQgG66KZMWiJY4eJGPMN68WADafSLNrBe24XJKWw84023O40KGKEemmI9o5_p7okxIV-XHxdEewTFMnzkzS-ttVE-SwF6taT4bVuCB-y90LU2q4I5ERvDqlopv8eJ_3B0daH2eIbY3Glaz_vSI74oI5vII3GteAD32YVzCshXrQ17bp0mPLM_s2qsyRVxwcQqrEtD1fxQ2Mr-YRxhZMRa2eRdIAePv1SXrPKRzxGLEMXjS4jXe824PPNv7VeFn88XrRaa2HoaLvi9BB81wMt8N61pFDB4O7Z8Z8l2-GHtJrYx13_OiIs_UB4vAkfiT79gMUF21yXpisnFwf3hQ7LB_tYwFZOwA--YL-wXhsBOzTDYEOJMlCMiZLzk-eNHrwE-9wF_FHyh8jmRZs8NbOCfQAtLAZyvHTV-AQdU-JssU4kh6hrJ8zrPiBBwxht05ezHI_ADdzNrwxbRrDZBtsJCzFawTF0eXGA2CF373VxtHmP6XfsPUwSkjzxYP8V2UHgaAgInmJYLJEHPTBunLcwSqKp2gXRSBa71rMtldC3R4weICViw57P_9p6eXlA5RHtQ3QdgHMQp46gnFMj1o9XEjDaNYyg2DBK3tZrYsOyexSLoEv1Ec-5cRoZ-Iiyq3ylwVOzPFFOPvmjxhyeOyTGoJ0cXBYf_68_ynwbKJw5M8T9mBbAy1-q3EyYzF1m3d1GgrcZriJuKIQQJkXgWvv4QUdKZ1QCJc8EIm2Tk74MqmllRHMBD-W6xgwPd7DUufu2IElkGOk7NfVfmGPirxHw5DcOCqWtK0wc-G2LEtEBxgofgnrBySCrSp-71z_ZIIljzJWe3RhTG47H3HQEpE8kCFVZPkcBUVoHRcpXUEDdu_n4FufXCCRDwO0hftjHr6vMpAfVgxjh58CUb92_ApfiblJcbg6eqBZroEmmUVhUYj-1u9heDR37sfDjtq5tD0TCNIexXhRGNiC13HrZP-RdE4_JkgtD1DR5tgEOfcTw1hlo_-AyABS-60jDtkddJNE_mkH1zR6tSKtRM7UStuOSZFRRq9meuU8BXnOMPIBDzxSp8QpcTFUMpFY8rZdKT_RTwn6Az_GeyKzqrJBjTZYRLOWd8PT4QHvQQLZFMAzG_5IhNnlbD1ikSwy4oLq6d1uV6Vh-oG_47fJSXT69CRA7LX5oQSXbi9Ywiejd72ppB4ylqmog5pz2xWBB0KsLX0K--8vWh10hi1tB-jOo5SGWiPAqK_r3acLfsSgrl_q9cH8YqfjmG8YCBlBY0ZxEaFribAjwHMMFBEid6ZrdYus5y4nwAov9V13DcQtT5ljL9Yvh3arT1oMDNzY6OL2evCsrAXitMxrwnbXh8mHVUsnZUbYYboVuAD2DSvGELmeZPt1d3EXUJM_kOIqWMG6bOAHMzTK6Aezi-4jhMai1ts24cyU7w9H-AcZrUxSiNm40?></g></svg></div><p class="diagram-error" role="status" hidden></p><figcaption>当前实现：独立的下载资源可用性状态机 · <a href="assets/plantuml/implemented.svg" target="_blank" rel="noopener">打开大图</a></figcaption><details class="diagram-source"><summary>查看 PlantUML 源码</summary><pre><code class="language-plantuml">@startuml
+title 当前实现：本地下载资源状态（与下载任务进度分开维护）
+hide empty description
+skinparam shadowing false
+
+state &quot;无下载关联\nNO_RECORD&quot; as NO_RECORD
+state &quot;核对中\nCHECKING&quot; as CHECKING
+state &quot;本地文件可用\nAVAILABLE&quot; as AVAILABLE
+state &quot;确认缺失\nMISSING&quot; as MISSING
+state &quot;暂不可用\nUNAVAILABLE&quot; as UNAVAILABLE
+state &quot;上次确认状态&quot; as PREVIOUS &lt;&lt;choice&gt;&gt;
+
+[*] --&gt; NO_RECORD
+NO_RECORD --&gt; CHECKING : 启动 / 全量核对\n[数据库存在下载关联]
+NO_RECORD --&gt; AVAILABLE : 下载校验与记录提交成功
+AVAILABLE --&gt; CHECKING : 文件或目录事件\n配置变化 / 刷新 / 播放取源
+MISSING --&gt; CHECKING : 恢复事件 / 配置变化\n启动 / 刷新 / 补偿核对
+UNAVAILABLE --&gt; CHECKING : 恢复事件 / 刷新\n启动 / 补偿核对
+
+CHECKING --&gt; AVAILABLE : [读取与指纹检查通过]\n[必要的记录更新已提交]
+CHECKING --&gt; MISSING : [确认缺失]\n[没有唯一的指纹匹配文件]
+CHECKING --&gt; UNAVAILABLE : [离线 / 权限 / I/O / 内容改变]\n或 [实际音频打开或解码失败]
+CHECKING --&gt; PREVIOUS : 提交失败 / 配置已过期\n恢复原结论并补偿核对
+PREVIOUS --&gt; NO_RECORD : [原结论无关联]
+PREVIOUS --&gt; AVAILABLE : [原结论可用]
+PREVIOUS --&gt; MISSING : [原结论缺失]
+PREVIOUS --&gt; UNAVAILABLE : [原结论不可用]
+
+MISSING --&gt; AVAILABLE : 重新下载并提交成功
+UNAVAILABLE --&gt; AVAILABLE : 重新下载并提交成功
+AVAILABLE --&gt; NO_RECORD : 用户移除关联 / 事务成功
+MISSING --&gt; NO_RECORD : 用户移除关联 / 事务成功
+UNAVAILABLE --&gt; NO_RECORD : 用户移除关联 / 事务成功
+
+note right of CHECKING
+  核对时 UI 保留上次确认图标。
+  文件事件先合并，再进入串行更新队列。
+  SHA-256 匹配搬迁文件；同名不算同一首歌。
+  监听重建 ready 时做全量补偿。
+end note
+
+note bottom of AVAILABLE
+  ResourcesChanged 只表示资源可用性变化。
+  Downloaded 表示下载器成功提交了完成记录。
+  外部恢复文件不能提前结束正在执行的下载。
+  PREVIOUS 是绘图判定节点，不是代码中的额外枚举。
+end note
+@enduml
+</code></pre></details></figure>
+<div class="table-wrap"><table><thead><tr><th>状态</th><th>判定与表现</th></tr></thead><tbody><tr><td><code>NO_RECORD</code></td><td>没有下载关联；可下载</td></tr><tr><td><code>CHECKING</code></td><td>正在核对；图标保留上次确认结果，避免闪动</td></tr><tr><td><code>AVAILABLE</code></td><td>文件可读取且通过大小/必要的内容校验；显示已下载，本地优先</td></tr><tr><td><code>MISSING</code></td><td>确认文件或目录缺失，没有可靠的搬迁候选；显示可下载，保留恢复元数据</td></tr><tr><td><code>UNAVAILABLE</code></td><td>离线、权限、I/O、空文件、内容变化，或本次打开/解码失败；保留关联，显示原因</td></tr></tbody></table></div>
+<p><code>PREVIOUS</code> 是图中的判定节点，不是代码枚举。提交失败或配置变更时恢复上次确认结果；不会把未提交的路径当作新结论。</p>
+<h3 id="download-file-state-h5">任务事件与资源事件</h3>
+<div class="table-wrap"><table><thead><tr><th>事件/数据</th><th>表示什么</th><th>能否结束下载任务</th></tr></thead><tbody><tr><td><code>DownloadEvts.Downloaded</code></td><td>下载器已成功提交完成记录</td><td>可以</td></tr><tr><td><code>DownloadEvts.ResourcesChanged</code></td><td>文件核对后资源恢复可用或路径变化</td><td>不可以</td></tr><tr><td><code>DownloadEvts.RemoveDownload</code></td><td>当前可用集合中的记录被移除</td><td>不表示正在执行的传输已取消</td></tr><tr><td><code>downloadedSet</code></td><td>当前 <code>AVAILABLE</code> 的歌曲键集合</td><td>不单独决定活动任务的进度</td></tr><tr><td>资源 Store</td><td>所有已知关联的状态，包括缺失/不可用</td><td>供图标与本地播放选择使用</td></tr></tbody></table></div>
+<p>下载中页面优先显示实际任务进度；歌单中的下载图标读取资源可用性。外部恢复文件不会把尚未完成的传输误报为 <code>DONE</code>。</p>
+<h2 id="download-file-state-h6">4. 本地优先与打开失败回退</h2>
+<figure class="diagram" id="download-file-state-diagram-3" data-diagram-language="mermaid" data-diagram-state="waiting"><div class="diagram-output" role="img" aria-label="Mermaid 流程图">正在渲染流程图…</div><p class="diagram-error" role="status" hidden></p><details class="diagram-source"><summary>查看 Mermaid 源码</summary><pre><code class="language-mermaid">sequenceDiagram
+    participant Player as TrackPlayer
+    participant Sync as 下载记录队列
+    participant File as 本地文件
+    participant Audio as HTMLAudio
+    participant Plugin as 在线插件
+    Player-&gt;&gt;Sync: 核对当前歌曲
+    Sync-&gt;&gt;File: 读取检查 / 必要时指纹校验
+    Sync--&gt;&gt;Player: 返回确认后的资源状态和最新路径
+    alt 本地可用
+        Player-&gt;&gt;Audio: 设置 file:// 音源
+        opt 检查后被删除或打开/解码失败
+            Audio--&gt;&gt;Player: 本次音源错误
+            Player-&gt;&gt;Sync: 上报失败路径并重新核对
+            Player-&gt;&gt;Plugin: 新请求，绕过本地获取网络音源
+            Plugin--&gt;&gt;Player: 网络音源或失败
+            alt 请求仍属于当前歌曲和代次
+                Player-&gt;&gt;Audio: 网络回退；保留进度与播放意图
+            else 已切歌 / 新请求取代
+                Player-&gt;&gt;Player: 丢弃旧结果，包括旧失败
+            end
+        end
+    else 缺失或不可用
+        Player-&gt;&gt;Plugin: 有在线来源时获取网络音源
+    end
+    Note over Player,Plugin: 纯本地歌曲不进行网络回退；网络仍失败则沿用播放错误策略</code></pre></details><noscript>启用 JavaScript 后可以查看流程图；也可展开上面的 Mermaid 源码。</noscript></figure>
+<p>实际打开失败只尝试一次本地→网络回退；重复错误不会重复启动恢复。恢复期间用户暂停，网络源准备好后保持暂停。<code>playback</code> 表示本次音频打开或解码失败；手动刷新会重新检查文件，文件检查不等于所有编码都能解码。</p>
+<h2 id="download-file-state-h7">5. 实现机制与代码入口</h2>
+<div class="table-wrap"><table><thead><tr><th>模块</th><th>职责</th><th>重要边界</th></tr></thead><tbody><tr><td><a href="../../src/common/download-resource.ts">download-resource.ts</a></td><td>资源枚举、文件身份、核对结果与事件类型</td><td>类型与下载任务枚举分开</td></tr><tr><td><a href="../../src/common/download-file-system.ts">download-file-system.ts</a></td><td>文件读回、SHA-256、缺失/离线/访问错误分类</td><td>文件内容变化不覆盖原指纹</td></tr><tr><td><a href="../../src/common/download-directory-watcher.ts">download-directory-watcher.ts</a></td><td>Chokidar 监听、合并事件、重建监听、释放资源</td><td>只允许相关目录树；附近父目录失效后重新选监听位置</td></tr><tr><td><a href="../../src/shared/utils/preload.ts">utils/preload.ts</a></td><td>将 Node 检查和监听能力通过 contextBridge 提供给 renderer</td><td>窗口卸载关闭原生监听器</td></tr><tr><td><a href="../../src/renderer/core/downloader/downloaded-sheet.ts">downloaded-sheet.ts</a></td><td>统一核对、串行事务、缓存、Store、补偿与配置代次</td><td>下载完成提交和核对共用队列</td></tr><tr><td><a href="../../src/renderer/core/downloader/index.ts">downloader/index.ts</a></td><td>任务进度、真正完成事件、刷新和资源 hook</td><td>资源恢复不提前结束活动任务</td></tr><tr><td><a href="../../src/renderer/core/track-player/index.ts">track-player/index.ts</a></td><td>本地优先、打开错误回退、旧请求保护</td><td>失败路径已被新下载替换时，旧失败不能覆盖它</td></tr><tr><td><a href="../../src/renderer/components/MusicDownloaded/index.tsx">MusicDownloaded</a> / <a href="../../src/renderer/pages/main-page/views/download-view/index.tsx">DownloadView</a></td><td>下载图标、不可用原因、手动刷新</td><td>英文、简体中文、繁体中文均有对应文案</td></tr></tbody></table></div>
+<h3 id="download-file-state-h8">参数与恢复策略</h3>
+<div class="table-wrap"><table><thead><tr><th>机制</th><th>当前设置</th></tr></thead><tbody><tr><td>文件事件合并</td><td>preload 250ms 收集；renderer 250ms 合并/排队；持续变化不会无限延迟已收集事件</td></tr><tr><td>目录删除后的监听重建</td><td>500ms 后重新选择可访问监听位置；<code>ready</code> 触发全量核对</td></tr><tr><td>监听错误恢复</td><td>5 秒后重新建立监听；同时请求核对</td></tr><tr><td>核对/提交失败重试</td><td>自动核对失败时 5 秒后重试；手动刷新显示错误</td></tr><tr><td>补偿核对</td><td>启动时在首屏后分批执行，详见 <a href="#flows">02</a>；配置变化、手动刷新、监听 ready；每 5 分钟一次；焦点触发最多每 30 秒一次</td></tr><tr><td>磁盘/内容检查并发</td><td>普通候选分批最多 4 个；搬迁候选串行验证</td></tr><tr><td>指纹</td><td>大小、SHA-256、修改时间、设备提示；新下载建立，旧记录在文件可读取时补建</td></tr><tr><td>日常读取</td><td>指纹已有且大小/修改时间未变时做读取检查；文件事件、手动刷新、搬迁候选需要内容校验</td></tr><tr><td>缺失与不可用</td><td>保留歌曲身份、收藏、引用计数和下载路径元数据</td></tr><tr><td>已下载页面</td><td>显示可用与暂不可用的关联；确认缺失项移出列表，元数据仍保留</td></tr></tbody></table></div>
+<h2 id="download-file-state-h9">6. 已解决问题与验证证据</h2>
+<div class="table-wrap"><table><thead><tr><th>问题</th><th>本轮结果</th><th>验证方式</th></tr></thead><tbody><tr><td>外部删除后图标仍是已下载</td><td>已修正</td><td>Windows 真实 Chokidar、IndexedDB、已挂载 React 图标</td></tr><tr><td>整个目录删除/重建不刷新</td><td>已修正</td><td>Windows 用户临时目录和 F 盘测试；Linux 原生文件事件与重新附着</td></tr><tr><td>同名歌曲误恢复下载关联</td><td>已防止</td><td>同名、同大小、不同 SHA-256 的候选拒绝关联</td></tr><tr><td>外接盘或访问故障被当作删除</td><td>分类保留关联</td><td>注入离线、权限、I/O 错误；检查警告图标和引用计数</td></tr><tr><td>文件检查后被删除，播放不能自愈</td><td>已修正</td><td>真实 HTMLAudio 在打开前删除本地 WAV，再验证网络 WAV 解码播放</td></tr><tr><td>恢复请求晚到覆盖新歌曲</td><td>已防止</td><td>Node 的延迟成功/失败、暂停、切歌及重复错误回归</td></tr><tr><td>旧目录核对覆盖新设置</td><td>已防止</td><td>核对途中切换目录；检查事务、缓存与事件没有发布旧路径</td></tr><tr><td>核对提交失败丢失原路径</td><td>保留原记录与原结论</td><td>注入真实 IndexedDB 写失败，恢复后重新核对</td></tr><tr><td>恢复文件提前结束正在下载的任务</td><td>已防止</td><td>真实下载队列中阻塞取源，恢复旧文件；任务保持下载中，真正提交后才完成</td></tr></tbody></table></div>
+<p><a href="evidence/download-file-sync-results.json">本轮验收记录</a>包含环境、源文件校验值与测试结果；<a href="../../scripts/tests/README.md">回归入口</a>说明如何复跑。Node 8 组、Windows Electron 6 组、类型与格式门禁已通过。Linux 本轮验证了文件检查和原生监听；没有把它当作 Linux GUI 或 macOS 运行验收。</p>
+<p>Windows 编译版还用独立 profile 检查了真实打包 preload 的 contextBridge：文件 SHA-256、原生删除回调、目录删除/恢复和停止释放均通过。知识库离线网页 12 张图在桌面、窄屏与打印模式均渲染成功；对应结果见 <a href="evidence/browser-render-results.json">网页验证记录</a>。</p>
+<h2 id="download-file-state-h10">7. 保留的边界</h2>
+<div class="table-wrap"><table><thead><tr><th>场景</th><th>当前边界与处理</th></tr></thead><tbody><tr><td>旧记录没有指纹，升级前已搬离原路径</td><td>无法仅凭同名证明身份；原路径重新可读时可补建指纹，之后支持可靠搬迁恢复</td></tr><tr><td>文件被移动并改名，或移到未知目录</td><td>不扫描整个磁盘；当前仅检查已登记路径与配置目录中的同名候选</td></tr><tr><td>正在写入的临时文件</td><td>没有已提交下载关联，不作为完成歌曲导入</td></tr><tr><td>外部编辑音频标签或内容</td><td>指纹变化标记不可用；保留原身份，用户可恢复原文件或重新下载</td></tr><tr><td>目录或卷不可访问</td><td>区分确认缺失与暂不可用；设备提示辅助判断，网络盘和特殊挂载仍需额外设备验证</td></tr><tr><td>下载任务持久化、Range 续传、单任务取消、HLS 合并</td><td>本轮没有新增，继续在 <a href="#product">03</a> 管理</td></tr></tbody></table></div>
+<h2 id="download-file-state-h11">8. 历史状态机（开发前）</h2>
+<p>以下只表示 <code>dev@4e7b711</code> 的开发前行为：下载图标来自内存缓存，外部删除没有持续同步，播放取源缺失分支有清理 TODO。不能把此图当作当前实现。</p>
+<figure class="diagram" id="download-file-state-diagram-4" data-diagram-language="plantuml" data-diagram-state="rendered"><div class="diagram-output" role="img" aria-label="开发前：下载任务与界面标志状态，保留用于对照"><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" data-diagram-type="STATE" style="background:#FFFFFF;" width="1666px" height="993px" viewBox="0 0 1666 993" zoomAndPan="magnify" preserveAspectRatio="none" contentStyleType="text/css"><?plantuml 1.2026.8?><defs/><g font-family="sans-serif" lengthAdjust="spacing"><g class="title" data-source-line="1"><text x="660.66" y="24.813" fill="#000" font-size="14" textLength="338.591" font-weight="700" font-family="Microsoft YaHei">开发前（dev@4e7b711）：下载任务与界面下载标志</text></g><rect x="816.87" y="237.418" width="164.267" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="821.87" y="257.231" fill="#000" font-size="14" textLength="154.267" font-family="Microsoft YaHei">未下载 / 无有效下载缓存</text><text x="821.87" y="275.709" fill="#000" font-size="14" textLength="41.87" font-family="Microsoft YaHei">NONE</text><rect x="493.93" y="380.378" width="72.146" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="498.93" y="400.191" fill="#000" font-size="14" textLength="28" font-family="Microsoft YaHei">排队</text><text x="498.93" y="418.669" fill="#000" font-size="14" textLength="62.146" font-family="Microsoft YaHei">WAITING</text><rect x="468.64" y="539.168" width="122.718" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="473.64" y="558.981" fill="#000" font-size="14" textLength="42" font-family="Microsoft YaHei">下载中</text><text x="473.64" y="577.459" fill="#000" font-size="14" textLength="112.718" font-family="Microsoft YaHei">DOWNLOADING</text><rect x="562.35" y="932.868" width="65.31" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="567.35" y="952.681" fill="#000" font-size="14" textLength="28" font-family="Microsoft YaHei">暂停</text><text x="567.35" y="971.159" fill="#000" font-size="14" textLength="55.31" font-family="Microsoft YaHei">PAUSED</text><rect x="168" y="680.958" width="94" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="173" y="700.771" fill="#000" font-size="14" textLength="84" font-family="Microsoft YaHei">保存下载记录</text><text x="173" y="719.249" fill="#000" font-size="14" textLength="53.307" font-family="Microsoft YaHei">SAVING</text><rect x="385" y="806.918" width="66" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="390" y="826.731" fill="#000" font-size="14" textLength="56" font-family="Microsoft YaHei">任务失败</text><text x="390" y="845.209" fill="#000" font-size="14" textLength="46.525" font-family="Microsoft YaHei">ERROR</text><rect x="873" y="78.468" width="52" height="46.955" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;" rx="12.5" ry="12.5"/><text x="878" y="98.281" fill="#000" font-size="14" textLength="42" font-family="Microsoft YaHei">已下载</text><text x="878" y="116.759" fill="#000" font-size="14" textLength="41.152" font-family="Microsoft YaHei">DONE</text><g class="entity" data-qualified-name="CHECK_DISK" id="download-file-state-diagram-4-ent0008"><polygon points="1224,391.858,1236,403.858,1224,415.858,1212,403.858,1224,391.858" fill="#F1F1F1" style="stroke:#181818;stroke-width:0.5;stroke-linejoin:miter;stroke-miterlimit:10;"/></g><g class="start_entity" data-qualified-name=".start." id="download-file-state-diagram-4-ent0009" data-source-line="14"><ellipse cx="1224" cy="260.898" rx="10" ry="10" fill="#222" style="stroke:#222;stroke-width:1;"/></g><g class="entity" data-qualified-name="GMN31" id="download-file-state-diagram-4-ent0032" data-source-line="37"><path d="M1119,45.478 L1119,97.948 L925.27,101.948 L1119,105.948 L1119,158.424 A0,0 0 0 0 1119,158.424 L1387,158.424 A0,0 0 0 0 1387,158.424 L1387,55.478 L1377,45.478 L1119,45.478 A0,0 0 0 0 1119,45.478" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><path d="M1377,45.478 L1377,55.478 L1387,55.478 L1377,45.478" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><text x="1125" y="64.233" fill="#000" font-size="13" textLength="225.247" font-family="Microsoft YaHei">DONE 主要由 downloadedSet 派生。</text><text x="1125" y="81.391" fill="#000" font-size="13" textLength="208" font-family="Microsoft YaHei">自环归纳两种状态没有改变的场景，</text><text x="1125" y="98.548" fill="#000" font-size="13" textLength="208" font-family="Microsoft YaHei">不代表当前存在文件删除监听处理。</text><text x="1125" y="115.706" fill="#000" font-size="13" textLength="182.248" font-family="Microsoft YaHei">外部删除 / 移动后图标未同步；</text><text x="1125" y="132.864" fill="#000" font-size="13" textLength="247" font-family="Microsoft YaHei">播放发现缺失时回退插件，图标仍未同步。</text><text x="1125" y="150.021" fill="#000" font-size="13" textLength="224.39" font-family="Microsoft YaHei">缺失文件播放分支仍留有清理 TODO。</text></g><g class="entity" data-qualified-name="GMN34" id="download-file-state-diagram-4-ent0035" data-source-line="46"><path d="M1036.44,523.328 L1036.44,601.958 A0,0 0 0 0 1036.44,601.958 L1411.55,601.958 A0,0 0 0 0 1411.55,601.958 L1411.55,533.328 L1401.55,523.328 L1228,523.328 L1224,416.388 L1220,523.328 L1036.44,523.328 A0,0 0 0 0 1036.44,523.328" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><path d="M1401.55,523.328 L1401.55,533.328 L1411.55,533.328 L1401.55,523.328" style="stroke:#181818;stroke-width:0.5;" fill="#FEFFDD"/><text x="1042.44" y="542.083" fill="#000" font-size="13" textLength="354.11" font-family="Microsoft YaHei">CHECK_DISK 是图中的判定节点，非 DownloadState 枚举。</text><text x="1042.44" y="559.241" fill="#000" font-size="13" textLength="312" font-family="Microsoft YaHei">该图归纳主要转换，不展开全局队列切换和并发细节。</text><text x="1042.44" y="576.398" fill="#000" font-size="13" textLength="273" font-family="Microsoft YaHei">缺失文件的元数据会保留，便于以后恢复路径。</text><text x="1042.44" y="593.556" fill="#000" font-size="13" textLength="320.049" font-family="Microsoft YaHei">ERROR 也可能表示文件已落盘，但下载记录保存失败。</text></g><!--link *start* to CHECK_DISK--><g class="link" data-entity-1="ent0009" data-entity-2="ent0008" id="download-file-state-diagram-4-lnk10" data-source-line="14" data-link-type="dependency"><path d="M1223.31,271.178 C1222.57,281.668 1221.43,299.238 1221,314.378 C1220.54,330.368 1220.54,334.388 1221,350.378 C1221.41,364.788 1222.112,376.41 1222.852,387.02" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-*start*-to-CHECK_DISK"/><polygon points="1223.2,392.008,1226.564,382.751,1222.852,387.02,1218.584,383.308,1223.2,392.008" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1222" y="337.633" fill="#000" font-size="13" textLength="65" font-family="Microsoft YaHei">初始化核对</text></g><!--link CHECK_DISK to DONE--><g class="link" data-entity-1="ent0008" data-entity-2="ent0007" id="download-file-state-diagram-4-lnk11" data-source-line="15" data-link-type="dependency"><path d="M1233.28,400.638 C1281.41,388.668 1498.33,328.958 1441,237.418 C1358.88,106.308 1253.74,188.558 1102,158.418 C1037.68,145.648 968.52,125.007 930.09,112.927" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-CHECK_DISK-to-DONE"/><polygon points="925.32,111.428,932.706,117.942,930.09,112.927,935.105,110.31,925.32,111.428" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1451.57" y="257.653" fill="#000" font-size="13" textLength="199.342" font-family="Microsoft YaHei">[登记路径存在，或现目录同名候选</text><text x="1510.07" y="274.811" fill="#000" font-size="13" textLength="82.342" font-family="Microsoft YaHei">通过当前检查]</text></g><!--link DONE to CHECK_DISK--><g class="link" data-entity-1="ent0007" data-entity-2="ent0008" id="download-file-state-diagram-4-lnk28" data-source-line="32" data-link-type="dependency"><path d="M925.41,110.348 C998.41,131.198 1200.89,191.888 1252,237.418 C1291.77,272.848 1315.49,302.578 1292,350.378 C1279.37,376.078 1252.012,390.724 1236.832,397.444" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-DONE-to-CHECK_DISK"/><polygon points="1232.26,399.468,1242.109,399.482,1236.832,397.444,1238.87,392.167,1232.26,399.468" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1293.78" y="257.653" fill="#000" font-size="13" textLength="117.248" font-family="Microsoft YaHei">修改下载目录 / 重启</text><text x="1326.404" y="274.811" fill="#000" font-size="13" textLength="52" font-family="Microsoft YaHei">重新核对</text></g><!--link CHECK_DISK to NONE--><g class="link" data-entity-1="ent0008" data-entity-2="ent0001" id="download-file-state-diagram-4-lnk12" data-source-line="16" data-link-type="dependency"><path d="M1212.89,402.428 C1164.05,400.338 968.91,389.628 925,350.378 C906.5,333.838 901.254,309.873 899.694,289.613" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-CHECK_DISK-to-NONE"/><polygon points="899.31,284.628,896.013,293.908,899.694,289.613,903.989,293.294,899.31,284.628" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="926" y="329.133" fill="#000" font-size="13" textLength="134.342" font-family="Microsoft YaHei">[没有记录，或文件缺失</text><text x="952" y="346.291" fill="#000" font-size="13" textLength="82.342" font-family="Microsoft YaHei">且未恢复路径]</text></g><!--link NONE to CHECK_DISK--><g class="link" data-entity-1="ent0001" data-entity-2="ent0008" id="download-file-state-diagram-4-lnk29" data-source-line="33" data-link-type="dependency"><path d="M981.25,284.308 C1008.35,292.638 1038.35,302.888 1065,314.378 C1081.03,321.288 1183.538,379.727 1212.458,396.247" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-NONE-to-CHECK_DISK"/><polygon points="1216.8,398.728,1210.969,390.79,1212.458,396.247,1207.001,397.737,1216.8,398.728" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="1129.99" y="329.133" fill="#000" font-size="13" textLength="78" font-family="Microsoft YaHei">修改下载目录</text><text x="1129.99" y="346.291" fill="#000" font-size="13" textLength="78" font-family="Microsoft YaHei">尝试恢复记录</text></g><!--link NONE to WAITING--><g class="link" data-entity-1="ent0001" data-entity-2="ent0002" id="download-file-state-diagram-4-lnk13" data-source-line="17" data-link-type="dependency"><path d="M816.51,281.838 C783.86,290.598 746.25,301.758 713,314.378 C660.54,334.278 607.063,361.237 570.723,380.597" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-NONE-to-WAITING"/><polygon points="566.31,382.948,576.134,382.246,570.723,380.597,572.372,375.186,566.31,382.948" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="714" y="337.633" fill="#000" font-size="13" textLength="129.53" font-family="Microsoft YaHei">开始下载 [队列未暂停]</text></g><!--link NONE to PAUSED--><g class="link" data-entity-1="ent0001" data-entity-2="ent0004" id="download-file-state-diagram-4-lnk14" data-source-line="18" data-link-type="dependency"><path d="M891.38,284.558 C882.79,312.158 870,360.378 870,402.858 C870,402.858 870,402.858 870,831.398 C870,936.528 705.888,952.846 632.898,955.056" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-NONE-to-PAUSED"/><polygon points="627.9,955.208,637.017,958.933,632.898,955.056,636.775,950.937,627.9,955.208" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="871" y="646.713" fill="#000" font-size="13" textLength="129.53" font-family="Microsoft YaHei">开始下载 [队列已暂停]</text></g><!--link WAITING to DOWNLOADING--><g class="link" data-entity-1="ent0002" data-entity-2="ent0003" id="download-file-state-diagram-4-lnk15" data-source-line="19" data-link-type="dependency"><path d="M530,427.658 C530,457.378 530,504.078 530,533.818" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-WAITING-to-DOWNLOADING"/><polygon points="530,538.818,534,529.818,530,533.818,526,529.818,530,538.818" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="567.842" y="472.083" fill="#000" font-size="13" textLength="52" font-family="Microsoft YaHei">队列执行</text><text x="531" y="489.241" fill="#000" font-size="13" textLength="125.684" font-family="Microsoft YaHei">[没有已完成文件缓存]</text></g><!--link WAITING to SAVING--><g class="link" data-entity-1="ent0002" data-entity-2="ent0005" id="download-file-state-diagram-4-lnk16" data-source-line="20" data-link-type="dependency"><path d="M493.76,410.658 C434.64,421.948 317.21,452.308 249,523.328 C212.05,561.798 209.61,579.908 198,631.958 C194.36,648.268 197.131,661.931 202.431,675.941" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-WAITING-to-SAVING"/><polygon points="204.2,680.618,204.757,670.784,202.431,675.941,197.274,673.615,204.2,680.618" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="286.842" y="559.403" fill="#000" font-size="13" textLength="52" font-family="Microsoft YaHei">队列执行</text><text x="250" y="576.561" fill="#000" font-size="13" textLength="125.684" font-family="Microsoft YaHei">[存在已完成文件缓存]</text></g><!--link WAITING to DONE--><g class="link" data-entity-1="ent0002" data-entity-2="ent0007" id="download-file-state-diagram-4-lnk17" data-source-line="21" data-link-type="dependency"><path d="M539.33,380.078 C554.5,345.428 587.44,279.098 633,237.418 C707.07,169.658 816.872,128.913 868.022,112.403" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-WAITING-to-DONE"/><polygon points="872.78,110.868,862.986,109.825,868.022,112.403,865.444,117.439,872.78,110.868" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="690.342" y="257.653" fill="#000" font-size="13" textLength="52" font-family="Microsoft YaHei">队列执行</text><text x="634" y="274.811" fill="#000" font-size="13" textLength="164.684" font-family="Microsoft YaHei">[下载记录已由其他操作提交]</text></g><!--link WAITING to PAUSED--><g class="link" data-entity-1="ent0002" data-entity-2="ent0004" id="download-file-state-diagram-4-lnk18" data-source-line="22" data-link-type="dependency"><path d="M493.69,409.438 C386.2,424.028 77,473.638 77,561.648 C77,561.648 77,561.648 77,831.398 C77,931.608 443.342,950.83 557.202,954.41" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-WAITING-to-PAUSED"/><polygon points="562.2,954.568,553.33,950.287,557.202,954.41,553.079,958.283,562.2,954.568" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="78" y="709.693" fill="#000" font-size="13" textLength="52" font-family="Microsoft YaHei">全部暂停</text></g><!--link PAUSED to WAITING--><g class="link" data-entity-1="ent0004" data-entity-2="ent0002" id="download-file-state-diagram-4-lnk20" data-source-line="24" data-link-type="dependency"><path d="M627.79,947.158 C676.68,932.758 763,897.908 763,831.398 C763,561.648 763,561.648 763,561.648 C763,468.028 636.816,427.753 571.286,412.903" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-PAUSED-to-WAITING"/><polygon points="566.41,411.798,574.303,417.688,571.286,412.903,576.071,409.886,566.41,411.798" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="764" y="709.693" fill="#000" font-size="13" textLength="52" font-family="Microsoft YaHei">全部继续</text></g><!--link DOWNLOADING to PAUSED--><g class="link" data-entity-1="ent0003" data-entity-2="ent0004" id="download-file-state-diagram-4-lnk19" data-source-line="23" data-link-type="dependency"><path d="M560.6,586.508 C586.23,607.738 620.96,641.898 636,680.958 C643.5,700.438 645.75,709.468 636,727.918 C624.94,748.848 603.06,736.988 592,757.918 C562.05,814.598 576.138,888.993 586.628,927.583" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-DOWNLOADING-to-PAUSED"/><polygon points="587.94,932.408,589.439,922.673,586.628,927.583,581.719,924.772,587.94,932.408" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="593" y="772.673" fill="#000" font-size="13" textLength="143.248" font-family="Microsoft YaHei">全部暂停 / 中止本次传输</text></g><!--link DOWNLOADING to SAVING--><g class="link" data-entity-1="ent0003" data-entity-2="ent0005" id="download-file-state-diagram-4-lnk21" data-source-line="25" data-link-type="dependency"><path d="M468.27,572.768 C380.89,586.298 229.93,612.228 214,631.958 C203.17,645.388 203.315,660.424 206.705,675.824" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-DOWNLOADING-to-SAVING"/><polygon points="207.78,680.708,209.752,671.058,206.705,675.824,201.939,672.778,207.78,680.708" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="215" y="646.713" fill="#000" font-size="13" textLength="143" font-family="Microsoft YaHei">文件写入及最终落盘成功</text></g><!--link DOWNLOADING to ERROR--><g class="link" data-entity-1="ent0003" data-entity-2="ent0006" id="download-file-state-diagram-4-lnk22" data-source-line="26" data-link-type="dependency"><path d="M525.72,586.308 C522.01,604.188 515.98,629.578 508,650.958 C486.3,709.148 453.449,768.883 434.149,802.143" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-DOWNLOADING-to-ERROR"/><polygon points="431.64,806.468,439.617,800.691,434.149,802.143,432.697,796.676,431.64,806.468" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="496.53" y="709.693" fill="#000" font-size="13" textLength="130" font-family="Microsoft YaHei">获取源或文件传输失败</text></g><!--link SAVING to DONE--><g class="link" data-entity-1="ent0005" data-entity-2="ent0007" id="download-file-state-diagram-4-lnk23" data-source-line="27" data-link-type="dependency"><path d="M170.16,680.488 C108.75,645.468 6,572.518 6,476.328 C6,259.898 6,259.898 6,259.898 C6,169.488 720.262,115.294 867.772,105.054" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-SAVING-to-DONE"/><polygon points="872.76,104.708,863.505,101.34,867.772,105.054,864.059,109.321,872.76,104.708" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="7" y="409.113" fill="#000" font-size="13" textLength="104" font-family="Microsoft YaHei">下载记录提交成功</text></g><!--link SAVING to ERROR--><g class="link" data-entity-1="ent0005" data-entity-2="ent0006" id="download-file-state-diagram-4-lnk24" data-source-line="28" data-link-type="dependency"><path d="M227.72,728.238 C237.47,743.868 252.26,764.038 270,776.918 C304.75,802.138 347.879,815.101 379.679,822.181" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-SAVING-to-ERROR"/><polygon points="384.56,823.268,376.644,817.407,379.679,822.181,374.906,825.216,384.56,823.268" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="271" y="772.673" fill="#000" font-size="13" textLength="104" font-family="Microsoft YaHei">下载记录提交失败</text></g><!--link ERROR to WAITING--><g class="link" data-entity-1="ent0006" data-entity-2="ent0002" id="download-file-state-diagram-4-lnk25" data-source-line="29" data-link-type="dependency"><path d="M410.2,806.578 C398.66,769.478 379.95,694.008 395,631.958 C415.17,548.828 474.389,470.12 506.799,431.43" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-ERROR-to-WAITING"/><polygon points="510.01,427.598,501.164,431.928,506.799,431.43,507.297,437.065,510.01,427.598" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="396" y="646.713" fill="#000" font-size="13" textLength="103.53" font-family="Microsoft YaHei">重试 [队列未暂停]</text></g><!--link ERROR to PAUSED--><g class="link" data-entity-1="ent0006" data-entity-2="ent0004" id="download-file-state-diagram-4-lnk26" data-source-line="30" data-link-type="dependency"><path d="M428.13,854.358 C435.98,869.868 448.18,889.818 464,902.868 C492.72,926.578 528.686,939.361 557.096,946.861" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-ERROR-to-PAUSED"/><polygon points="561.93,948.138,554.249,941.973,557.096,946.861,552.207,949.708,561.93,948.138" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="465" y="898.623" fill="#000" font-size="13" textLength="103.53" font-family="Microsoft YaHei">重试 [队列已暂停]</text></g><!--link DONE to NONE--><g class="link" data-entity-1="ent0007" data-entity-2="ent0001" id="download-file-state-diagram-4-lnk27" data-source-line="31" data-link-type="dependency"><path d="M899,125.768 C899,155.528 899,202.278 899,232.048" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-DONE-to-NONE"/><polygon points="899,237.048,903,228.048,899,232.048,895,228.048,899,237.048" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="900" y="203.173" fill="#000" font-size="13" textLength="169" font-family="Microsoft YaHei">在播放器内移除下载关联成功</text></g><!--link DONE to DONE--><g class="link" data-entity-1="ent0007" data-entity-2="ent0007" id="download-file-state-diagram-4-lnk30" data-source-line="34" data-link-type="dependency"><path d="M925.33,85.538 C942.9,80.918 960,86.388 960,101.948 C960,117.508 947.736,124.249 930.166,119.629" style="stroke:#181818;stroke-width:1;" fill="none" id="download-file-state-diagram-4-DONE-to-DONE"/><polygon points="925.33,118.358,933.017,124.515,930.166,119.629,935.051,116.778,925.33,118.358" fill="#181818" style="stroke:#181818;stroke-width:1;stroke-linejoin:miter;stroke-miterlimit:10;"/><text x="966" y="107.203" fill="#000" font-size="13" textLength="129.53" font-family="Microsoft YaHei">外部变化 [缓存未更新]</text></g><?plantuml-src ZLRRJXjN57sVhnZbiL9KHOeKgOfGKKmQbDQk86rKOLGvU0XMO0RXQQk-cOil6Dy0ss1iSujTMn6sWI0m7by-fhFF6J_n2zqpvzWCq4Xv6pnhhRttsfV1_y4dBtgMF0lpoim7oIjwfLdF7_FgIqLMdPu5IVp9DxEa-9LPLVpDyqho2QfFdPT4Q0SWkGdhyPjsn2lz-VrJwTcxPq-UtBJNRzfxUdF3w7HqJOFeaTvCq4oiNpncFvB3CFHsX3cVLnAbXKNrRupddrdoBQe-HHRyWrn4_vp7g_pbaz-BivvvloG8VjMZIk8ZKlZ4XCHlHR9pI0hh91DXlz3sDjHstRBJvHnx97hyelamv2Ms-hi7RldjwFYRSUSFrdl-F83mh9irj-nmlNN-w1fr392sluU2UokmN73BFu_-CZdci53iSIZNAs8wJDIedq8duvOdHtyTIBB78TZo2afdnaNPBOzDJBWcB9JrD031rJcJCnFaDJfkQtpnQkp5wzyTuvElnUVFP-OKtumqCY88KzzCYuyVZzXVVoT2f0YL3OXboM4J6jU2xQM9DLKHDKLp6gPkN3MWkuR5GA5wquwHI9OcJcc-ZYL1AWQfE0Ho_S2wM-u7zenU63hRE1VaOu0SbAVlApkvCZa_mjunNvWcoOPrxPAsM-Y2MzQRQMmrMJw6Kfp5dnOihYd26sVMWMDOsU0JCOKTXiYEoREQOsEmrdo1WBuE20DbPiAmwKZaskiLuoZcbdd-o8Gw9fyQ96zEu5qLrkU70ipEhn3WlRX7jyyLYj3q6GGlTIrBjkDwfq2IARrLkgjpQq6msb-jiee5Uv5VHE6kuLgGsZ4fd92J8xrzQ7It1Gwzrn2BHhKArMeFn8TUi6eXb8DW6P9HKWXGBMAaEZI_Yrv0zE01rLe4P1g9AqXcIIird1YM3LiTWKUm-MOtYjd28zYW0_67M2xB07ShxOVZHYFpFqDt2nwQUHThcpV7O43vNk18aAqQINSXLuLGa5QqVgx4qeBWPsCvFRI7y-vijTwha_GrluRMVcBdC3Qa6hYSuJZ9dl9zTtubtot3QH5JvujeENCRd5iCfIps79AxU4_mPbWpRFgHly20qu8WAtYTbdplvrHHcMKNIsHSlQaP_opZy8fuxELvnUELl9EIAfABBaqV_1jOGQ0H_aGJ3UXiqTPdlLcYbJYDNfB0Cjj0p1S3qxqrABH8he6d12bwCwvh7usZAZj5RDNup4KEqL6QtuJK2PJMQ2h4el0QhBTe6XeFqIga4f3luYSBgy5BHshbctOUmRn5oKtp3be7Y-nSGdw_7mYGv1P6mJGOKTVYGouBnF5MCbmd4YBf1Y9f9cTMr0nYLk8RbyDbCYJPAve6SXlVAQggB9W-tdOELMrj9BiDZ8txQfeIAK5zpuYkq9LhpAbVt1STtEX9wvj1zl5ZtUL6Dyf871XjDiRed93uCHBHK3ZBcBSpM8Mp01_ZI1ZVmbOChYzDBxGG1dfOf9b6S9LaJacyhkF_1hqYrcbgTdjwAw5hPNJPVkUP0biY_Ve0aWrZjOEzfAKMR-7LEJiLfaWdP5zQzirbIsitxpy0?></g></svg></div><p class="diagram-error" role="status" hidden></p><figcaption>开发前：下载任务与界面标志状态，保留用于对照 · <a href="assets/plantuml/before.svg" target="_blank" rel="noopener">打开大图</a></figcaption><details class="diagram-source"><summary>查看 PlantUML 源码</summary><pre><code class="language-plantuml">@startuml
+title 开发前（dev@4e7b711）：下载任务与界面下载标志
+hide empty description
+skinparam shadowing false
+
+state &quot;未下载 / 无有效下载缓存\nNONE&quot; as NONE
+state &quot;排队\nWAITING&quot; as WAITING
+state &quot;下载中\nDOWNLOADING&quot; as DOWNLOADING
+state &quot;暂停\nPAUSED&quot; as PAUSED
+state &quot;保存下载记录\nSAVING&quot; as SAVING
+state &quot;任务失败\nERROR&quot; as ERROR
+state &quot;已下载\nDONE&quot; as DONE
+state CHECK_DISK &lt;&lt;choice&gt;&gt;
+
+[*] --&gt; CHECK_DISK : 初始化核对
+CHECK_DISK --&gt; DONE : [登记路径存在，或现目录同名候选\n通过当前检查]
+CHECK_DISK --&gt; NONE : [没有记录，或文件缺失\n且未恢复路径]
+NONE --&gt; WAITING : 开始下载 [队列未暂停]
+NONE --&gt; PAUSED : 开始下载 [队列已暂停]
+WAITING --&gt; DOWNLOADING : 队列执行\n[没有已完成文件缓存]
+WAITING --&gt; SAVING : 队列执行\n[存在已完成文件缓存]
+WAITING --&gt; DONE : 队列执行\n[下载记录已由其他操作提交]
+WAITING --&gt; PAUSED : 全部暂停
+DOWNLOADING --&gt; PAUSED : 全部暂停 / 中止本次传输
+PAUSED --&gt; WAITING : 全部继续
+DOWNLOADING --&gt; SAVING : 文件写入及最终落盘成功
+DOWNLOADING --&gt; ERROR : 获取源或文件传输失败
+SAVING --&gt; DONE : 下载记录提交成功
+SAVING --&gt; ERROR : 下载记录提交失败
+ERROR --&gt; WAITING : 重试 [队列未暂停]
+ERROR --&gt; PAUSED : 重试 [队列已暂停]
+DONE --&gt; NONE : 在播放器内移除下载关联成功
+DONE --&gt; CHECK_DISK : 修改下载目录 / 重启\n重新核对
+NONE --&gt; CHECK_DISK : 修改下载目录\n尝试恢复记录
+DONE --&gt; DONE : 外部变化 [缓存未更新]
+
+note right of DONE
+  DONE 主要由 downloadedSet 派生。
+  自环归纳两种状态没有改变的场景，
+  不代表当前存在文件删除监听处理。
+  外部删除 / 移动后图标未同步；
+  播放发现缺失时回退插件，图标仍未同步。
+  缺失文件播放分支仍留有清理 TODO。
+end note
+
+note bottom of CHECK_DISK
+  CHECK_DISK 是图中的判定节点，非 DownloadState 枚举。
+  该图归纳主要转换，不展开全局队列切换和并发细节。
+  缺失文件的元数据会保留，便于以后恢复路径。
+  ERROR 也可能表示文件已落盘，但下载记录保存失败。
+end note
+@enduml
+</code></pre></details></figure>
+<p><code>CHECK_DISK</code> 是原图中的判定节点，不是枚举。一次任务 <code>ERROR</code> 也可能是文件已落盘、记录保存失败；这仍是理解任务状态与资源状态区别的重要例子。当前任务流程见 <a href="#flows">02</a>。</p>
+<h2 id="download-file-state-h12">9. 维护方式</h2>
+<p>正文仅维护本章。<code>docs/design/download-file-state/README.md</code> 只保留入口；<code>implemented.puml</code> 与 <code>before.puml</code> 是图的唯一源码。网页生成器自动嵌入 SVG 和对应源码，并检查 SHA-256，避免图与源码不同步。</p>
+<pre><code class="language-powershell">python docs/knowledge-base/evidence/render-plantuml.py --jar C:/tools/plantuml.jar --dot C:/tools/Graphviz/bin/dot.exe
+python docs/knowledge-base/evidence/build-docs.py
+.\node_modules\.bin\electron.cmd docs/knowledge-base/evidence/browser-render-test.cjs</code></pre>
+<p>只修改文字或 Mermaid 时跳过第一条。图形在本地生成，浏览器读取离线 SVG；源码可展开，较大的状态图可点击“打开大图”。</p></article><article id="vinyl-player-preview" class="chapter" hidden><h1 id="vinyl-player-preview-h1">11 · 唱片播放效果：写实金属材质</h1>
+<p><a href="#guide">返回目录</a></p>
+<blockquote>状态：<strong>已改用写实唱臂与黑胶素材，已接入播放器并通过 Windows 自测和编译。</strong> 本章前半部分是编译版真实截图；第 6 节保留确认的 AI 示意图，便于对照。验证使用独立 profile 和示例歌曲，用户音乐库与设置不参与。<strong>2026-10-05：用户已验收本轮写实效果。</strong></blockquote>
+<p><strong>新的整体配色提案：</strong> 见 <a href="#jiangnan-porcelain-theme">12 江南 · 青花主题预览</a>，目前只提供效果图，待确认后开发。</p>
+<h2 id="vinyl-player-preview-h2">1. 当前详情：实际截图</h2>
+<p><figure><img loading="lazy" src="assets/previews/vinyl-real-detail-playing.png" alt="编译版实际详情：写实银色唱臂、车削底座与配重、石墨唱头及黑胶反光"><figcaption>编译版实际详情：写实银色唱臂、车削底座与配重、石墨唱头及黑胶反光</figcaption></figure></p>
+<p><a href="assets/previews/vinyl-real-detail-playing.png">打开播放详情原尺寸截图</a>。暂停后唱臂移到盘外，唱片保留当前角度：</p>
+<p><figure><img loading="lazy" src="assets/previews/vinyl-real-detail-paused.png" alt="编译版实际暂停详情：唱臂移到唱片右侧盘外"><figcaption>编译版实际暂停详情：唱臂移到唱片右侧盘外</figcaption></figure></p>
+<p>截图是静态图片。运行本轮编译版可以查看旋转和唱臂过渡；隐藏测试窗口的截图用于确认外观姿态，真实 Chromium 动画行为另由组件回归验证。</p>
+<h2 id="vinyl-player-preview-h3">2. 三个显示位置</h2>
+<div class="table-wrap"><table><thead><tr><th>位置</th><th>当前样式</th><th>适配</th></tr></thead><tbody><tr><td>歌曲详情</td><td>写实银色弧线唱臂、底座、配重、螺丝与石墨唱头</td><td>唱片展示区域略放大；尺寸取 <code>min(51vmin, 40vw)</code>，唱针落在黑胶右下外圈</td></tr><tr><td>底部栏</td><td>共用写实素材，减小阴影</td><td>封面组件 44px；保留点击和键盘打开详情</td></tr><tr><td>迷你窗口</td><td>共用写实素材，减小阴影</td><td>封面 56px，窗口 340 × 72；保留歌词、拖动、双击和悬停操作</td></tr></tbody></table></div>
+<p><figure><img loading="lazy" src="assets/previews/vinyl-real-bottom-playing.png" alt="编译版实际底部栏：44px 银色唱臂与圆形封面"><figcaption>编译版实际底部栏：44px 银色唱臂与圆形封面</figcaption></figure></p>
+<p>迷你窗口原尺寸截图：</p>
+<p><figure><img loading="lazy" src="assets/previews/vinyl-real-mini-playing.png" alt="编译版实际迷你窗口播放姿态"><figcaption>编译版实际迷你窗口播放姿态</figcaption></figure></p>
+<p><figure><img loading="lazy" src="assets/previews/vinyl-real-mini-paused.png" alt="编译版实际迷你窗口暂停姿态"><figcaption>编译版实际迷你窗口暂停姿态</figcaption></figure></p>
+<p>详情打开时，底部栏继续按既有规则切换为歌曲操作按钮，隐藏的底部封面停止旋转。</p>
+<h2 id="vinyl-player-preview-h4">3. 材质与几何</h2>
+<p>之前两轮使用 SVG 渐变模拟金属，实际画面中的高光、厚度与表面细节仍与确认图有明显差距。本轮改为使用确认图作为参考生成写实透明素材，并直接接入播放器。唱片槽纹与反光也一起重做；专辑封面直径从唱片的 64% 调整到 54%，使黑胶区域更接近参考比例。</p>
+<div class="table-wrap"><table><thead><tr><th>部位</th><th>当前实现</th></tr></thead><tbody><tr><td>金属管</td><td>本地透明 PNG，包含圆柱反射、窄高光、暗面和细表面纹理</td></tr><tr><td>底座与配重</td><td>同一素材中的车削端面、倒角、圆柱侧面与接触阴影</td></tr><tr><td>唱头</td><td>石墨材质、真实厚度、两枚螺丝、金属提手和针尖</td></tr><tr><td>黑胶</td><td>本地透明盘面素材，包含细密槽纹、银色边缘与固定方向的反光</td></tr><tr><td>封面</td><td>歌曲实际封面，圆形裁剪后旋转；直径占唱片 54%</td></tr><tr><td>层次</td><td>盘面在下，歌曲封面与中心轴居中，唱臂在上；盘面反光保持固定</td></tr></tbody></table></div>
+<p>唱臂围绕 <code>(82, 16)</code> 转动，素材中的针尖映射到播放位置 <code>(64, 78)</code>；暂停转到 <code>-25°</code>。这些坐标以封面组件的 <code>100 × 100</code> 视图为单位。播放针尖位于黑胶右下外圈，暂停针尖在盘外。测试使用素材实际 alpha 边界与可见针尖检查位置，避免只验证空的矩形或替代路径。</p>
+<p>素材通过内置 <strong>imagegen</strong> 生成后原样复制到仓库：</p>
+<ul><li><a href="../../src/assets/imgs/vinyl-tonearm-real-v1.png">写实唱臂 PNG</a>：1024 × 1536，约 1.2MiB。</li><li><a href="../../src/assets/imgs/vinyl-record-real-v1.png">写实黑胶 PNG</a>：1254 × 1254，约 2.1MiB。</li><li><a href="evidence/vinyl-real-prompts.txt">生成提示词与参考图说明</a>。素材使用真实透明通道，背景没有烘焙进图片。</li></ul>
+<p>素材随应用打包，通过本地地址加载；光照和表面细节已在素材内绘制，运行时对封面和唱臂执行 CSS 旋转。主窗口与迷你窗口都使用这两份素材。小尺寸保留相同造型，减小阴影，避免 44px / 56px 下发糊。</p>
+<h2 id="vinyl-player-preview-h5">4. 状态规则</h2>
+<div class="table-wrap"><table><thead><tr><th>状态</th><th>唱片</th><th>唱臂</th></tr></thead><tbody><tr><td>播放</td><td>20 秒一圈匀速旋转</td><td>落到黑胶外圈</td></tr><tr><td>暂停</td><td>保持当前角度</td><td>转到右侧盘外</td></tr><tr><td>继续播放</td><td>从暂停角度继续</td><td>再次落下</td></tr><tr><td>缓冲、无歌曲</td><td>停转</td><td>移开</td></tr><tr><td>窗口或封面隐藏</td><td>暂停动画，可见后按播放状态继续</td><td>保留与播放状态对应的姿态</td></tr><tr><td>系统减少动态效果</td><td>不自动旋转</td><td>直接切换姿态，无过渡</td></tr></tbody></table></div>
+<p>切歌重新建立唱片；暂停和继续保留同一首歌的唱片节点与动画角度。唱臂转动围绕固定支点进行，过渡为 450ms。</p>
+<h2 id="vinyl-player-preview-h6">5. 实现、验证与运行</h2>
+<p>共用 <a href="../../src/renderer/components/VinylCover/index.tsx">VinylCover</a>和 <a href="../../src/renderer/components/VinylCover/index.scss">SCSS</a>。主窗口使用播放状态 Store，迷你窗口由 MessagePort 消息总线同步；详情、底部栏和迷你窗口继续共用一个实现。<code>compact</code> 控制小尺寸阴影。</p>
+<div class="table-wrap"><table><thead><tr><th>验证</th><th>结果与范围</th></tr></thead><tbody><tr><td>唱针几何</td><td>三处播放针尖位于外圈、暂停针尖移出唱片，素材实际可见边界不越界</td></tr><tr><td>图形与动画</td><td>两份素材在实际 Chromium 中解码且背景透明；反光无旋转动画；20 秒周期、暂停保持角度、继续、切歌、隐藏停转和减少动态效果通过</td></tr><tr><td>交互与生命周期</td><td>封面失败回退、键盘打开详情、迷你双击/悬停、卸载订阅清理通过</td></tr><tr><td>编译版</td><td>真实 main / preload / renderer，本地 WAV 播放、详情与迷你窗口状态同步及暂停通过</td></tr><tr><td>门禁</td><td>本轮 Windows 唱片组件回归、TypeScript 和全库格式检查通过；下载与音频业务代码未改动</td></tr><tr><td>启动</td><td>使用 1000 条隔离记录再测，首屏仍不等待后台文件核对，详见验证记录</td></tr><tr><td>知识库</td><td>本轮实际截图和所有流程图在离线网页、窄屏及打印模式验证通过</td></tr></tbody></table></div>
+<p><a href="evidence/vinyl-real-results.json">本轮验证记录</a> · <a href="../../scripts/tests/README.md">测试说明</a> · <a href="#flows">启动优化流程</a>。Linux/macOS GUI、不同 DPI 与长期性能仍需设备验收。</p>
+<p>先退出旧播放器，再运行 <code>out/vinyl-real-20261005/MusicFree-win32-x64/MusicFree.exe</code>。查看详情、底部栏及迷你窗口，检查播放/暂停/继续、切歌与最小化恢复。系统启用了减少动态效果时，不自动旋转是预期行为。</p>
+<h2 id="vinyl-player-preview-h7">6. 已确认示意图与设计参考</h2>
+<p><figure><img loading="lazy" src="assets/previews/vinyl-beauty-silver-v2.png" alt="用户已确认的美化示意图：金属唱臂、播放与暂停姿态、材质特写和小尺寸放大适配"><figcaption>用户已确认的美化示意图：金属唱臂、播放与暂停姿态、材质特写和小尺寸放大适配</figcaption></figure></p>
+<p><a href="assets/previews/vinyl-beauty-silver-v2.png">打开确认图原尺寸</a>。此图由内置 imagegen 生成，图中“待确认”是生成时的状态，现在已经确认并实施；它仍是视觉参考，不是程序截图。44px / 56px 两张小图是放大的适配示意。</p>
+<p>你的参考图：<a href="assets/previews/vinyl-reference-playing.png">运行</a>、<a href="assets/previews/vinyl-reference-paused.png">暂停</a>，原样来自 <code>docs/ref</code>。主要借鉴细长金属管、配重、轴承与窄高光的层次。</p>
+<p>网上查阅的设计依据：</p>
+<ul><li><a href="https://www.zcool.com.cn/article/ZMTYyNjY4MA==.html">网易云音乐设计团队：播放器样式创新设计（站酷）</a>：将合理实体结构、材质与光影融入播放器设计。</li><li><a href="https://www.technics.com/au/products/turntables/sl-1200gr2ebs.html">Technics SL-1200GR2 官方说明</a>：以 S 形铝合金唱臂与轴承结构作为金属形态参考。</li></ul>
+<p><a href="evidence/vinyl-beauty-prompt.txt">生成与修订提示词</a> · <a href="evidence/vinyl-beauty-results.json">示意图生成和当时的网页验证记录</a>。实现与运行验收由第 5 节记录维护。</p>
+<h2 id="vinyl-player-preview-h8">7. 历史效果</h2>
+<p>上一轮增强 SVG 金属反射：<a href="assets/previews/vinyl-metal-detail-playing.png">详情播放</a>、<a href="assets/previews/vinyl-metal-detail-paused.png">详情暂停</a>。该版材质表现仍未满足确认图的效果，已由当前写实素材实现取代；<a href="evidence/vinyl-metal-results.json">当时验证记录</a>保留。</p>
+<p>上一版银色唱臂：<a href="assets/previews/vinyl-silver-detail-playing.png">详情播放</a>、<a href="assets/previews/vinyl-silver-detail-paused.png">详情暂停</a>。该版形态接近参考，但金属反射不足，已由本章的新实现取代；<a href="evidence/vinyl-silver-results.json">当时验证记录</a>保留。</p>
+<p>第一版实际截图：<a href="assets/previews/vinyl-detail-playing.png">详情播放</a>、<a href="assets/previews/vinyl-detail-paused.png">详情暂停</a>、<a href="assets/previews/vinyl-bottom-playing.png">底部栏</a>、<a href="assets/previews/vinyl-mini-playing.png">迷你播放</a>、<a href="assets/previews/vinyl-mini-paused.png">迷你暂停</a>。原实现与验证记录保存在 <a href="evidence/vinyl-player-results.json">第一版记录</a>。</p>
+<p><a href="assets/previews/vinyl-player-concept.png">最初开发前示意图</a>保留供历史对照。全部图片随知识库保存，可离线查看；当前效果以第 1、2 节实际截图和本轮运行版为准。</p></article><article id="jiangnan-porcelain-theme" class="chapter" hidden><h1 id="jiangnan-porcelain-theme-h1">12 · 江南 · 青花：播放器主题效果预览</h1>
+<p><a href="#guide">返回目录</a> · <a href="#vinyl-player-preview">当前唱片实现</a></p>
+<blockquote>状态：<strong>效果图提案，待你确认后再开发。</strong> 本章图片由内置 imagegen 生成，用于确认视觉方向，不是播放器运行截图。本轮只更新知识库，没有修改播放器主题代码。</blockquote>
+<h2 id="jiangnan-porcelain-theme-h2">1. 主界面：瓷白底，青花蓝，烟雨江南</h2>
+<p><figure><img loading="lazy" src="assets/previews/jiangnan-porcelain-main-v1.png" alt="江南 · 青花主题效果示意：歌单主界面、批量选择工具栏与底部播放栏；待确认"><figcaption>江南 · 青花主题效果示意：歌单主界面、批量选择工具栏与底部播放栏；待确认</figcaption></figure></p>
+<p><a href="assets/previews/jiangnan-porcelain-main-v1.png">打开主界面原尺寸效果图</a></p>
+<p>主界面以「我喜欢」歌单为例：左侧保留导航和歌单，右侧保留歌曲列表、复选框与批量操作。江南水乡插画集中在歌单头部，青花纹样只点缀边角；列表区域留白，让歌曲信息容易阅读。主按钮与播放进度统一使用青花蓝。</p>
+<h2 id="jiangnan-porcelain-theme-h3">2. 歌曲详情与迷你播放器</h2>
+<p><figure><img loading="lazy" src="assets/previews/jiangnan-porcelain-detail-mini-v1.png" alt="江南 · 青花主题效果示意：唱片详情页及迷你播放器；待确认"><figcaption>江南 · 青花主题效果示意：唱片详情页及迷你播放器；待确认</figcaption></figure></p>
+<p><a href="assets/previews/jiangnan-porcelain-detail-mini-v1.png">打开详情与迷你播放器原尺寸效果图</a></p>
+<p>详情页延续左侧唱片、右侧歌词的布局，以淡蓝烟雨背景和瓷白留白衬托唱片。当前歌词使用青花蓝，其他歌词使用可读的墨灰；不把青花纹样铺在歌词下面。底部栏和迷你窗口保持相同配色，小尺寸只保留主要轮廓。</p>
+<p>效果图使用统一的水乡示例封面来展示整体氛围。<strong>实际开发时仍显示歌曲自己的专辑封面，不会把所有封面都替换成青花图。</strong> 迷你窗口在图中为放大示意，实际需要按现有小窗口尺寸适配。</p>
+<h2 id="jiangnan-porcelain-theme-h4">3. 视觉约定</h2>
+<div class="table-wrap"><table><thead><tr><th>元素</th><th>拟采用的设计</th><th>目的</th></tr></thead><tbody><tr><td>页面底色</td><td>瓷白 <code>#F7F8F4</code></td><td>柔和、干净，避免整页灰青色模糊背景</td></tr><tr><td>内容表面</td><td>白色 <code>#FFFFFF</code></td><td>歌曲列表和文字有明确的阅读区域</td></tr><tr><td>主色</td><td>青花蓝 <code>#245A81</code></td><td>主按钮、播放进度、当前歌词、选中状态统一</td></tr><tr><td>选中背景</td><td>淡青蓝 <code>#E8F0F4</code></td><td>与未选中行区分，兼顾复选框与键盘焦点</td></tr><tr><td>正文</td><td>墨色 <code>#253A47</code></td><td>小字号歌曲信息也要清晰</td></tr><tr><td>装饰</td><td>水乡、石桥、乌篷与少量青花枝叶</td><td>表现江南意境，集中在留白处</td></tr><tr><td>字体</td><td>现有系统无衬线字体</td><td>导航、列表和歌词不使用难读的书法字体</td></tr><tr><td>唱片</td><td>黑胶盘、原专辑圆形封面、银色唱臂</td><td>黑胶与青花蓝形成层次；金属保持窄高光与暗面</td></tr></tbody></table></div>
+<p>颜色是拟议主题参数，图片的具体像素会有生成偏差；开发时以确认后的参数和实际页面为准。图片中的歌曲、时长和歌词均为视觉示例。</p>
+<h2 id="jiangnan-porcelain-theme-h5">4. 确认后的开发范围</h2>
+<div class="table-wrap"><table><thead><tr><th>区域</th><th>计划调整</th><th>验收重点</th></tr></thead><tbody><tr><td>主窗口</td><td>主题颜色、边框、导航、歌单头部装饰和列表状态</td><td>选中、悬停、键盘焦点、下载状态清楚；批量按钮保持易用</td></tr><tr><td>歌曲详情</td><td>背景、歌词颜色、唱片周边层次</td><td>任意专辑封面都协调；文字不被装饰干扰</td></tr><tr><td>底部播放栏</td><td>进度、播放按钮、文字与图标配色</td><td>小尺寸清晰，播放操作位置稳定</td></tr><tr><td>迷你窗口</td><td>同一配色、精简纹样与圆形唱片</td><td>拖动、悬停、歌词、双击等交互仍正常</td></tr><tr><td>金属唱臂</td><td>与新配色协调，保留清楚的反射层次</td><td>对照真实程序截图验收材质与光感，不能只用效果图代表完成</td></tr><tr><td>启动与动画</td><td>装饰作为本地静态资源；旋转继续使用现有动画机制</td><td>不引入启动网络请求、运行时生成图片或持续 3D 渲染</td></tr></tbody></table></div>
+<p>青花瓷主要体现为配色、留白和局部纹样；瓷器表面与金属的图像质感需要分别处理。开发后应在相同窗口尺寸下对照效果图与实际截图，再判断是否达到目标。<strong>本轮没有编译新的播放器，也没有测得新主题的启动耗时。</strong></p>
+<h2 id="jiangnan-porcelain-theme-h6">5. 本轮交付与维护</h2>
+<ul><li>本地图片保存在 <code>assets/previews</code>，随知识库一起复制即可离线查看。</li><li>生成方式：内置 imagegen，两个独立效果图；<a href="evidence/jiangnan-porcelain-prompts.txt">完整提示词</a>记录颜色、布局和约束。</li><li><a href="evidence/jiangnan-porcelain-preview-results.json">预览验证记录</a>记录图片校验值、网页显示检查及本轮范围。</li><li>后续实施时补充真实截图和验证结果；本章在确认前保持「效果图提案」状态。</li></ul>
+<p>使用浏览器打开 <code>index.html</code>，选择左侧「12 江南 · 青花主题预览」。也可以直接使用 <code>index.html#jiangnan-porcelain-theme</code> 定位本章。无需安装工具或启动服务。</p></article></main><script src="vendor/mermaid/mermaid.min.js"></script><script>
+const chapters=[...document.querySelectorAll('.chapter')];
+const links=[...document.querySelectorAll('.chapter-link')];
+function show(){const id=location.hash.slice(1)||'guide';const chapter=chapters.find(x=>x.id===id)||chapters[0];
+chapters.forEach(x=>x.hidden=x!==chapter);links.forEach(x=>{x.classList.toggle('active',x.dataset.target===chapter.id);if(x.dataset.target===chapter.id)x.setAttribute('aria-current','page');else x.removeAttribute('aria-current')});
+document.title=chapter.querySelector('h1').textContent+' · MusicFree 知识库';window.scrollTo(0,0)}
+window.addEventListener('hashchange',show);show();
+document.querySelector('#search').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();let count=0;
+links.forEach(link=>{const chapter=chapters.find(x=>x.id===link.dataset.target);const match=!q||chapter.textContent.toLowerCase().includes(q);link.hidden=!match;if(match)count++});
+document.querySelector('#search-status').textContent=q?count+' 个章节包含关键词；选择左侧章节后可用 Ctrl+F 定位':''});
+document.querySelector('#print').addEventListener('click',()=>window.print());
+async function renderDiagrams(){
+const figures=[...document.querySelectorAll('.diagram')];
+const status=document.querySelector('#diagram-status');
+const result={total:figures.length,rendered:0,failed:0};
+const staging=document.createElement('div');staging.className='diagram-measure';
+staging.style.width=Math.max(320,Math.min(1200,document.querySelector('.chapter:not([hidden])').clientWidth-76))+'px';
+document.body.append(staging);
+try{
+    if(document.fonts)await document.fonts.ready;
+    if(window.mermaid)window.mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'default',
+        fontFamily:'Segoe UI, Microsoft YaHei, sans-serif',flowchart:{htmlLabels:false,useMaxWidth:true},
+        sequence:{useMaxWidth:true},suppressErrorRendering:true});
+    for(const figure of figures){
+        const output=figure.querySelector('.diagram-output');
+        try{
+            if(figure.dataset.diagramLanguage==='plantuml'){
+                if(!output.querySelector('svg'))throw new Error('PlantUML 本地图形缺失，请重新生成知识库。');
+                figure.dataset.diagramState='rendered';result.rendered++;
+            }else{
+                if(!window.mermaid)throw new Error('Mermaid 渲染库未加载，请确认 vendor 文件夹与 index.html 一起保存。');
+                // Offscreen layout remains measurable even when a chapter is hidden.
+                const source=figure.querySelector('code.language-mermaid').textContent;
+                const rendered=await window.mermaid.render('render-'+figure.id,source,staging);
+                output.innerHTML=rendered.svg;
+                rendered.bindFunctions?.(output);
+                figure.dataset.diagramState='rendered';result.rendered++;
+            }
+        }catch(error){
+            output.textContent='流程图未能渲染。';
+            const message=figure.querySelector('.diagram-error');message.hidden=false;
+            message.textContent=String(error.message||error);
+            figure.querySelector('.diagram-source').open=true;
+            figure.dataset.diagramState='failed';result.failed++;
+        }finally{staging.replaceChildren();}
+        status.textContent='流程图：'+result.rendered+'/'+result.total+' 已渲染'+(result.failed?'，'+result.failed+' 张失败':'');
+    }
+}finally{staging.remove();document.querySelector('#print').disabled=false;}
+document.documentElement.dataset.diagramStatus=result.failed?'failed':'ready';
+return result;
+}
+window.knowledgeBaseReady=renderDiagrams();
+</script></body></html>

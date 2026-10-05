@@ -1,0 +1,212 @@
+{
+  "date": "2026-10-04",
+  "baselineGitHead": "4e7b711",
+  "uncommittedWorkspace": true,
+  "status": "implemented-and-verified-on-windows",
+  "confirmedConcept": "docs/knowledge-base/assets/previews/vinyl-beauty-silver-v2.png",
+  "build": "out/vinyl-silver-20261004/MusicFree-win32-x64/MusicFree.exe",
+  "packageFormat": "runnable Windows folder, no ZIP",
+  "svgPivot": [
+    84,
+    12
+  ],
+  "recordDiameterInCover": 0.88,
+  "artworkDiameterInRecord": 0.64,
+  "restAngleDegrees": -18,
+  "playingAngleDegrees": 0,
+  "rotationPeriodSeconds": 20,
+  "armTransitionMs": 450,
+  "compactSizesPx": [
+    44,
+    56
+  ],
+  "tests": {
+    "electronSuites": [
+      {
+        "name": "electron-downloader",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 2608
+      },
+      {
+        "name": "electron-audio",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1569
+      },
+      {
+        "name": "electron-playlist",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1210
+      },
+      {
+        "name": "electron-startup",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 982
+      },
+      {
+        "name": "electron-relocation",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 2578
+      },
+      {
+        "name": "electron-download-resource",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 5726
+      },
+      {
+        "name": "electron-vinyl",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 9756
+      }
+    ],
+    "vinylRegression": {
+      "suite": "vinyl",
+      "passed": true,
+      "result": "PASS: real React/SCSS + Chromium record rotation, angle-preserving pause/resume, metal pivot/counterweight/headshell fit, stylus groove/rest geometry, static reflections, compact detail reduction, independent arm movement, 44px/56px fit, main Store and mini bus sync, hidden-window suspension, track switch, broken-cover fallback, keyboard/double-click/hover controls, cleanup; reduced-motion verified by main runner",
+      "counts": {},
+      "electron": "25.3.0"
+    },
+    "typecheckPassed": true,
+    "formatCheckPassed": true,
+    "packagedPlayback": {
+      "passed": true,
+      "packagedMainPreloadRenderer": true,
+      "isolatedProfile": true,
+      "protocolRegistrationDisabled": true,
+      "localSilentWav": true,
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "checks": [
+        "main bootstrap",
+        "local audio play",
+        "bottom circular cover",
+        "detail circular cover",
+        "real mini-window MessagePort state sync",
+        "pause reflected in both windows"
+      ],
+      "screenshots": [
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-silver-smoke-1791123960513\\bottom-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-silver-smoke-1791123960513\\detail-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-silver-smoke-1791123960513\\mini-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-silver-smoke-1791123960513\\detail-paused.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-silver-smoke-1791123960513\\mini-paused.png"
+      ]
+    }
+  },
+  "startupBenchmark": {
+    "passed": true,
+    "package": "vinyl-silver-20261004",
+    "platform": "win32",
+    "electron": "25.3.0",
+    "isolatedProfile": true,
+    "fixture": {
+      "records": 1000,
+      "logicalBytesPerFile": 1048576,
+      "hardLinks": true,
+      "legacyWithoutFingerprints": true
+    },
+    "empty": {
+      "text": "[2026-10-04 22:26:08.025] [info]  [Perf Main]: App Ready [Offset]: 0ms\r\n[2026-10-04 22:26:08.074] [info]  [Perf Main]: Create Main Window [Offset]: 49ms\r\n[2026-10-04 22:26:08.695] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 22:26:08.709] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":1}\r\n[2026-10-04 22:26:08.710] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":1}\r\n[2026-10-04 22:26:08.775] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":63}\r\n[2026-10-04 22:26:08.785] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":75}\r\n[2026-10-04 22:26:08.793] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":7}\r\n[2026-10-04 22:26:08.801] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":7}\r\n[2026-10-04 22:26:08.802] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 107ms\r\n[2026-10-04 22:26:08.873] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 178ms\r\n",
+      "bootstrapMs": 107,
+      "firstScreenMs": 178
+    },
+    "legacy": {
+      "text": "[2026-10-04 22:26:09.212] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 22:26:09.220] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":3}\r\n[2026-10-04 22:26:09.220] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":3}\r\n[2026-10-04 22:26:09.226] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":6}\r\n[2026-10-04 22:26:09.227] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":6}\r\n[2026-10-04 22:26:09.231] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":4}\r\n[2026-10-04 22:26:09.252] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":21}\r\n[2026-10-04 22:26:09.252] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 40ms\r\n[2026-10-04 22:26:09.275] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 63ms\r\n",
+      "bootstrapMs": 40,
+      "firstScreenMs": 63,
+      "reloadToUiMs": 209,
+      "fingerprintsAtUi": 0,
+      "migrationCompleteMs": 8499
+    },
+    "warm": {
+      "text": "[2026-10-04 22:26:18.319] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 22:26:18.327] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":3}\r\n[2026-10-04 22:26:18.327] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":3}\r\n[2026-10-04 22:26:18.334] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":6}\r\n[2026-10-04 22:26:18.335] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":7}\r\n[2026-10-04 22:26:18.343] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":7}\r\n[2026-10-04 22:26:18.364] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":20}\r\n[2026-10-04 22:26:18.364] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 46ms\r\n[2026-10-04 22:26:18.384] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 66ms\r\n",
+      "bootstrapMs": 46,
+      "firstScreenMs": 66
+    },
+    "limitations": "One sample per workload; cached filesystem, same process reload; not physical cold launch P95; fixture is binary, not audio decoding"
+  },
+  "sourceSha256": {
+    "src/renderer/components/VinylCover/index.tsx": "7550af3c680e718cb9eaf6f347499e5b94a750175d6a3ae9dd55cc2ef60c5ebb",
+    "src/renderer/components/VinylCover/index.scss": "03fd83b9cbfd6aa32dd755c079e40da76f911647c9c51f4193e52417ee2888fc",
+    "src/renderer/components/MusicDetail/index.scss": "f453e2f1bc052426fd4fa917cfc65ddc360f08c997f61b46373edd669686db1e",
+    "src/renderer/components/MusicBar/widgets/MusicInfo/index.tsx": "a4fd6a6815827b119d323a2b58a026a2a343f7a37e2eb5c316e784bdacc91467",
+    "src/renderer-minimode/pages/index.tsx": "046aa82d8da1ff96b4ee053bc7b103475e71b584b31403921301ac4ce58c9e16",
+    "scripts/tests/vinyl-renderer.cjs": "af7e3da48b5a16b8d85f177c8868d623cbb5beb4bd733e916e5656cbacfc5da8"
+  },
+  "packagedRendererSha256": "e317c6c1a7bad3f5813b9ec8d0baafde451b225eac854ed0a8e9de7c10e70761",
+  "screenshotSha256": {
+    "docs/knowledge-base/assets/previews/vinyl-silver-bottom-playing.png": "b9648abb383b060cbdf0b408eb127c891ee175989e00be4eed423d458c30ab78",
+    "docs/knowledge-base/assets/previews/vinyl-silver-detail-paused.png": "2b35f711432d1757fe54b52bc7d9779fef9b168e01acc75ab69fb1a6bca6c3b2",
+    "docs/knowledge-base/assets/previews/vinyl-silver-detail-playing.png": "27887202b0d67af208d0be815e1e905ae43322343df221f2eaf78b7a6303d230",
+    "docs/knowledge-base/assets/previews/vinyl-silver-mini-paused.png": "ac1749e7605ac73fd12a4dca1c3d4bbc99f37e4cda710169f62f744630d246ec",
+    "docs/knowledge-base/assets/previews/vinyl-silver-mini-playing.png": "93424c6377cb5a81411c7236f01acee3013f0e99b90cf0dbfeddac7bef04b7c6"
+  },
+  "limits": [
+    "Windows only; Linux/macOS GUI, DPI/device variety and long-running performance still require manual acceptance",
+    "concept is not a pixel-identical rendering target; runtime screenshots document delivered geometry",
+    "startup samples cover same-process reload with cached file system, not exe cold-start P95"
+  ],
+  "knowledgeBaseBrowser": {
+    "passed": true,
+    "platform": "win32",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199",
+    "diagrams": {
+      "total": 13,
+      "rendered": 13,
+      "failed": 0
+    },
+    "narrowDiagrams": 13,
+    "printDiagrams": 13,
+    "network": "HTTP(S) blocked; no requests attempted",
+    "previewImage": {
+      "desktop": {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-silver-detail-playing.png",
+        "complete": true,
+        "naturalWidth": 1050,
+        "naturalHeight": 740,
+        "width": 1050,
+        "height": 740,
+        "containerWidth": 1211
+      },
+      "narrow": {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-silver-detail-playing.png",
+        "complete": true,
+        "naturalWidth": 1050,
+        "naturalHeight": 740,
+        "width": 477,
+        "height": 336.15625,
+        "containerWidth": 525
+      },
+      "print": {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-silver-detail-playing.png",
+        "complete": true,
+        "naturalWidth": 1050,
+        "naturalHeight": 740,
+        "width": 567,
+        "height": 399.59375,
+        "containerWidth": 567
+      }
+    },
+    "chapterImagesDecoded": 6,
+    "originalImage": {
+      "width": 1050,
+      "height": 740
+    },
+    "screenshot": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791124053155\\vinyl-player-preview.png"
+  }
+}

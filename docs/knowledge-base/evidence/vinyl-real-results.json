@@ -1,0 +1,300 @@
+{
+  "date": "2026-10-05",
+  "status": "verified-on-windows",
+  "uncommittedWorkspace": true,
+  "build": "out/vinyl-real-20261005/MusicFree-win32-x64/MusicFree.exe",
+  "packageFormat": "runnable Windows folder, no ZIP",
+  "change": "Replace SVG gradient artwork with production transparent photorealistic tonearm and vinyl assets; match artwork proportion and diagonal arm pose to approved visual reference.",
+  "generation": {
+    "mode": "built-in image_gen",
+    "reference": "docs/knowledge-base/assets/previews/vinyl-beauty-silver-v2.png",
+    "prompts": "docs/knowledge-base/evidence/vinyl-real-prompts.txt",
+    "assets": [
+      "src/assets/imgs/vinyl-tonearm-real-v1.png",
+      "src/assets/imgs/vinyl-record-real-v1.png"
+    ],
+    "originalOutputs": [
+      "/home/brraida/.codex/generated_images/01a0fc25-cbcd-7791-9bd1-ae7ff0cd9a0d/exec-6310d65c-0dbf-465a-ac37-a6c846a0705f.png",
+      "/home/brraida/.codex/generated_images/01a0fc25-cbcd-7791-9bd1-ae7ff0cd9a0d/exec-26fdcd04-e762-4188-bd93-c2832b5645ff.png"
+    ]
+  },
+  "geometry": {
+    "pivot": [
+      82,
+      16
+    ],
+    "playingNeedle": [
+      64,
+      78
+    ],
+    "restDegrees": -25,
+    "recordDiameterInCover": 0.88,
+    "artworkDiameterInRecord": 0.54,
+    "periodSeconds": 20,
+    "armTransitionMs": 450,
+    "compactSizesPx": [
+      44,
+      56
+    ]
+  },
+  "rendering": "Local texture decoding, static record reflections, CSS rotation; no online assets or per-frame lighting calculation.",
+  "sourceSha256": {
+    "src/renderer/components/VinylCover/index.tsx": "b6401eba14602cadbb1942f49bfbf8227ac35ec334e8dbbb15adc19947b970a7",
+    "src/renderer/components/VinylCover/index.scss": "06d78bff1fbafc25fa81b93aa5de871ae6de6627af4dfe712fd902ac85877dc2",
+    "src/renderer/components/MusicDetail/index.scss": "5d1a783e012d65b57b8c8df4fdc15cff0bf99d2e8308bb02f78073f5c0fed09a",
+    "src/assets/imgs/vinyl-tonearm-real-v1.png": "de7be7518adf78c9570d7a5dd0a1ed2cd29929de28fc15d7da20c5a513815f90",
+    "src/assets/imgs/vinyl-record-real-v1.png": "6557d1b8138b6738c6f685ad96c4a2857a628530feb20e370b23ed7be1256fca"
+  },
+  "compiledMaterialSha256": {
+    "resources/app/.webpack/renderer/6b1285fa64b914655be9.png": "6557d1b8138b6738c6f685ad96c4a2857a628530feb20e370b23ed7be1256fca",
+    "resources/app/.webpack/renderer/d723c810c54437a78a5e.png": "de7be7518adf78c9570d7a5dd0a1ed2cd29929de28fc15d7da20c5a513815f90"
+  },
+  "compiledRendererSha256": {
+    "resources/app/.webpack/renderer/db/index.js": "6e73c5d92d6f48c610b84ff62dbc86d59382187e2bbf7c70f9cd0443aa4d80ab",
+    "resources/app/.webpack/renderer/local_file_watcher/index.js": "3f3aa2b99fc3df139fbfb7056dd5fb8a2837167eb979f918d2a6fa6d67f37254",
+    "resources/app/.webpack/renderer/lrc_window/index.js": "356a270b57a7c9d666be5a0a4a5c0d00720e9f9307652d6ce2d40064d3116104",
+    "resources/app/.webpack/renderer/lrc_window/preload.js": "e0b14c9dcbb4501be04d91ee12ee10728f3078526b2d0e153fc5de41178f1a9d",
+    "resources/app/.webpack/renderer/main_window/index.js": "76f11516ae194b49c6651a6363c50b6ca2a077016560d58c3620767d8e5c9781",
+    "resources/app/.webpack/renderer/main_window/preload.js": "11ee988843849d206732c00937780db51c777902aacece59ea9c79b69b1e2421",
+    "resources/app/.webpack/renderer/minimode_window/index.js": "368216e3022426ccb4a81a376ffdbdf22bf477c81e218b8eb1c570b130b5432d",
+    "resources/app/.webpack/renderer/minimode_window/preload.js": "e0b14c9dcbb4501be04d91ee12ee10728f3078526b2d0e153fc5de41178f1a9d",
+    "resources/app/.webpack/renderer/worker_downloader/index.js": "7c00ee817ae858ca3a4ace5bc2570f4dcde9802cee7e2b5078119c2885829efe"
+  },
+  "actualScreenshotSha256": {
+    "docs/knowledge-base/assets/previews/vinyl-real-bottom-playing.png": "4ce4bebaf7c1c8bf64ad06a86953cca5726c95a005914130b82850dfaacaa759",
+    "docs/knowledge-base/assets/previews/vinyl-real-detail-paused.png": "1b150bd7f8756bc133e0555365fb0f9b7b0b7e7335ea3aaba6cb91873738e3a1",
+    "docs/knowledge-base/assets/previews/vinyl-real-detail-playing.png": "d92082daa58e6aef70dc51397ff547c65cc7bc8272224ded6882564df6fb6c3f",
+    "docs/knowledge-base/assets/previews/vinyl-real-mini-paused.png": "9ea0cf86c397da402e3ebbfd76b9475195a6725642ffa7cc458267db887e05fe",
+    "docs/knowledge-base/assets/previews/vinyl-real-mini-playing.png": "55c354ca713100c5a504752fa1341b2f1b43e27fa24bd470e2eaaf4567f569f2"
+  },
+  "tests": {
+    "vinylRegression": {
+      "suite": "vinyl",
+      "passed": true,
+      "result": "PASS: real React/SCSS + Chromium record rotation, angle-preserving pause/resume, transparent material decode, actual sprite alpha-boundary fit, visible needle groove/rest geometry, static reflections, independent arm movement, 44px/56px fit, main Store and mini bus sync, hidden-window suspension, track switch, broken-cover fallback, keyboard/double-click/hover controls, cleanup; reduced-motion verified by main runner",
+      "counts": {},
+      "electron": "25.3.0"
+    },
+    "typecheckPassed": true,
+    "formatCheckPassed": true,
+    "packagedPlayback": {
+      "passed": true,
+      "packagedMainPreloadRenderer": true,
+      "isolatedProfile": true,
+      "protocolRegistrationDisabled": true,
+      "localSilentWav": true,
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "checks": [
+        "main bootstrap",
+        "local audio play",
+        "bottom circular cover",
+        "detail circular cover",
+        "real mini-window MessagePort state sync",
+        "pause reflected in both windows"
+      ],
+      "materialCaptures": [
+        {
+          "name": "bottom-playing",
+          "materials": [
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            }
+          ]
+        },
+        {
+          "name": "detail-playing",
+          "materials": [
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            },
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            }
+          ]
+        },
+        {
+          "name": "mini-playing",
+          "materials": [
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            }
+          ]
+        },
+        {
+          "name": "detail-paused",
+          "materials": [
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            },
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            }
+          ]
+        },
+        {
+          "name": "mini-paused",
+          "materials": [
+            {
+              "arm": {
+                "width": 1024,
+                "height": 1536,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/d723c810c54437a78a5e.png"
+              },
+              "record": {
+                "width": 1254,
+                "height": 1254,
+                "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/vinyl-real-20261005/MusicFree-win32-x64/resources/app/.webpack/renderer/6b1285fa64b914655be9.png"
+              }
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-real-smoke-1791161715386\\bottom-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-real-smoke-1791161715386\\detail-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-real-smoke-1791161715386\\mini-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-real-smoke-1791161715386\\detail-paused.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-real-smoke-1791161715386\\mini-paused.png"
+      ]
+    },
+    "startup1000": {
+      "passed": true,
+      "package": "vinyl-real-20261005",
+      "platform": "win32",
+      "electron": "25.3.0",
+      "isolatedProfile": true,
+      "fixture": {
+        "records": 1000,
+        "logicalBytesPerFile": 1048576,
+        "hardLinks": true,
+        "legacyWithoutFingerprints": true
+      },
+      "empty": {
+        "text": "[2026-10-05 08:55:23.073] [info]  [Perf Main]: App Ready [Offset]: 0ms\r\n[2026-10-05 08:55:23.118] [info]  [Perf Main]: Create Main Window [Offset]: 45ms\r\n[2026-10-05 08:55:23.746] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-05 08:55:23.761] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":1}\r\n[2026-10-05 08:55:23.761] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":1}\r\n[2026-10-05 08:55:23.839] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":75}\r\n[2026-10-05 08:55:23.849] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":87}\r\n[2026-10-05 08:55:23.857] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":7}\r\n[2026-10-05 08:55:23.865] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":6}\r\n[2026-10-05 08:55:23.866] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 120ms\r\n[2026-10-05 08:55:23.935] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 189ms\r\n",
+        "bootstrapMs": 120,
+        "firstScreenMs": 189
+      },
+      "legacy": {
+        "text": "[2026-10-05 08:55:24.250] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-05 08:55:24.257] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":2}\r\n[2026-10-05 08:55:24.257] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":2}\r\n[2026-10-05 08:55:24.261] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":4}\r\n[2026-10-05 08:55:24.262] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":5}\r\n[2026-10-05 08:55:24.267] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":5}\r\n[2026-10-05 08:55:24.283] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":16}\r\n[2026-10-05 08:55:24.283] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 33ms\r\n[2026-10-05 08:55:24.299] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 49ms\r\n",
+        "bootstrapMs": 33,
+        "firstScreenMs": 49,
+        "reloadToUiMs": 195,
+        "fingerprintsAtUi": 0,
+        "migrationCompleteMs": 8380
+      },
+      "warm": {
+        "text": "[2026-10-05 08:55:33.157] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-05 08:55:33.164] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":2}\r\n[2026-10-05 08:55:33.164] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":2}\r\n[2026-10-05 08:55:33.170] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":6}\r\n[2026-10-05 08:55:33.171] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":7}\r\n[2026-10-05 08:55:33.179] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":8}\r\n[2026-10-05 08:55:33.201] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":22}\r\n[2026-10-05 08:55:33.202] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 45ms\r\n[2026-10-05 08:55:33.219] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 62ms\r\n",
+        "bootstrapMs": 45,
+        "firstScreenMs": 62
+      },
+      "limitations": "One sample per workload; cached filesystem, same process reload; not physical cold launch P95; fixture is binary, not audio decoding"
+    },
+    "knowledgeBaseBrowser": {
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "initial": {
+        "total": 13,
+        "rendered": 13,
+        "failed": 0
+      },
+      "narrowDiagrams": 13,
+      "printDiagrams": 13,
+      "network": "HTTP(S) blocked; no requests attempted",
+      "previewImages": {
+        "desktop": {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-real-detail-playing.png",
+          "complete": true,
+          "naturalWidth": 1050,
+          "naturalHeight": 740,
+          "width": 1050,
+          "height": 740,
+          "containerWidth": 1211
+        },
+        "narrow": {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-real-detail-playing.png",
+          "complete": true,
+          "naturalWidth": 1050,
+          "naturalHeight": 740,
+          "width": 477,
+          "height": 336.15625,
+          "containerWidth": 525
+        },
+        "print": {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-real-detail-playing.png",
+          "complete": true,
+          "naturalWidth": 1050,
+          "naturalHeight": 740,
+          "width": 567,
+          "height": 399.59375,
+          "containerWidth": 567
+        }
+      },
+      "originalPreviewImage": {
+        "width": 1050,
+        "height": 740
+      }
+    }
+  },
+  "limits": [
+    "Aesthetic fidelity is inspected from actual screenshots; state tests do not grade visual similarity.",
+    "Startup timings are isolated cached-filesystem samples, not executable cold-start P95.",
+    "Linux/macOS GUI and other DPI configurations have not been exercised."
+  ]
+}

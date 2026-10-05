@@ -1,0 +1,237 @@
+{
+  "date": "2026-10-04",
+  "branch": "dev",
+  "baselineCommit": "4e7b71137d3581da8c023ffab4dde66b0af5379b",
+  "implementation": "Current workspace; not yet committed",
+  "workspaceVersion": "0.0.80",
+  "scope": "Download resource lifecycle monitoring, reconciliation, verified relocation, task isolation, local playback recovery; existing architecture retained",
+  "environments": {
+    "windows": {
+      "node": "v20.20.0",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "architecture": "x64"
+    },
+    "linux": {
+      "environment": "WSL",
+      "node": "v24.20.0",
+      "scope": "Node file-system and native Chokidar regression only"
+    }
+  },
+  "windowsNode": {
+    "command": "node scripts/ci/run-tests.cjs node",
+    "exitCode": 0,
+    "results": [
+      {
+        "name": "node-player",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 4423
+      },
+      {
+        "name": "node-service",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1197
+      },
+      {
+        "name": "node-scanner",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 3773
+      },
+      {
+        "name": "node-audio",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 944
+      },
+      {
+        "name": "node-store",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 738
+      },
+      {
+        "name": "node-startup",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1214
+      },
+      {
+        "name": "node-ci",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 976
+      },
+      {
+        "name": "node-download-resource",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 3794
+      }
+    ]
+  },
+  "windowsElectron": {
+    "command": "electron suites via scripts/ci/run-tests.cjs electron",
+    "exitCode": 0,
+    "results": [
+      {
+        "name": "electron-downloader",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 4021
+      },
+      {
+        "name": "electron-audio",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 2486
+      },
+      {
+        "name": "electron-playlist",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1846
+      },
+      {
+        "name": "electron-startup",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1583
+      },
+      {
+        "name": "electron-relocation",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 3578
+      },
+      {
+        "name": "electron-download-resource",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 6292
+      }
+    ],
+    "downloadResourceDetail": {
+      "suite": "download-resource",
+      "passed": true,
+      "result": "PASS: real Windows watcher + IndexedDB + React, external deletion/restoration/directory recreation, hash-verified moves, manual refresh, offline/permission/I/O/content/playback unavailability, stale configuration exclusion, commit rollback, concurrent re-download ownership, real HTMLAudio local-open failure and decoded network fallback",
+      "counts": {
+        "/seed.wav": 1,
+        "/fallback.wav": 1
+      },
+      "electron": "25.3.0"
+    }
+  },
+  "linuxNode": {
+    "command": "node scripts/tests/download-resource-regression.cjs",
+    "exitCode": 0,
+    "covers": [
+      "real file SHA-256 and read-back",
+      "same-size impostor rejected",
+      "missing/offline/permission/I/O classification (fault injection for unavailable cases)",
+      "real native delete/restore events",
+      "parent-directory removal and reattachment compensation",
+      "bounded watch scope",
+      "superseded watch generations",
+      "watcher close cleanup"
+    ]
+  },
+  "gates": {
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "exitCode": 0
+    },
+    "format": {
+      "command": "npm run format:check",
+      "exitCode": 0
+    }
+  },
+  "build": {
+    "command": "@electron-forge/core api.package win32/x64",
+    "exitCode": 0,
+    "directory": "out/download-file-sync-20261004/MusicFree-win32-x64",
+    "localZipCreated": false,
+    "preloadSmoke": {
+      "passed": true,
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "isolatedProfile": true,
+      "packagedPreload": true,
+      "checks": [
+        "real contextBridge file SHA-256",
+        "native unlink callback",
+        "missing classification",
+        "directory delete/recreate recovery",
+        "restored identity",
+        "stop releases watcher"
+      ],
+      "packageRoot": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\download-file-sync-20261004\\MusicFree-win32-x64"
+    },
+    "smokeScript": "out/.cicd-review/packaged-download-resource-smoke.cjs",
+    "bundleSha256": {
+      "out/download-file-sync-20261004/MusicFree-win32-x64/resources/app/.webpack/main/index.js": "237129c94bfcb9e0d42e74c525ce49c7780d527ae211881f14d3629a2153f317",
+      "out/download-file-sync-20261004/MusicFree-win32-x64/resources/app/.webpack/renderer/main_window/index.js": "a7400f728e8b3a82b5d3751acac3644464e64329bd1714e67ad013625b45f57f",
+      "out/download-file-sync-20261004/MusicFree-win32-x64/resources/app/.webpack/renderer/main_window/preload.js": "11ee988843849d206732c00937780db51c777902aacece59ea9c79b69b1e2421"
+    }
+  },
+  "knowledgeBase": {
+    "report": "browser-render-results.json",
+    "initial": {
+      "total": 12,
+      "rendered": 12,
+      "failed": 0
+    },
+    "narrowDiagrams": 12,
+    "printDiagrams": 12,
+    "remoteRequests": 0
+  },
+  "sourceSha256": {
+    "src/common/download-resource.ts": "d0ecb18c5c08eb42473f5443109d3954b290fdc102d8f2032d9f8603cc535a4d",
+    "src/common/download-file-system.ts": "61db2b03cdeca5179a28e7dc2293e6aacdfb6fc66aee0c47b36d664036d211dc",
+    "src/common/download-directory-watcher.ts": "f3af2674adc7843b5978c9230b0ca0970dad8bd5cd5c95ec30ac66efedda83ee",
+    "src/shared/utils/preload.ts": "88bcdd93a22fed3ebe5da97974db68ebfd94e9b6df56c75ff0d83914b3706bac",
+    "src/shared/utils/renderer.ts": "019af43f656a1b627e3d8b2bbbb497cd90293fea9a538a19584642ba65fa9dc3",
+    "src/types/media.d.ts": "8aa8c562b771f8c389049e2bed74195af497d049f0128572c11760a563a38192",
+    "src/renderer/core/downloader/downloaded-sheet.ts": "1c271bf3e7c8a8fe1a7efa519188885d1f1958a3aef345ac392b11c6fa6a254a",
+    "src/renderer/core/downloader/ee.ts": "3875a3d6f7f8afc6982feebd6700f6d2edb21e448d43745f525b762c230e161d",
+    "src/renderer/core/downloader/index.ts": "ba2fc552673e8bd6b23f242296dd96f531c4c82c0d438963f71bcd370e1e07b8",
+    "src/renderer/core/track-player/index.ts": "2ccafe6b30ec264c4e9897be09c2167b9bf0bd2f1f4fe870187c0bfb32703395",
+    "src/renderer/components/MusicDownloaded/index.tsx": "c2d1a906a1ec8bb36a493c7571b2424628e49b3a1c517f808718fffffc420a63",
+    "src/renderer/pages/main-page/views/download-view/index.tsx": "76b04fd43a8e98b6cfbc515ce1f1c406652fdb0ee01c299f0595fa8f6ba6bb7d",
+    "res/lang/en-US.json": "44ce21991122392bea823ea7354f25dcb006bf455b05ee6ef512b7ad63dfcd00",
+    "res/lang/zh-CN.json": "dd593b39759e57ed115f21001505b77af2d12be5edbd9cf3ba602e2f454d7805",
+    "res/lang/zh-TW.json": "b27b4f0d8d392a86be6c105e4eaaaef200d76008910e0ff9432b3152f709ecc1",
+    "scripts/ci/run-tests.cjs": "ecbcb722dd2aa2f1e0725ec61c6661928fbdd5f5ebce806efe5c6103ff343afd",
+    "scripts/tests/download-resource-regression.cjs": "8b35c4da76ea74dac7719220c10f04397633fc9f002b683b9093ae4680584b05",
+    "scripts/tests/download-resource-renderer.cjs": "66d63d5df791d56d23286ff29046e04b719184beed9c545f47737f65655f7220",
+    "scripts/tests/player-regression.cjs": "11b3097b73132740a0c86a4c621990deecd0cfb4435549de33bd12bf3f50a671",
+    "scripts/tests/downloader-renderer.cjs": "d9add62bb8705eabf4ade42682ff999d25b39f9c18084c452f4ca53d45d04fb8",
+    "scripts/tests/relocation-renderer.cjs": "446b9c9cb2f6b8fc4e8b2160e46aee0e891675c4d5242db943a456bf32aace65",
+    "scripts/tests/electron-regression-main.cjs": "d42dd911a1000df0c975e7f78dc60f27dac3092ff40ff8e696c74198b256828e"
+  },
+  "limits": [
+    "Linux GUI and macOS runtime/build acceptance not performed",
+    "No full performance or all-plugin/format/device compatibility certification",
+    "Offline/permission/I/O cases include fault injection; physical removable/network volumes need device testing",
+    "Legacy records missing a fingerprint and original file cannot safely relink by filename alone",
+    "Moves to unknown directories or renamed files are not discovered",
+    "Full HLS offline download and durable task recovery remain separate work"
+  ]
+}

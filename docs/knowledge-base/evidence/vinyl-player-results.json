@@ -1,0 +1,169 @@
+{
+  "date": "2026-10-04",
+  "branch": "dev",
+  "baselineCommit": "4e7b71137d3581da8c023ffab4dde66b0af5379b",
+  "implementation": "Current uncommitted workspace",
+  "version": "0.0.80",
+  "scope": "Shared rotating circular vinyl album artwork and independent tonearm in detail, bottom bar and mini window",
+  "environment": {
+    "platform": "win32",
+    "architecture": "x64",
+    "node": "v20.20.0",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199"
+  },
+  "behavior": {
+    "rotationSeconds": 20,
+    "armTransitionMs": 450,
+    "bottomSlotPx": 44,
+    "miniSlotPx": 56,
+    "miniWindowPx": [
+      340,
+      72
+    ],
+    "pause": "Same record node and CSS animation time retained; arm moves off the record",
+    "hidden": "Page Visibility and hidden bottom cover pause rotation",
+    "reducedMotion": "Record animation and arm transition disabled"
+  },
+  "gates": {
+    "windowsElectron": {
+      "command": "node scripts/ci/run-tests.cjs electron",
+      "exitCode": 0,
+      "results": [
+        {
+          "name": "electron-downloader",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 4658
+        },
+        {
+          "name": "electron-audio",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 2749
+        },
+        {
+          "name": "electron-playlist",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 2277
+        },
+        {
+          "name": "electron-startup",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 2011
+        },
+        {
+          "name": "electron-relocation",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 4177
+        },
+        {
+          "name": "electron-download-resource",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 7657
+        },
+        {
+          "name": "electron-vinyl",
+          "passed": true,
+          "exitCode": 0,
+          "signal": null,
+          "durationMs": 15025
+        }
+      ]
+    },
+    "vinylDetail": {
+      "suite": "vinyl",
+      "passed": true,
+      "result": "PASS: real React/SCSS + Chromium record rotation, angle-preserving pause/resume, independent arm movement, 44px/56px fit, main Store and mini bus sync, hidden-window suspension, track switch, broken-cover fallback, keyboard/double-click/hover controls, cleanup; reduced-motion verified by main runner",
+      "counts": {},
+      "electron": "25.3.0"
+    },
+    "typecheck": {
+      "command": "tsc --noEmit",
+      "exitCode": 0
+    },
+    "format": {
+      "command": "npm run format:check",
+      "exitCode": 0
+    }
+  },
+  "build": {
+    "command": "@electron-forge/core api.package win32/x64",
+    "exitCode": 0,
+    "directory": "out/vinyl-player-20261004/MusicFree-win32-x64",
+    "zipCreated": false,
+    "packagedUI": {
+      "passed": true,
+      "packagedMainPreloadRenderer": true,
+      "isolatedProfile": true,
+      "protocolRegistrationDisabled": true,
+      "localSilentWav": true,
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "checks": [
+        "main bootstrap",
+        "local audio play",
+        "bottom circular cover",
+        "detail circular cover",
+        "real mini-window MessagePort state sync",
+        "pause reflected in both windows"
+      ],
+      "screenshots": [
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-vinyl-smoke-1791115830162\\bottom-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-vinyl-smoke-1791115830162\\detail-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-vinyl-smoke-1791115830162\\mini-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-vinyl-smoke-1791115830162\\detail-paused.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-vinyl-smoke-1791115830162\\mini-paused.png"
+      ]
+    },
+    "smokeHarness": "out/.cicd-review/packaged-vinyl-smoke.cjs",
+    "smokeMethod": "Installed Electron of the same version loads unmodified packaged main/preload/renderer; system paths isolated and protocol registration suppressed",
+    "bundleSha256": {
+      "out/vinyl-player-20261004/MusicFree-win32-x64/resources/app/.webpack/main/index.js": "237129c94bfcb9e0d42e74c525ce49c7780d527ae211881f14d3629a2153f317",
+      "out/vinyl-player-20261004/MusicFree-win32-x64/resources/app/.webpack/renderer/main_window/index.js": "ec88cf26df4dce5e6e13a8a038edae955747f402d759b6575b8048275f731e61",
+      "out/vinyl-player-20261004/MusicFree-win32-x64/resources/app/.webpack/renderer/minimode_window/index.js": "b8767cebf20409707d98aa58533e809e6289428aaf1a8eeec58bb89373800607"
+    }
+  },
+  "knowledgeBase": {
+    "report": "browser-render-results.json",
+    "image": "Actual packaged detail screenshot decoded at desktop/narrow/print sizes; original-size link verified"
+  },
+  "sourceSha256": {
+    "src/renderer/components/VinylCover/index.tsx": "56b60af19f84c8d7b0bfe11fc1df6b51b22a25de60b9d91bbf0dbe83d911d520",
+    "src/renderer/components/VinylCover/index.scss": "c19cec26e45085b69030d38d12a427ddde0386120d7fabb49ef2b0d4f98c51a6",
+    "src/renderer/components/MusicDetail/index.tsx": "4ddf00bce22f95a629805646534415d55230ce27c1d01e2c37f703cc5b3dc877",
+    "src/renderer/components/MusicDetail/index.scss": "60104643443fb96bd40fc1077ee7b0ba56bf1e21bf93ca12a6bc0545db10d1f4",
+    "src/renderer/components/MusicBar/widgets/MusicInfo/index.tsx": "943124107d0b2d6650f64b140e3c567d18db6b42bbf8d91ef59a8aba18cbe134",
+    "src/renderer/components/MusicBar/widgets/MusicInfo/index.scss": "4d974b97ac108d090fd9f9f58f44bb518d710374ac1894e5032e2f2c0cd5fb14",
+    "src/renderer-minimode/pages/index.tsx": "a82ac4853cb6c1a55068c3129746f8ba2431ea9d319dd2f5edd9f65254ff9458",
+    "src/renderer-minimode/pages/index.scss": "39cd110ee67417d5668fdaf9cd1d1bc7f45a187149772c76bc9020f592a200e3",
+    "scripts/tests/vinyl-renderer.cjs": "9ffe4e042b055c11b63db0d78d5abe15cb0205a3903d87fa83fbc04f7d91bf84",
+    "scripts/tests/electron-regression-main.cjs": "1b5d4d1c4fc9c9d2cf4a2892cca1681b4d454a9db8741954313b7bc118736503",
+    "scripts/ci/run-tests.cjs": "f236f475b15ae83ab49521be909ea0294cf768b14f9495841b644b826b45bfe6"
+  },
+  "screenshots": {
+    "vinyl-bottom-playing.png": "390a41420aa519c2f9726fcf941b9f869830aeaa599596a59a70312dd4f5e4d5",
+    "vinyl-detail-paused.png": "18421c551d169c09f30fb2d3c603a1fface789c7971ab4d9f2ae9a4c13d39f23",
+    "vinyl-detail-playing.png": "fd94dc45ca878f1fca15b103c7457ca433de63dfafc6176ba3d4edb1bb8b2afb",
+    "vinyl-mini-paused.png": "7233e93e31d635dc2c788b8ba8f7f8fb6ae1c87faae3cdeda4f0faa7c26f2bd1",
+    "vinyl-mini-playing.png": "27c1c3ab5964e817344578904e169bd16a4828998f63e20a94ee56bba702aae1",
+    "vinyl-player-concept.png": "dc5eb32161bb6c4755b79e03f627a4dbaeb79a677f8ecf346a9e4b0714f3d64a"
+  },
+  "limits": [
+    "Windows tested; Linux/macOS GUI not run in this round",
+    "DPI/theme matrix and sustained performance measurements remain manual acceptance",
+    "Specialist React suite uses actual styles/components/stores but substitutes peripheral panels and transport; packaged smoke covers real MessagePort sync",
+    "Knowledge-base screenshots are static examples; they do not themselves animate"
+  ]
+}

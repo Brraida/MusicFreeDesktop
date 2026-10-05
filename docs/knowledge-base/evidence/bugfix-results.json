@@ -1,0 +1,104 @@
+{
+  "baselineCommit": "5c2d332d3fb273edb79169c7eaa455ace586da92",
+  "fixedCommit": "5806cdf7d9569abb66d0cee86c90b1e2a12856a9",
+  "branch": "dev",
+  "scope": "First-phase BUG-01 through BUG-13 and newly reproduced BUG-14; existing architecture retained.",
+  "node": {
+    "commit": "5806cdf7d9569abb66d0cee86c90b1e2a12856a9",
+    "node": "v20.20.0",
+    "platform": "win32",
+    "arch": "x64",
+    "results": [
+      {
+        "suite": "player",
+        "exitCode": 0,
+        "seconds": 1.712,
+        "stdout": "PASS: player source/lyrics generations, A-B-A, quality races, stale errors and reset\n",
+        "stderr": ""
+      },
+      {
+        "suite": "service",
+        "exitCode": 0,
+        "seconds": 0.699,
+        "stdout": "PASS: service restart/stop/backoff and real HTTP loopback authorization, invalid inputs, headers, stream errors\n",
+        "stderr": ""
+      },
+      {
+        "suite": "scanner",
+        "exitCode": 0,
+        "seconds": 2.947,
+        "stdout": "PASS: scan handshake at 1/100/10000, stale parses, real Windows watcher add/change/unlink, optional stats and folder import\n",
+        "stderr": ""
+      },
+      {
+        "suite": "audio",
+        "exitCode": 0,
+        "seconds": 0.597,
+        "stdout": "PASS: HLS teardown/headers, Blob auth/autoplay/seek, pause, abort, A-B-A and Object URL cleanup\n",
+        "stderr": ""
+      },
+      {
+        "suite": "store",
+        "exitCode": 0,
+        "seconds": 0.465,
+        "stdout": "PASS: Store commits before notification, isolates subscribers and retains state on update failure\n",
+        "stderr": ""
+      },
+      {
+        "suite": "startup",
+        "exitCode": 0,
+        "seconds": 0.776,
+        "stdout": "PASS: startup failures carry config/plugin/playlist/player/language/download stage diagnostics\n",
+        "stderr": ""
+      }
+    ]
+  },
+  "electron": {
+    "audio": {
+      "suite": "audio",
+      "passed": true,
+      "result": "PASS: actual Windows HTMLAudio decodes authenticated Blob WAV, retains play/seek/pause, revokes Blob, aborts real HLS fragment and plays direct WAV",
+      "counts": {
+        "/protected.wav": 1,
+        "/protected-slow.wav": 1,
+        "/manifest.m3u8": 1,
+        "/stats": 2,
+        "/segment.ts": 1,
+        "/direct.wav": 1
+      },
+      "electron": "25.3.0",
+      "resultFile": "out/.correctness-regression-audio-1791007014033/result.json"
+    },
+    "playlist": {
+      "suite": "playlist",
+      "passed": true,
+      "result": "PASS: actual Windows IndexedDB duplicate/concurrent additions, add-remove races, reference counts, favorite index, clear/delete and transaction rollback",
+      "counts": {},
+      "electron": "25.3.0",
+      "resultFile": "out/.correctness-regression-playlist-1791006929618/result.json"
+    },
+    "startup": {
+      "suite": "startup",
+      "passed": true,
+      "result": "PASS: real React startup loading/error/restart UI, logger failure isolation and no player mount before successful initialization",
+      "counts": {},
+      "electron": "25.3.0",
+      "resultFile": "out/.correctness-regression-startup-1791006933699/result.json"
+    }
+  },
+  "download": {
+    "exitCode": 0,
+    "output": "PASS: actual Windows Electron/IndexedDB concurrent records, stale index recovery, failed commits, real HTTP streams, collision protection, pause/resume, Comlink queue control, source cancellation, record-only retry, post-commit notification failure and mounted React status synchronization\nHTTP_REQUEST_COUNTS {\"/ok\":7,\"/404\":1,\"/broken\":1,\"/playlist-mime\":1,\"/playlist-disguised.mp3\":1,\"/playlist-split\":1,\"/actual-audio.m3u8\":1,\"/slow\":2}",
+    "log": "out/bugfix-download-regression.log"
+  },
+  "typecheck": {
+    "command": "Windows node node_modules/typescript/bin/tsc --noEmit",
+    "exitCode": 0
+  },
+  "limits": [
+    "No Linux/macOS runtime acceptance in this round",
+    "No all-plugin/device/format compatibility or performance certification",
+    "Full HLS offline segment download remains unsupported; manifests are rejected",
+    "Electron upgrade and plugin sandbox migration remain separate work"
+  ]
+}

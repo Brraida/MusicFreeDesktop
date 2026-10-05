@@ -1,0 +1,149 @@
+{
+  "date": "2026-10-04",
+  "status": "verified-on-windows",
+  "uncommittedWorkspace": true,
+  "change": "Replace bounding-box tube gradient with curved reflection bands, directional machined bearing face and higher contrast counterweight metal.",
+  "build": "out/vinyl-metal-20261004/MusicFree-win32-x64/MusicFree.exe",
+  "material": "Static SVG layers; no network assets, texture download, animated filters or per-frame lighting calculation.",
+  "sourceSha256": {
+    "src/renderer/components/VinylCover/index.tsx": "f5e07596fc8123477a3fa728319dbfb733797d368da31fc1a5c4eaefb6132711"
+  },
+  "compiledRendererSha256": {
+    "resources/app/.webpack/renderer/db/index.js": "6e73c5d92d6f48c610b84ff62dbc86d59382187e2bbf7c70f9cd0443aa4d80ab",
+    "resources/app/.webpack/renderer/local_file_watcher/index.js": "3f3aa2b99fc3df139fbfb7056dd5fb8a2837167eb979f918d2a6fa6d67f37254",
+    "resources/app/.webpack/renderer/lrc_window/index.js": "356a270b57a7c9d666be5a0a4a5c0d00720e9f9307652d6ce2d40064d3116104",
+    "resources/app/.webpack/renderer/lrc_window/preload.js": "e0b14c9dcbb4501be04d91ee12ee10728f3078526b2d0e153fc5de41178f1a9d",
+    "resources/app/.webpack/renderer/main_window/index.js": "5fe51f7fc8c92cbe5c853f09728415239a840a3b808eb07651e3afdf4a8c3da1",
+    "resources/app/.webpack/renderer/main_window/preload.js": "11ee988843849d206732c00937780db51c777902aacece59ea9c79b69b1e2421",
+    "resources/app/.webpack/renderer/minimode_window/index.js": "0710fbf1d3ef619eabc9fe52a857ee9e9a87a974b0e4554df6d38551b4881de2",
+    "resources/app/.webpack/renderer/minimode_window/preload.js": "e0b14c9dcbb4501be04d91ee12ee10728f3078526b2d0e153fc5de41178f1a9d",
+    "resources/app/.webpack/renderer/worker_downloader/index.js": "7c00ee817ae858ca3a4ace5bc2570f4dcde9802cee7e2b5078119c2885829efe"
+  },
+  "tests": {
+    "vinylRegression": {
+      "suite": "vinyl",
+      "passed": true,
+      "result": "PASS: real React/SCSS + Chromium record rotation, angle-preserving pause/resume, metal pivot/counterweight/headshell fit, stylus groove/rest geometry, static reflections, compact detail reduction, independent arm movement, 44px/56px fit, main Store and mini bus sync, hidden-window suspension, track switch, broken-cover fallback, keyboard/double-click/hover controls, cleanup; reduced-motion verified by main runner",
+      "counts": {},
+      "electron": "25.3.0"
+    },
+    "typecheckPassed": true,
+    "formatCheckPassed": true,
+    "packagedPlayback": {
+      "passed": true,
+      "packagedMainPreloadRenderer": true,
+      "isolatedProfile": true,
+      "protocolRegistrationDisabled": true,
+      "localSilentWav": true,
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "checks": [
+        "main bootstrap",
+        "local audio play",
+        "bottom circular cover",
+        "detail circular cover",
+        "real mini-window MessagePort state sync",
+        "pause reflected in both windows"
+      ],
+      "screenshots": [
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-metal-smoke-1791127098694\\bottom-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-metal-smoke-1791127098694\\detail-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-metal-smoke-1791127098694\\mini-playing.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-metal-smoke-1791127098694\\detail-paused.png",
+        "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-metal-smoke-1791127098694\\mini-paused.png"
+      ]
+    },
+    "startup1000": {
+      "passed": true,
+      "package": "vinyl-metal-20261004",
+      "platform": "win32",
+      "electron": "25.3.0",
+      "isolatedProfile": true,
+      "fixture": {
+        "records": 1000,
+        "logicalBytesPerFile": 1048576,
+        "hardLinks": true,
+        "legacyWithoutFingerprints": true
+      },
+      "empty": {
+        "text": "[2026-10-04 23:18:26.083] [info]  [Perf Main]: App Ready [Offset]: 0ms\r\n[2026-10-04 23:18:26.132] [info]  [Perf Main]: Create Main Window [Offset]: 49ms\r\n[2026-10-04 23:18:26.754] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 23:18:26.768] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":1}\r\n[2026-10-04 23:18:26.768] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":1}\r\n[2026-10-04 23:18:26.840] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":70}\r\n[2026-10-04 23:18:26.850] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":82}\r\n[2026-10-04 23:18:26.858] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":7}\r\n[2026-10-04 23:18:26.865] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":6}\r\n[2026-10-04 23:18:26.865] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 111ms\r\n[2026-10-04 23:18:26.945] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 191ms\r\n",
+        "bootstrapMs": 111,
+        "firstScreenMs": 191
+      },
+      "legacy": {
+        "text": "[2026-10-04 23:18:27.247] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 23:18:27.254] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":2}\r\n[2026-10-04 23:18:27.254] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":2}\r\n[2026-10-04 23:18:27.261] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":7}\r\n[2026-10-04 23:18:27.261] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":6}\r\n[2026-10-04 23:18:27.265] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":4}\r\n[2026-10-04 23:18:27.281] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":15}\r\n[2026-10-04 23:18:27.281] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 34ms\r\n[2026-10-04 23:18:27.295] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 48ms\r\n",
+        "bootstrapMs": 34,
+        "firstScreenMs": 48,
+        "reloadToUiMs": 194,
+        "fingerprintsAtUi": 0,
+        "migrationCompleteMs": 8598
+      },
+      "warm": {
+        "text": "[2026-10-04 23:18:36.456] [info]  [Perf Renderer]: Create Bundle [Offset]: 0ms\r\n[2026-10-04 23:18:36.464] [info]  Startup stage {\"stage\":\"配置\",\"durationMs\":2}\r\n[2026-10-04 23:18:36.465] [info]  Startup stage {\"stage\":\"插件\",\"durationMs\":3}\r\n[2026-10-04 23:18:36.470] [info]  Startup stage {\"stage\":\"歌单\",\"durationMs\":5}\r\n[2026-10-04 23:18:36.470] [info]  Startup stage {\"stage\":\"播放状态\",\"durationMs\":5}\r\n[2026-10-04 23:18:36.476] [info]  Startup stage {\"stage\":\"语言\",\"durationMs\":5}\r\n[2026-10-04 23:18:36.496] [info]  Startup stage {\"stage\":\"下载记录\",\"durationMs\":20}\r\n[2026-10-04 23:18:36.496] [info]  [Perf Renderer]: Bundle Bootstrap Ready [Offset]: 40ms\r\n[2026-10-04 23:18:36.512] [info]  [Perf Renderer]: Bundle First Screen [Offset]: 56ms\r\n",
+        "bootstrapMs": 40,
+        "firstScreenMs": 56
+      },
+      "limitations": "One sample per workload; cached filesystem, same process reload; not physical cold launch P95; fixture is binary, not audio decoding"
+    },
+    "knowledgeBaseBrowser": {
+      "platform": "win32",
+      "electron": "25.3.0",
+      "chromium": "114.0.5735.199",
+      "initial": {
+        "total": 13,
+        "rendered": 13,
+        "failed": 0
+      },
+      "narrowDiagrams": 13,
+      "printDiagrams": 13,
+      "network": "HTTP(S) blocked; no requests attempted",
+      "actualImages": {
+        "desktop": {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-metal-detail-playing.png",
+          "complete": true,
+          "naturalWidth": 1050,
+          "naturalHeight": 740,
+          "width": 1050,
+          "height": 740,
+          "containerWidth": 1211
+        },
+        "narrow": {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-metal-detail-playing.png",
+          "complete": true,
+          "naturalWidth": 1050,
+          "naturalHeight": 740,
+          "width": 477,
+          "height": 336.15625,
+          "containerWidth": 525
+        },
+        "print": {
+          "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/vinyl-metal-detail-playing.png",
+          "complete": true,
+          "naturalWidth": 1050,
+          "naturalHeight": 740,
+          "width": 567,
+          "height": 399.59375,
+          "containerWidth": 567
+        }
+      },
+      "originalPreviewImage": {
+        "width": 1050,
+        "height": 740
+      },
+      "allChaptersChecked": true
+    }
+  },
+  "actualScreenshotSha256": {
+    "docs/knowledge-base/assets/previews/vinyl-metal-bottom-playing.png": "4acf37339d3344673491703572f4226148c1119e64236da7390a1e42f74e28e3",
+    "docs/knowledge-base/assets/previews/vinyl-metal-detail-paused.png": "9c8cdc24e60cab5d666bfe498778fe6a3ecf4fce9c4f4fdf2b167a52d4323a24",
+    "docs/knowledge-base/assets/previews/vinyl-metal-detail-playing.png": "766d4613563f6a8b926c2006bbd343694c1adebe4d43df0ea8aa2c1a04195222",
+    "docs/knowledge-base/assets/previews/vinyl-metal-mini-paused.png": "b1da1d07246e40f0c8e42edcdf70fb26d075cdee0f451abd4fcbda978713d539",
+    "docs/knowledge-base/assets/previews/vinyl-metal-mini-playing.png": "4b649d34750e2630f958344e2b8f0615b10bfdb15f5227e792162516c393d588"
+  },
+  "limits": [
+    "Visual quality was inspected from actual Chromium screenshots; automated state tests do not grade aesthetics.",
+    "Startup benchmark is an isolated profile and cached filesystem sample, not executable cold-start P95.",
+    "Linux/macOS GUI and other DPI settings were not tested."
+  ]
+}

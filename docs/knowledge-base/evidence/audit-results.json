@@ -1,0 +1,69 @@
+{
+  "baselineCommit": "6bb1e21d9c642b1427d531aa207d9ccddc6acf25",
+  "node": "v20.20.0",
+  "platform": "win32",
+  "architecture": "x64",
+  "scope": "Deterministic isolated probes; not end-to-end Windows playback tests or performance measurements",
+  "results": [
+    {
+      "id": "BUG-01",
+      "title": "Old source failure resets the newer track",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-02",
+      "title": "Old lyric failure clears the newer lyrics",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-03",
+      "title": "Forwarder restart is blocked by the started flag",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-04",
+      "title": "Forwarder has no explicit loopback bind and malformed URL throws",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-05",
+      "title": "Scan batch is discarded before the callback is registered",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-06",
+      "title": "Uppercase music extensions are excluded",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-07",
+      "title": "HLS instance remains attached after switching to direct audio",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-08",
+      "title": "Blob fallback loses generated auth and does not resume deferred play or revoke URL",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-09",
+      "title": "Observer failure prevents Store value from being committed",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    },
+    {
+      "id": "BUG-10",
+      "title": "Duplicate input produces duplicate playlist keys",
+      "outcome": "reproduced",
+      "method": "actual source with isolated mocks"
+    }
+  ]
+}

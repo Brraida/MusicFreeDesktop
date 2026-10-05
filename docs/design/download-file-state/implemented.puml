@@ -1,0 +1,48 @@
+@startuml
+title 当前实现：本地下载资源状态（与下载任务进度分开维护）
+hide empty description
+skinparam shadowing false
+
+state "无下载关联\nNO_RECORD" as NO_RECORD
+state "核对中\nCHECKING" as CHECKING
+state "本地文件可用\nAVAILABLE" as AVAILABLE
+state "确认缺失\nMISSING" as MISSING
+state "暂不可用\nUNAVAILABLE" as UNAVAILABLE
+state "上次确认状态" as PREVIOUS <<choice>>
+
+[*] --> NO_RECORD
+NO_RECORD --> CHECKING : 启动 / 全量核对\n[数据库存在下载关联]
+NO_RECORD --> AVAILABLE : 下载校验与记录提交成功
+AVAILABLE --> CHECKING : 文件或目录事件\n配置变化 / 刷新 / 播放取源
+MISSING --> CHECKING : 恢复事件 / 配置变化\n启动 / 刷新 / 补偿核对
+UNAVAILABLE --> CHECKING : 恢复事件 / 刷新\n启动 / 补偿核对
+
+CHECKING --> AVAILABLE : [读取与指纹检查通过]\n[必要的记录更新已提交]
+CHECKING --> MISSING : [确认缺失]\n[没有唯一的指纹匹配文件]
+CHECKING --> UNAVAILABLE : [离线 / 权限 / I/O / 内容改变]\n或 [实际音频打开或解码失败]
+CHECKING --> PREVIOUS : 提交失败 / 配置已过期\n恢复原结论并补偿核对
+PREVIOUS --> NO_RECORD : [原结论无关联]
+PREVIOUS --> AVAILABLE : [原结论可用]
+PREVIOUS --> MISSING : [原结论缺失]
+PREVIOUS --> UNAVAILABLE : [原结论不可用]
+
+MISSING --> AVAILABLE : 重新下载并提交成功
+UNAVAILABLE --> AVAILABLE : 重新下载并提交成功
+AVAILABLE --> NO_RECORD : 用户移除关联 / 事务成功
+MISSING --> NO_RECORD : 用户移除关联 / 事务成功
+UNAVAILABLE --> NO_RECORD : 用户移除关联 / 事务成功
+
+note right of CHECKING
+  核对时 UI 保留上次确认图标。
+  文件事件先合并，再进入串行更新队列。
+  SHA-256 匹配搬迁文件；同名不算同一首歌。
+  监听重建 ready 时做全量补偿。
+end note
+
+note bottom of AVAILABLE
+  ResourcesChanged 只表示资源可用性变化。
+  Downloaded 表示下载器成功提交了完成记录。
+  外部恢复文件不能提前结束正在执行的下载。
+  PREVIOUS 是绘图判定节点，不是代码中的额外枚举。
+end note
+@enduml

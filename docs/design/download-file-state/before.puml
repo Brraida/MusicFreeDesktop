@@ -1,0 +1,52 @@
+@startuml
+title 开发前（dev@4e7b711）：下载任务与界面下载标志
+hide empty description
+skinparam shadowing false
+
+state "未下载 / 无有效下载缓存\nNONE" as NONE
+state "排队\nWAITING" as WAITING
+state "下载中\nDOWNLOADING" as DOWNLOADING
+state "暂停\nPAUSED" as PAUSED
+state "保存下载记录\nSAVING" as SAVING
+state "任务失败\nERROR" as ERROR
+state "已下载\nDONE" as DONE
+state CHECK_DISK <<choice>>
+
+[*] --> CHECK_DISK : 初始化核对
+CHECK_DISK --> DONE : [登记路径存在，或现目录同名候选\n通过当前检查]
+CHECK_DISK --> NONE : [没有记录，或文件缺失\n且未恢复路径]
+NONE --> WAITING : 开始下载 [队列未暂停]
+NONE --> PAUSED : 开始下载 [队列已暂停]
+WAITING --> DOWNLOADING : 队列执行\n[没有已完成文件缓存]
+WAITING --> SAVING : 队列执行\n[存在已完成文件缓存]
+WAITING --> DONE : 队列执行\n[下载记录已由其他操作提交]
+WAITING --> PAUSED : 全部暂停
+DOWNLOADING --> PAUSED : 全部暂停 / 中止本次传输
+PAUSED --> WAITING : 全部继续
+DOWNLOADING --> SAVING : 文件写入及最终落盘成功
+DOWNLOADING --> ERROR : 获取源或文件传输失败
+SAVING --> DONE : 下载记录提交成功
+SAVING --> ERROR : 下载记录提交失败
+ERROR --> WAITING : 重试 [队列未暂停]
+ERROR --> PAUSED : 重试 [队列已暂停]
+DONE --> NONE : 在播放器内移除下载关联成功
+DONE --> CHECK_DISK : 修改下载目录 / 重启\n重新核对
+NONE --> CHECK_DISK : 修改下载目录\n尝试恢复记录
+DONE --> DONE : 外部变化 [缓存未更新]
+
+note right of DONE
+  DONE 主要由 downloadedSet 派生。
+  自环归纳两种状态没有改变的场景，
+  不代表当前存在文件删除监听处理。
+  外部删除 / 移动后图标未同步；
+  播放发现缺失时回退插件，图标仍未同步。
+  缺失文件播放分支仍留有清理 TODO。
+end note
+
+note bottom of CHECK_DISK
+  CHECK_DISK 是图中的判定节点，非 DownloadState 枚举。
+  该图归纳主要转换，不展开全局队列切换和并发细节。
+  缺失文件的元数据会保留，便于以后恢复路径。
+  ERROR 也可能表示文件已落盘，但下载记录保存失败。
+end note
+@enduml

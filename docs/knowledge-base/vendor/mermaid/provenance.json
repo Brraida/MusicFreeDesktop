@@ -1,0 +1,8 @@
+{
+  "name": "mermaid",
+  "version": "10.9.5",
+  "license": "MIT",
+  "source": "https://registry.npmjs.org/mermaid/-/mermaid-10.9.5.tgz",
+  "packageIntegrity": "sha512-eRlKEjzak4z1rcXeCd1OAlyawhrptClQDo8OuI8n6bSVqJ9oMfd5Lrf3Q+TdJHewi/9AIOc3UmEo8Fz+kNzzuQ==",
+  "scriptSha256": "616a109f19cd186842e11d45b35ac07456b3a75513310f6ea075351aa430b1e2"
+}

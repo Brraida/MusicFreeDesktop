@@ -1,0 +1,2 @@
+# Preserve the upstream bundle bytes and checksum when checking whitespace.
+mermaid/mermaid.min.js -whitespace
