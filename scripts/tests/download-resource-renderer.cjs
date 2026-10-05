@@ -94,6 +94,52 @@ module.exports = async (testRoot, base) => {
         "@shared/plugin-manager/renderer": {}, "@/shared/i18n/renderer": { i18n: { t: key => key } },
         "@shared/logger/renderer": logger,
     }).default;
+    {
+        // First launch with legacy download metadata: showing the UI must not wait for any disk read.
+        const legacy = Array.from({ length: 24 }, (_, index) => {
+            const item = complete(song("startup-" + index), path.join(oldDir, "startup-" + index + ".mp3"));
+            item[constants.musicRefSymbol] = 1;
+            fs.writeFileSync(media.getInternalData(item, "downloadData").path, "startup audio " + index);
+            return item;
+        });
+        await db.musicStore.bulkPut(legacy);
+        let unblock, entered;
+        const blocked = new Promise(resolve => {
+            unblock = resolve;
+        });
+        const started = new Promise(resolve => {
+            entered = resolve;
+        });
+        const inspections = [];
+        beforeInspection = async fp => {
+            inspections.push(fp);
+            if (fp === media.getInternalData(legacy[0], "downloadData").path) {
+                entered(); await blocked;
+            }
+        };
+        await sheet.setupDownloadedMusicListInBackground();
+        assert.equal(inspections.length, 0, "metadata readiness must not perform disk I/O");
+        assert.equal(sheet.getDownloadResourceStatus(legacy[23]).state, State.CHECKING);
+        assert.equal(sheet.isDownloaded(legacy[23]), false, "unchecked files must not be advertised as available");
+        await started;
+        let allChecked = false;
+        const fullCheck = sheet.setupDownloadedMusicList().then(() => {
+            allChecked = true;
+        });
+        const selected = sheet.refreshDownloadedMusicItem(legacy[23]);
+        const noDuplicate = core.startDownload(legacy[22]);
+        unblock();
+        assert.equal((await selected).state, State.AVAILABLE);
+        assert.deepEqual(await noDuplicate, { added: 0, skipped: 1 }, "unchecked existing song must not be downloaded again");
+        assert.equal(allChecked, false, "playing one song must not wait for the entire library");
+        assert(inspections.indexOf(media.getInternalData(legacy[23], "downloadData").path)
+        < inspections.indexOf(media.getInternalData(legacy[8], "downloadData").path)
+        || !inspections.includes(media.getInternalData(legacy[8], "downloadData").path), "selected song takes priority between batches");
+        await fullCheck;
+        assert(legacy.every(item => sheet.isDownloaded(item)), "background migration must eventually verify every record");
+        assert.equal(await sheet.removeDownloadedMusic(legacy, true).then(result => result[0]), true);
+        beforeInspection = async () => {};
+    }
     await sheet.setupDownloadedMusicList();
     assert.equal(await sheet.addDownloadedMusicToList([complete(A, oldA), complete(B, oldB)]), true);
     const favorite = await db.musicStore.get([A.platform, A.id]);

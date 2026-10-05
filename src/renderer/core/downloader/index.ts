@@ -6,6 +6,7 @@ import {
     addDownloadedMusicToList, isDownloaded, removeDownloadedMusic,
     setupDownloadedMusicList, useDownloaded, useDownloadedMusicList,
     refreshDownloadedMusicList, useDownloadResourceStatus,
+    setupDownloadedMusicListInBackground, prepareDownloadedMusicList, refreshDownloadedMusicItem, getDownloadedMusicItem,
 } from "./downloaded-sheet";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import Store from "@/common/store";
@@ -45,9 +46,9 @@ const completedFiles = new Map<string, IMusic.IMusicItem>();
 const downloadingQueue = new PQueue({ concurrency: 5 });
 let downloaderWorker: IDownloaderWorker;
 
-async function setupDownloader() {
+async function setupDownloader(background = false) {
     setupDownloaderWorker();
-    await setupDownloadedMusicList();
+    await (background ? setupDownloadedMusicListInBackground() : setupDownloadedMusicList());
 }
 
 function setupDownloaderWorker() {
@@ -217,7 +218,9 @@ function enqueue(item: IMusic.IMusicItem) {
 async function startDownload(musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) {
     setupDownloaderWorker();
     const items = Array.isArray(musicItems) ? musicItems : [musicItems];
-    await setupDownloadedMusicList();
+    await prepareDownloadedMusicList();
+    // Never redownload an unchecked startup association. Check selected songs ahead of background work.
+    await Promise.all(items.filter(item => getDownloadedMusicItem(item)).map(item => refreshDownloadedMusicItem(item)));
     const seen = new Set<string>();
     const validItems = items.filter((item) => {
         const pk = getMediaPrimaryKey(item);
@@ -321,4 +324,5 @@ export default {
     useDownloaded, isDownloaded, useDownloadedMusicList, removeDownloadedMusic,
     setDownloadingConcurrency, useDownloadState,
     refreshDownloadedMusicList, useDownloadResourceStatus,
+    setupDownloadedMusicListInBackground, prepareDownloadedMusicList, refreshDownloadedMusicItem, getDownloadedMusicItem,
 };

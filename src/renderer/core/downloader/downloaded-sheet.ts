@@ -18,6 +18,8 @@ const downloadedSet = new Set<string>();
 const downloadedRecords = new Map<string, IMusic.IMusicItem>();
 const mutations = new PQueue({ concurrency: 1 });
 let initialization: Promise<void>;
+let preparation: Promise<void>;
+let backgroundTimer: ReturnType<typeof setTimeout>;
 let observingConfig = false;
 let configurationGeneration = 0;
 let monitorGeneration = 0;
@@ -34,7 +36,7 @@ function downloadDirectory() {
     return AppConfig.getConfig("download.path") || getGlobalContext().appPath.downloads;
 }
 
-export function setupDownloadedMusicList() {
+export function prepareDownloadedMusicList() {
     if (!observingConfig) {
         observingConfig = true;
         AppConfig.onConfigUpdate((patch) => {
@@ -53,8 +55,50 @@ export function setupDownloadedMusicList() {
             requestReconciliation({ paths: [], full: true });
         });
     }
+    if (!preparation) {
+        preparation = mutations.add(async () => {
+            const records = (await musicSheetDB.musicStore.toArray())
+                .filter(item => getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData")?.path);
+            const statuses = new Map<string, DownloadResourceStatus>();
+            records.forEach(item => statuses.set(getMediaPrimaryKey(item), { state: DownloadResourceState.CHECKING }));
+            publishResources(new Map(records.map(item => [getMediaPrimaryKey(item), item])), statuses);
+        }).then(() => undefined).catch(error => {
+            preparation = undefined;
+            throw error;
+        });
+    }
+    return preparation;
+}
+
+// Load associations before displaying the UI; disk reads and legacy SHA migration follow later.
+export async function setupDownloadedMusicListInBackground() {
+    await prepareDownloadedMusicList();
+    if (!backgroundTimer && !initialization) {
+        backgroundTimer = setTimeout(() => {
+            backgroundTimer = undefined;
+            void setupDownloadedMusicList().catch(error => {
+                reportSaveError("Background download verification failed", error);
+                requestReconciliation({ paths: [], full: true });
+            });
+        }, 100);
+    }
+}
+
+export function setupDownloadedMusicList() {
     if (!initialization) {
-        initialization = mutations.add(() => reconcileDownloadedMusicList()).catch(error => {
+        initialization = (async () => {
+            await prepareDownloadedMusicList();
+            const started = Date.now();
+            const keys = [...downloadedRecords.keys()];
+            // Yield between bounded batches. User actions enter this queue with higher priority.
+            for (let index = 0; index < keys.length; index += 8) {
+                const batch = new Set(keys.slice(index, index + 8));
+                await mutations.add(() => reconcileDownloadedMusicList(undefined, false, undefined, batch), { priority: -1 });
+                await new Promise(resolve => setTimeout(resolve, 0));
+            }
+            await updateMonitor();
+            logger.logInfo("Startup download verification", { records: keys.length, durationMs: Date.now() - started });
+        })().catch(error => {
             initialization = undefined;
             throw error;
         });
@@ -115,7 +159,7 @@ async function updateMonitor() {
 export async function stopDownloadedMusicMonitor() {
     monitoring = false;
     ++monitorGeneration;
-    clearInterval(compensationTimer); clearTimeout(deliveryTimer); clearTimeout(retryTimer);
+    clearInterval(compensationTimer); clearTimeout(deliveryTimer); clearTimeout(retryTimer); clearTimeout(backgroundTimer);
     pendingPaths.clear(); pendingFull = false;
     await fsUtil.stopDownloadWatcher();
 }
@@ -126,7 +170,7 @@ export async function refreshDownloadedMusicList() {
 }
 
 export async function refreshDownloadedMusicItem(item: IMedia.IMediaBase, failedPath?: string) {
-    await setupDownloadedMusicList();
+    await prepareDownloadedMusicList();
     await mutations.add(async () => {
         const record = downloadedRecords.get(getMediaPrimaryKey(item));
         const data = getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData");
@@ -147,15 +191,15 @@ function touches(paths: Set<string>, filePath: string) {
     return [...paths].some(changed => file === changed || file.startsWith(changed.endsWith(window.path.sep) ? changed : changed + window.path.sep));
 }
 
-async function reconcileDownloadedMusicList(paths?: Set<string>, forceHash = false, playbackFailure?: string) {
+async function reconcileDownloadedMusicList(paths?: Set<string>, forceHash = false, playbackFailure?: string, keys?: Set<string>) {
     const generation = configurationGeneration;
     const directory = downloadDirectory();
-    const partial = !!paths;
+    const partial = !!paths || !!keys;
     const records = partial ? [...downloadedRecords.values()] : await musicSheetDB.musicStore.toArray();
     const all = records.filter(item => getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData")?.path);
     const candidates = all.filter(item => {
         const data = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
-        return !paths || touches(paths, data.path) || touches(paths, window.path.join(directory, window.path.basename(data.path)));
+        return keys ? keys.has(getMediaPrimaryKey(item)) : !paths || touches(paths, data.path) || touches(paths, window.path.join(directory, window.path.basename(data.path)));
     });
     if (!candidates.length && partial) return;
     const previous = resourceStore.getValue();
@@ -293,7 +337,7 @@ function reportSaveError(message: string, error: Error) {
 export async function addDownloadedMusicToList(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
 ): Promise<boolean> {
-    await setupDownloadedMusicList();
+    await prepareDownloadedMusicList();
     const result = await mutations.add(async () => {
         let committed = false;
         try {
@@ -359,7 +403,7 @@ export async function removeDownloadedMusic(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
     removeFile = false,
 ): Promise<ICommon.ICommonReturnType> {
-    await setupDownloadedMusicList();
+    await prepareDownloadedMusicList();
     const result = await mutations.add(async (): Promise<ICommon.ICommonReturnType> => {
         try {
             const items = Array.isArray(musicItems) ? musicItems : [musicItems];

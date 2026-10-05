@@ -18,15 +18,23 @@ import throttle from "lodash.throttle";
 import { IAppState } from "@shared/message-bus/type";
 import MusicDetail from "@renderer/components/MusicDetail";
 import shortCut from "@shared/short-cut/renderer";
+import logger from "@shared/logger/renderer";
 
 
 setAutoFreeze(false);
 
 async function initializeStage(stage: string, initialize: () => Promise<unknown>) {
+    const started = Date.now();
     try {
         await initialize();
     } catch (error) {
         throw new Error(`${stage}初始化失败：${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+        try {
+            logger.logInfo("Startup stage", { stage, durationMs: Date.now() - started });
+        } catch {
+            // Diagnostics must not interfere with initialization.
+        }
     }
 }
 
@@ -46,7 +54,7 @@ export default async function () {
     setupCommandAndEvents();
     setupDeviceChange();
     localMusic.setupLocalMusic();
-    await initializeStage("下载记录", () => Downloader.setupDownloader());
+    await initializeStage("下载记录", () => Downloader.setupDownloader(true));
     setupRecentlyPlaylist();
     // 本地服务
     ServiceManager.setup();

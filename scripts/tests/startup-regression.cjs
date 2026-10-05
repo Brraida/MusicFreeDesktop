@@ -17,7 +17,10 @@ Object.defineProperty(global, "navigator", { configurable: true, value: { mediaD
                 "../core/music-sheet": { frontend: { setupMusicSheets: initialize("歌单") } },
                 "../core/track-player": { setup: initialize("播放状态"), on() {} },
                 "../core/local-music": { setupLocalMusic() {} }, immer: { setAutoFreeze() {} },
-                "../core/downloader": { setupDownloader: initialize("下载记录") },
+                "../core/downloader": { setupDownloader: async background => {
+                    assert.equal(background, true, "startup must request background file verification");
+                    await initialize("下载记录")();
+                } },
                 "@shared/app-config/renderer": { setup: initialize("配置"), getConfig: () => false },
                 "@/shared/i18n/renderer": { setupI18n: initialize("语言") }, "@/shared/themepack/renderer": {},
                 "../core/recently-playlist": { setupRecentlyPlaylist() {} },
@@ -25,6 +28,7 @@ Object.defineProperty(global, "navigator", { configurable: true, value: { mediaD
                 "@renderer/core/track-player/enum": enums, "@shared/utils/renderer": {},
                 "@shared/plugin-manager/renderer": { setup: initialize("插件") },
                 "@shared/message-bus/renderer/main": { onCommand() {}, syncAppState() {} },
+                "@shared/logger/renderer": { logInfo() {} },
                 "@renderer/components/MusicDetail": {}, "@shared/short-cut/renderer": { setup() {} },
             }).default;
             await assert.rejects(bootstrap, error => error.message === stage + "初始化失败：Injected failure");
