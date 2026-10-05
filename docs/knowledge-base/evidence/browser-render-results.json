@@ -6,8 +6,8 @@
   "protocol": "file:",
   "network": "HTTP(S) blocked; no requests attempted",
   "initial": {
-    "total": 13,
-    "rendered": 13,
+    "total": 14,
+    "rendered": 14,
     "failed": 0
   },
   "desktop": [
@@ -153,10 +153,21 @@
       "labels": 53,
       "containerWidth": 1133,
       "sourceOpen": false
+    },
+    {
+      "id": "jiangnan-theme-implementation-diagram-1",
+      "state": "rendered",
+      "width": 825.484375,
+      "height": 481.984375,
+      "viewWidth": 825.49609375,
+      "viewHeight": 482,
+      "labels": 22,
+      "containerWidth": 1133,
+      "sourceOpen": false
     }
   ],
-  "narrowDiagrams": 13,
-  "printDiagrams": 13,
+  "narrowDiagrams": 14,
+  "printDiagrams": 14,
   "sourceToggle": "Mermaid and both PlantUML sources passed",
   "largeViews": [
     {
@@ -275,20 +286,197 @@
       }
     ]
   },
+  "themeImplementation": {
+    "desktop": [
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main.png",
+        "width": 1135,
+        "height": 813.40625,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 1211
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main-batch.png",
+        "width": 1135,
+        "height": 813.40625,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 1211
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-detail-playing.png",
+        "width": 1135,
+        "height": 813.40625,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 1211
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-detail-paused.png",
+        "width": 1135,
+        "height": 813.40625,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 1211
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-mini-playing.png",
+        "width": 340,
+        "height": 72,
+        "naturalWidth": 340,
+        "naturalHeight": 72,
+        "containerWidth": 1211
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-theme-selector.png",
+        "width": 1135,
+        "height": 813.40625,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 1211
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main-narrow.png",
+        "width": 850,
+        "height": 700,
+        "naturalWidth": 850,
+        "naturalHeight": 700,
+        "containerWidth": 1211
+      }
+    ],
+    "narrow": [
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main.png",
+        "width": 477,
+        "height": 341.84375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 525
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main-batch.png",
+        "width": 477,
+        "height": 341.84375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 525
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-detail-playing.png",
+        "width": 477,
+        "height": 341.84375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 525
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-detail-paused.png",
+        "width": 477,
+        "height": 341.84375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 525
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-mini-playing.png",
+        "width": 340,
+        "height": 72,
+        "naturalWidth": 340,
+        "naturalHeight": 72,
+        "containerWidth": 525
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-theme-selector.png",
+        "width": 477,
+        "height": 341.84375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 525
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main-narrow.png",
+        "width": 477,
+        "height": 392.8125,
+        "naturalWidth": 850,
+        "naturalHeight": 700,
+        "containerWidth": 525
+      }
+    ],
+    "print": [
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main.png",
+        "width": 567,
+        "height": 406.34375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 567
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main-batch.png",
+        "width": 567,
+        "height": 406.34375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 567
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-detail-playing.png",
+        "width": 567,
+        "height": 406.34375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 567
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-detail-paused.png",
+        "width": 567,
+        "height": 406.34375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 567
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-mini-playing.png",
+        "width": 340,
+        "height": 72,
+        "naturalWidth": 340,
+        "naturalHeight": 72,
+        "containerWidth": 567
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-theme-selector.png",
+        "width": 567,
+        "height": 406.34375,
+        "naturalWidth": 1200,
+        "naturalHeight": 860,
+        "containerWidth": 567
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/docs/knowledge-base/assets/previews/jiangnan-actual-main-narrow.png",
+        "width": 567,
+        "height": 466.9375,
+        "naturalWidth": 850,
+        "naturalHeight": 700,
+        "containerWidth": 567
+      }
+    ]
+  },
   "invalidDiagramFallback": {
-    "total": 13,
-    "rendered": 12,
+    "total": 14,
+    "rendered": 13,
     "failed": 1
   },
   "normalPageConsoleErrors": 0,
   "screenshots": [
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\codebase.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\flows.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\download-implemented.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\download-before.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\vinyl-player-preview.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\jiangnan-main.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\jiangnan-detail-mini.png",
-    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791165111959\\jiangnan-narrow.png"
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\codebase.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\flows.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\download-implemented.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\download-before.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\vinyl-player-preview.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\jiangnan-main.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\jiangnan-detail-mini.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\jiangnan-narrow.png",
+    "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.knowledge-base-render-1791177463885\\jiangnan-implementation.png"
   ]
 }

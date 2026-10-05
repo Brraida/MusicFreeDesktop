@@ -13,6 +13,7 @@ fs.mkdirSync(app.getPath('userData'), { recursive: true });
 let window;
 const remoteRequests = [];
 const consoleErrors = [];
+const expectedDiagrams = 14;
 const deadline = setTimeout(() => {
     console.error('Knowledge-base browser test timed out');
     window?.destroy(); app.exit(1);
@@ -63,6 +64,23 @@ async function inspectThemePreview() {
     }
     return views;
 }
+async function inspectThemeImplementation() {
+    const views=await evaluate(`(async () => {
+        const chapter=document.querySelector('#jiangnan-theme-implementation');
+        const images=[...chapter.querySelectorAll('img')];
+        await Promise.all(images.map(image=>image.decode()));
+        return images.map(image=>{const rect=image.getBoundingClientRect();
+            return {src:image.currentSrc,width:rect.width,height:rect.height,naturalWidth:image.naturalWidth,
+                naturalHeight:image.naturalHeight,containerWidth:chapter.clientWidth};});
+    })()`);
+    assert.equal(views.length, 7);
+    for(const view of views){
+        assert.equal(new URL(view.src).protocol,'file:');
+        assert(view.src.includes('/assets/previews/jiangnan-actual-'));
+        assert(view.naturalWidth>0 && view.naturalHeight>0 && view.width>0 && view.height>0 && view.width<=view.containerWidth);
+    }
+    return views;
+}
 async function inspectDiagrams() {
     return evaluate(`([...document.querySelectorAll('.diagram')].filter(x => x.closest('.chapter').getBoundingClientRect().height > 0)).map(figure => {
         const svg = figure.querySelector('.diagram-output svg');
@@ -99,12 +117,12 @@ function assertVisible(diagram) {
     });
     await window.loadFile(path.join(docs, 'index.html'));
     const initial = await evaluate('window.knowledgeBaseReady');
-    assert.deepEqual(initial, { total: 13, rendered: 13, failed: 0 });
+    assert.deepEqual(initial, { total: expectedDiagrams, rendered: expectedDiagrams, failed: 0 });
     assert.equal(await evaluate('document.querySelector("#print").disabled'), false);
     const chapters = await evaluate('[...document.querySelectorAll(".chapter")].map(x => x.id)');
     assert(chapters.includes('commit-convention') && chapters.includes('commit-review')
         && chapters.includes('review-evidence') && chapters.includes('download-file-state')
-        && chapters.includes('vinyl-player-preview') && chapters.includes('jiangnan-porcelain-theme'), 'New chapters missing');
+        && chapters.includes('vinyl-player-preview') && chapters.includes('jiangnan-porcelain-theme') && chapters.includes('jiangnan-theme-implementation'), 'New chapters missing');
     assert.equal(await evaluate(`(() => {
         const links = [...document.querySelectorAll('#guide a')];
         return links.some(x => x.getAttribute('href') === '#commit-convention')
@@ -112,11 +130,13 @@ function assertVisible(diagram) {
             && links.some(x => x.getAttribute('href') === '#review-evidence')
             && links.some(x => x.getAttribute('href') === '#download-file-state')
             && links.some(x => x.getAttribute('href') === '#vinyl-player-preview')
-            && links.some(x => x.getAttribute('href') === '#jiangnan-porcelain-theme');
+            && links.some(x => x.getAttribute('href') === '#jiangnan-porcelain-theme')
+            && links.some(x => x.getAttribute('href') === '#jiangnan-theme-implementation');
     })()`), true, 'Guide links to new chapters missing');
     const desktop = [];
     const previewImages = {};
     const themePreview = {};
+    const themeImplementation = {};
     let previewLargeLink;
     for (const chapter of chapters) {
         await evaluate('location.hash = ' + JSON.stringify(chapter));
@@ -159,17 +179,23 @@ function assertVisible(diagram) {
             assert(previewAssets.every(x => new URL(x.url).protocol === 'file:' && x.width > 0 && x.height > 0));
             await frame(); await capture('vinyl-player-preview.png');
         }
+        if (chapter === 'jiangnan-theme-implementation') {
+            themeImplementation.desktop = await inspectThemeImplementation();
+            assert.equal(await evaluate(`document.querySelector('#jiangnan-theme-implementation').textContent.includes('Windows 编译版的实际截图')`),true);
+            await evaluate(`document.querySelector('#jiangnan-theme-implementation img').scrollIntoView({block:'center'})`);
+            await frame(); await capture('jiangnan-implementation.png');
+        }
         if (chapter === 'jiangnan-porcelain-theme') {
             themePreview.desktop = await inspectThemePreview();
             const text=await evaluate(`document.querySelector('#jiangnan-porcelain-theme').textContent`);
-            assert(text.includes('效果图提案，待你确认后再开发') && text.includes('没有修改播放器主题代码'));
+            assert(text.includes('视觉方向已确认') && text.includes('已合入'));
             for (const [index, name] of [[0, 'jiangnan-main'], [1, 'jiangnan-detail-mini']]) {
                 await evaluate(`document.querySelectorAll('#jiangnan-porcelain-theme img')[${index}].scrollIntoView({block:'center'})`);
                 await frame(); await capture(name + '.png');
             }
         }
     }
-    assert.equal(desktop.length, 13);
+    assert.equal(desktop.length, expectedDiagrams);
     await evaluate(`(() => { const search=document.querySelector('#search'); search.value='UNAVAILABLE'; search.dispatchEvent(new Event('input')); })()`);
     assert.equal(await evaluate(`document.querySelector('.chapter-link[data-target="download-file-state"]').hidden`), false);
     await evaluate(`(() => { const search=document.querySelector('#search'); search.value='青花'; search.dispatchEvent(new Event('input')); })()`);
@@ -190,6 +216,7 @@ function assertVisible(diagram) {
         await evaluate('location.hash = ' + JSON.stringify(chapter)); await frame();
         const diagrams = await inspectDiagrams(); diagrams.forEach(assertVisible); narrow.push(...diagrams);
         if (chapter === 'vinyl-player-preview') previewImages.narrow = await inspectPreviewImage();
+        if (chapter === 'jiangnan-theme-implementation') themeImplementation.narrow = await inspectThemeImplementation();
         if (chapter === 'jiangnan-porcelain-theme') {
             themePreview.narrow = await inspectThemePreview();
             await evaluate(`document.querySelector('#jiangnan-porcelain-theme img').scrollIntoView({block:'center'})`);
@@ -198,9 +225,10 @@ function assertVisible(diagram) {
     }
     window.webContents.debugger.attach('1.3');
     await window.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', { media: 'print' });
-    const printed = await inspectDiagrams(); printed.forEach(assertVisible); assert.equal(printed.length, 13);
+    const printed = await inspectDiagrams(); printed.forEach(assertVisible); assert.equal(printed.length, expectedDiagrams);
     previewImages.print = await inspectPreviewImage();
     themePreview.print = await inspectThemePreview();
+    themeImplementation.print = await inspectThemeImplementation();
     await window.webContents.debugger.sendCommand('Emulation.setEmulatedMedia', { media: '' });
     window.webContents.debugger.detach();
     assert.deepEqual(consoleErrors, [], 'Normal page console errors');
@@ -235,7 +263,7 @@ function assertVisible(diagram) {
         assert.equal(original.height, view.naturalHeight);
         themePreview.originalImages.push(original);
     }
-    // A malformed Mermaid graph must not prevent the other twelve from displaying.
+    // A malformed Mermaid graph must not prevent the other diagrams from displaying.
     let malformed = fs.readFileSync(path.join(docs, 'index.html'), 'utf8');
     malformed = malformed.replace('src="vendor/mermaid/mermaid.min.js"', 'src="' + pathToFileURL(path.join(docs, 'vendor/mermaid/mermaid.min.js')).href + '"');
     malformed = malformed.replace(/<code class="language-mermaid">[\s\S]*?<\/code>/,
@@ -243,7 +271,7 @@ function assertVisible(diagram) {
     const malformedFile = path.join(testRoot, 'malformed.html'); fs.writeFileSync(malformedFile, malformed);
     await window.loadFile(malformedFile);
     const fallback = await evaluate('window.knowledgeBaseReady');
-    assert.deepEqual(fallback, { total: 13, rendered: 12, failed: 1 });
+    assert.deepEqual(fallback, { total: expectedDiagrams, rendered: expectedDiagrams - 1, failed: 1 });
     assert.equal(await evaluate(`(() => { const figure=document.querySelector('.diagram[data-diagram-state="failed"]');
         return figure.querySelector('details').open && !figure.querySelector('.diagram-error').hidden
             && figure.querySelector('.diagram-error').textContent.length > 0; })()`), true);
@@ -252,10 +280,10 @@ function assertVisible(diagram) {
         chromium: process.versions.chrome, protocol: 'file:', network: 'HTTP(S) blocked; no requests attempted',
         initial, desktop, narrowDiagrams: narrow.length, printDiagrams: printed.length,
         sourceToggle: 'Mermaid and both PlantUML sources passed', largeViews,
-        previewImages, originalPreviewImage: originalImage, themePreview,
+        previewImages, originalPreviewImage: originalImage, themePreview, themeImplementation,
         invalidDiagramFallback: fallback, normalPageConsoleErrors,
         screenshots: ['codebase', 'flows', 'download-implemented', 'download-before', 'vinyl-player-preview',
-            'jiangnan-main', 'jiangnan-detail-mini', 'jiangnan-narrow'].map(name => path.join(testRoot, name + '.png')) };
+            'jiangnan-main', 'jiangnan-detail-mini', 'jiangnan-narrow', 'jiangnan-implementation'].map(name => path.join(testRoot, name + '.png')) };
     fs.writeFileSync(path.join(__dirname, 'browser-render-results.json'), JSON.stringify(report, null, 2) + '\n');
     console.log('PASS', JSON.stringify({ initial, narrow: narrow.length, print: printed.length, fallback, remoteRequests: remoteRequests.length,
         preview: 'local image decoded at desktop/narrow/print sizes; original-size link passed',

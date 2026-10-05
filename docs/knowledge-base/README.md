@@ -22,9 +22,10 @@
 | [09 审查验证与复现](09-review-evidence.md) | 哪些检查通过了，问题如何复现，哪些尚未验证？ |
 | [10 下载文件状态同步](10-download-file-state.md) | 当前如何监听、核对和恢复文件？本地播放失败如何回退？有哪些验证和限制？ |
 | [11 唱片播放效果](11-vinyl-player-preview.md) | 查看已接入的写实金属唱臂与黑胶素材、实际截图、三处适配与状态规则 |
-| [12 江南 · 青花主题预览](12-jiangnan-porcelain-theme.md) | 查看歌单、唱片详情、底部栏与迷你窗口效果图；待确认后开发 |
+| [12 江南 · 青花主题预览](12-jiangnan-porcelain-theme.md) | 已确认的开发前效果图，供与实际页面对照 |
+| [13 青花主题实际预览](13-jiangnan-theme-implementation.md) | 已合入 dev 的主题、真实编译截图、切换同步与运行入口 |
 
-**最新视觉提案：** [12 江南 · 青花](12-jiangnan-porcelain-theme.md)。本轮仅提供主题效果图，播放器主题尚未修改。
+**当前主题实现：** [13 青花主题实际预览](13-jiangnan-theme-implementation.md)。青花主题已从独立 worktree 合入 `dev`；[12](12-jiangnan-porcelain-theme.md)保留开发前效果图。
 
 ## 主要结论
 
@@ -95,7 +96,7 @@ python docs/knowledge-base/evidence/build-docs.py
 .\node_modules\.bin\electron.cmd docs/knowledge-base/evidence/browser-render-test.cjs
 ```
 
-测试使用独立 profile，以 `file://` 加载真实阅读页并阻止 HTTP(S) 请求；检查 13 张图（11 张 Mermaid、2 张 PlantUML）的 SVG、尺寸和标签、章节切换、窄屏、打印、源码展开、大图链接，以及单图失败时其他图继续渲染。[结果](evidence/browser-render-results.json)记录实际浏览器版本，截图路径位于忽略提交的 `out` 目录。
+测试使用独立 profile，以 `file://` 加载真实阅读页并阻止 HTTP(S) 请求；检查 14 张图（12 张 Mermaid、2 张 PlantUML）的 SVG、尺寸和标签、章节切换、窄屏、打印、源码展开、大图链接，以及单图失败时其他图继续渲染。[结果](evidence/browser-render-results.json)记录实际浏览器版本，截图路径位于忽略提交的 `out` 目录。
 
 渲染库的版本、许可证和校验值见 [vendor 说明](vendor/mermaid/README.md)。
 

@@ -21,7 +21,8 @@ FILES = [
  ('09-review-evidence.md','review-evidence','09 审查验证与复现'),
  ('10-download-file-state.md','download-file-state','10 下载文件状态同步'),
  ('11-vinyl-player-preview.md','vinyl-player-preview','11 唱片播放效果'),
- ('12-jiangnan-porcelain-theme.md','jiangnan-porcelain-theme','12 江南 · 青花主题预览')]
+ ('12-jiangnan-porcelain-theme.md','jiangnan-porcelain-theme','12 江南 · 青花主题预览'),
+ ('13-jiangnan-theme-implementation.md','jiangnan-theme-implementation','13 青花主题实际预览')]
 TARGETS={name: '#'+slug for name,slug,_ in FILES}
 CANONICALS={
     '07-commit-convention.md': (ROOT/'../../COMMIT_CONVENTION.md','07 · 代码提交规范'),
