@@ -208,26 +208,31 @@ code{font:13px/1.75 Consolas,monospace;background:#edf2f7;border-radius:4px;padd
 <p>需要认识的边界：</p>
 <ul><li>先读取现有库、注册并等待新增/删除回调，再启动 watcher；Worker 对尚未注册回调的批次保留缓冲。</li><li>监听 add/change/unlink；按路径合并事件并使过时的解析结果失效，Comlink 保存回调按顺序等待。</li><li>拖入、文件夹导入和扫描共用大小写无关的扩展名规则；缺失 stats 时安全 stat。</li><li>不足 128 字节的小文件使用 Buffer 解析，避免当前元数据库的短文件句柄泄漏。</li><li>封面以 base64 放入歌曲对象；大量高清封面会扩大内存和持久化数据，收益要通过实测确认。</li><li>Worker 已将文件解析移出界面线程，但主列表仍会按批次 <code>toArray()</code> 重读整个本地库。</li></ul>
 <p>来源：<a href="../../src/renderer/core/local-music/index.ts">local-music</a>、<a href="../../src/webworkers/local-file-watcher.ts">watcher</a>、<a href="../../src/common/file-util.ts">file-util</a>。</p>
-<h2 id="flows-h10">6. Windows / WSL 构建操作</h2>
-<h3 id="flows-h11">建议环境</h3>
+<h3 id="flows-h10">5.1 歌单时长补充（2026-10-05）</h3>
+<p>原本地解析器只保存标签、封面等信息，遗漏 <code>format.duration</code>；部分插件也不返回 <code>duration</code>。时长列过去只读这个字段，因此旧歌单无法显示真实时长。</p>
+<div class="table-wrap"><table><thead><tr><th>数据来源</th><th>显示与补充方式</th></tr></thead><tbody><tr><td>歌曲已有时长</td><td>统一解析秒数、数字字符串、<code>mm:ss</code> / <code>h:mm:ss</code>，再格式化显示</td></tr><tr><td>本地歌曲 / 已下载歌曲缺少时长</td><td>行进入可见区域后，从实际音频文件读取；兼容需要解析帧才能确定时长的 VBR 文件</td></tr><tr><td>未下载歌曲缺少时长</td><td>插件支持详情接口时请求 <code>getMusicInfo</code>；有实际播放进度时补充真实时长</td></tr><tr><td>文件不可用或来源不提供时长</td><td>显示 <code>--:--</code>，不编造数值</td></tr></tbody></table></div>
+<p>补充读取最多并发 3 项，同一歌曲与路径复用请求缓存；已取得的时长更新现有 IndexedDB 歌曲记录。只修改时长，保留歌曲身份、下载关联和引用计数；异步读取完成时不会重新创建已删除的歌曲。启动阶段不增加全量音频扫描。</p>
+<p>验证覆盖真实 WAV 导入、旧本地/下载记录补充、字符串时长、切换歌单、重新加载后的持久化，以及读取并发上限。验证记录：<a href="./evidence/duration-display-results.json">duration-display-results.json</a>。回归入口：<a href="../../scripts/tests/duration-regression.cjs">duration-regression.cjs</a>；实际界面验证：<a href="./evidence/packaged-startup-theme-check.cjs">packaged-startup-theme-check.cjs</a>。</p>
+<h2 id="flows-h11">6. Windows / WSL 构建操作</h2>
+<h3 id="flows-h12">建议环境</h3>
 <p>正式 Windows 构建在 Windows PowerShell 或 Windows CI 中完成。同一工作目录中的 Electron、sharp、better-sqlite3 和任务栏 <code>.node</code> 文件有平台/架构/ABI 要求；避免 Windows 和 WSL 轮流安装同一份 <code>node_modules</code>。WSL 可用于编辑和纯 TypeScript 检查，调用 Windows Node 时仍应确认使用的是 Windows 依赖。</p>
 <p>当前工作流使用 Node 18，Windows legacy 作业另装 Electron 22；这是现有配置，不是推荐继续使用的支持策略。现代 Windows 分支应先明确最低系统版本，再升级运行时和 CI。<a href="https://releases.electronjs.org/schedule">Electron 版本时间表</a>列出相应支持期限。</p>
-<h3 id="flows-h12">原仓库构建命令</h3>
+<h3 id="flows-h13">原仓库构建命令</h3>
 <pre><code class="language-powershell"># 项目根目录；首次安装前确认锁文件、Node 和原生模块兼容策略
 npm ci
 npm start
 npm run package -- --platform=win32 --arch=x64</code></pre>
 <p><code>npm ci</code> 是建议的锁文件安装方式；目前 CI 使用 <code>npm install</code>，换用前应验证现有锁文件可安装。完整安装器还依赖 <a href="../../release/build-windows.iss">Inno Setup 脚本</a>，<code>package</code> 得到应用目录不代表安装器也已生成。</p>
-<h3 id="flows-h13">检查与回归</h3>
+<h3 id="flows-h14">检查与回归</h3>
 <pre><code class="language-powershell">npx tsc --noEmit
 # 当前 npm run lint 含 --fix；审查阶段用不修改文件的检查
 npx eslint src
 .\node_modules\.bin\electron.cmd scripts/tests/downloader-main.cjs
 node docs/knowledge-base/evidence/audit-repro.cjs</code></pre>
 <p><code>npx eslint src</code> 可能包含既有问题，不承诺全仓库已通过。下载回归使用独立 profile 和本地 HTTP；隔离审阅脚本使用模拟边界并写入本目录的 <code>audit-results.json</code>。</p>
-<h3 id="flows-h14">测试版启动与数据目录</h3>
-<ul><li>软件有单实例锁；先从托盘完全退出旧实例，再打开目标目录的 <code>MusicFree.exe</code>。</li><li>免安装应用目录旁没有 <code>portable</code> 文件夹时，仍使用普通用户数据目录。</li><li>存在 <code>portable</code> 目录时，main 会重设 appData/userData 路径；排查“数据不见了”先比较这两种启动方式。</li><li>上轮最终测试版是 <code>out/download-status-fix-test/MusicFree-win32-x64</code>，构建产物不属于源码知识库。</li></ul>
-<h2 id="flows-h15">7. 排障速查</h2>
+<h3 id="flows-h15">测试版启动与数据目录</h3>
+<ul><li>软件有单实例锁；先从托盘完全退出旧实例，再打开目标目录的 <code>MusicFree.exe</code>。</li><li>免安装应用目录旁没有 <code>portable</code> 文件夹时，仍使用普通用户数据目录。</li><li>存在 <code>portable</code> 目录时，main 会重设 appData/userData 路径；排查“数据不见了”先比较这两种启动方式。</li><li>当前测试版是 <code>out/MusicFree-win32-x64</code>，构建产物不属于源码知识库。</li></ul>
+<h2 id="flows-h16">7. 排障速查</h2>
 <div class="table-wrap"><table><thead><tr><th>表现</th><th>第一项检查</th><th>下一项证据</th></tr></thead><tbody><tr><td>打开新版仍见旧错误</td><td>运行进程的 exe 路径、托盘实例</td><td>单实例锁与实际包内代码</td></tr><tr><td>切歌后突然停止</td><td>旧音源请求是否失败</td><td>BUG-01，请求序号/歌曲键/时间戳</td></tr><tr><td>新歌词突然清空</td><td>旧歌词请求是否晚到失败</td><td>BUG-02</td></tr><tr><td>部分本地歌未出现</td><td>初始扫描回调、扩展名大小写</td><td>BUG-05/06，新增事件与入库数量</td></tr><tr><td>带请求头歌曲无法播放</td><td>转发服务是否活着、headers 分支</td><td>BUG-03/08</td></tr><tr><td>已下载但不能离线播放</td><td>文件是否为真正音频、是否外部删除</td><td>BUG-13、RISK-02</td></tr><tr><td>首屏白屏</td><td>bootstrap Promise 拒绝和初始化日志</td><td>BUG-11，UI 挂载前异常</td></tr><tr><td>只有便携版缺歌单</td><td>当前 userData 是否不同</td><td>portable 分支与备份来源</td></tr></tbody></table></div></article><article id="product" class="chapter" hidden><h1 id="product-h1">03 · 播放器对比与体验优化清单</h1>
 <p><a href="#guide">返回目录</a></p>
 <h2 id="product-h2">1. 选择怎样的参照对象</h2>

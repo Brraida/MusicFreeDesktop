@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-05",
+  "baseRevision": "631ae59",
+  "includesUncommittedFix": true,
+  "platform": "win32",
+  "electron": "25.3.0",
+  "passed": true,
+  "durationCells": [
+    {
+      "text": "03:00",
+      "width": 97,
+      "content": 97
+    },
+    {
+      "text": "03:00",
+      "width": 97,
+      "content": 97
+    },
+    {
+      "text": "03:00",
+      "width": 97,
+      "content": 97
+    },
+    {
+      "text": "04:00",
+      "width": 97,
+      "content": 97
+    },
+    {
+      "text": "1:02:03",
+      "width": 97,
+      "content": 97
+    },
+    {
+      "text": "03:00",
+      "width": 97,
+      "content": 97
+    }
+  ],
+  "persistedDurations": [
+    180,
+    180,
+    180,
+    "240",
+    "1:02:03",
+    180
+  ],
+  "checks": [
+    "Real WAV import preserves duration",
+    "Preload reads file URLs and safely handles missing/tiny invalid files",
+    "Concurrent local metadata reads are deduplicated and limited to 3",
+    "Plugin details supply duration when available",
+    "Async persistence does not recreate removed songs",
+    "Existing local/downloaded playlist rows recover duration",
+    "Numeric strings and formatted durations render correctly",
+    "Duration persists across playlist changes and renderer reload",
+    "Packaged startup, batch selection, detail/mini playback and theme smoke passed"
+  ],
+  "unknownDuration": "--:-- when neither local metadata nor plugin information nor actual playback provides a duration",
+  "network": "UI fixture blocked HTTP(S), and attempted no remote requests",
+  "tests": [
+    "scripts/tests/duration-regression.cjs",
+    "scripts/tests/player-regression.cjs",
+    "docs/knowledge-base/evidence/packaged-startup-theme-check.cjs"
+  ],
+  "build": "out/MusicFree-win32-x64/MusicFree.exe"
+}

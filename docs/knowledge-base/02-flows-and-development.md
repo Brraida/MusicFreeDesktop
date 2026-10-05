@@ -161,6 +161,21 @@ stateDiagram-v2
 
 来源：[local-music](../../src/renderer/core/local-music/index.ts)、[watcher](../../src/webworkers/local-file-watcher.ts)、[file-util](../../src/common/file-util.ts)。
 
+### 5.1 歌单时长补充（2026-10-05）
+
+原本地解析器只保存标签、封面等信息，遗漏 `format.duration`；部分插件也不返回 `duration`。时长列过去只读这个字段，因此旧歌单无法显示真实时长。
+
+| 数据来源 | 显示与补充方式 |
+| --- | --- |
+| 歌曲已有时长 | 统一解析秒数、数字字符串、`mm:ss` / `h:mm:ss`，再格式化显示 |
+| 本地歌曲 / 已下载歌曲缺少时长 | 行进入可见区域后，从实际音频文件读取；兼容需要解析帧才能确定时长的 VBR 文件 |
+| 未下载歌曲缺少时长 | 插件支持详情接口时请求 `getMusicInfo`；有实际播放进度时补充真实时长 |
+| 文件不可用或来源不提供时长 | 显示 `--:--`，不编造数值 |
+
+补充读取最多并发 3 项，同一歌曲与路径复用请求缓存；已取得的时长更新现有 IndexedDB 歌曲记录。只修改时长，保留歌曲身份、下载关联和引用计数；异步读取完成时不会重新创建已删除的歌曲。启动阶段不增加全量音频扫描。
+
+验证覆盖真实 WAV 导入、旧本地/下载记录补充、字符串时长、切换歌单、重新加载后的持久化，以及读取并发上限。验证记录：[duration-display-results.json](./evidence/duration-display-results.json)。回归入口：[duration-regression.cjs](../../scripts/tests/duration-regression.cjs)；实际界面验证：[packaged-startup-theme-check.cjs](./evidence/packaged-startup-theme-check.cjs)。
+
 ## 6. Windows / WSL 构建操作
 
 ### 建议环境
@@ -197,7 +212,7 @@ node docs/knowledge-base/evidence/audit-repro.cjs
 - 软件有单实例锁；先从托盘完全退出旧实例，再打开目标目录的 `MusicFree.exe`。
 - 免安装应用目录旁没有 `portable` 文件夹时，仍使用普通用户数据目录。
 - 存在 `portable` 目录时，main 会重设 appData/userData 路径；排查“数据不见了”先比较这两种启动方式。
-- 上轮最终测试版是 `out/download-status-fix-test/MusicFree-win32-x64`，构建产物不属于源码知识库。
+- 当前测试版是 `out/MusicFree-win32-x64`，构建产物不属于源码知识库。
 
 ## 7. 排障速查
 
