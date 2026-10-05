@@ -4,8 +4,9 @@ const { load, deferred } = require("./source-loader.cjs");
 const A = { platform: "test", id: "A", title: "A" };
 const B = { ...A, id: "B", title: "B" };
 
-function createPlayer({ delay = async () => {}, downloaded, files = {}, internalData = () => undefined } = {}) {
+function createPlayer({ delay = async () => {}, downloaded, files = {}, internalData = () => undefined, reconcile } = {}) {
     const constants = load("src/common/constant.ts");
+    const resource = load("src/common/download-resource.ts");
     const media = {
         isSameMedia: (a, b) => !!a && !!b && a.id === b.id && a.platform === b.platform,
         getInternalData: internalData, getQualityOrder: () => ["standard"],
@@ -21,11 +22,19 @@ function createPlayer({ delay = async () => {}, downloaded, files = {}, internal
             return this.tracks.length > 0;
         }
         reset() {
+            this.musicItem = null;
             this.resetCount++;
         }
-        prepareTrack() {} play() {} seekTo() {}
+        prepareTrack() {} play() {
+            this.playing = true;
+        } pause() {
+            this.playing = false;
+        } seekTo(seconds) {
+            this.seek = seconds;
+        }
+        setVolume() {} setSpeed() {}
         setTrackSource(source, song) {
-            this.tracks.push({ source, song });
+            this.musicItem = song; this.tracks.push({ source, song });
         }
     }
     class Lyric {
@@ -39,7 +48,7 @@ function createPlayer({ delay = async () => {}, downloaded, files = {}, internal
     const plugins = { callPluginDelegateMethod: async () => null };
     const player = load("src/renderer/core/track-player/index.ts", {
         "./enum": load("src/renderer/core/track-player/enum.ts"),
-        "@/common/media-util": media, "@/common/constant": constants,
+        "@/common/download-resource": resource, "@/common/media-util": media, "@/common/constant": constants,
         "@/renderer/utils/lyric-parser": Lyric,
         "@/renderer/utils/user-perference": { setUserPreference() {}, setUserPreferenceIDB() {}, removeUserPreference() {} },
         "@shared/app-config/renderer": { getConfig: key => key === "playMusic.playError" ? "skip" : "standard" },
@@ -49,7 +58,11 @@ function createPlayer({ delay = async () => {}, downloaded, files = {}, internal
         "@shared/logger/renderer": { logError() {} }, "@/common/void-callback": () => {},
         "@/common/time-util": { delay }, "@/common/unique-map": {},
         "@renderer/core/link-lyric": { getLinkedLyric: async () => null },
-        "@renderer/core/downloader/downloaded-sheet": { getDownloadedMusicItem: () => downloaded },
+        "@renderer/core/downloader/downloaded-sheet": {
+            getDownloadedMusicItem: item => item?.id === downloaded?.id ? downloaded : undefined,
+            refreshDownloadedMusicItem: reconcile ?? (async () => ({ state: downloaded && await files.isFile(internalData(downloaded).path)
+                ? resource.DownloadResourceState.AVAILABLE : resource.DownloadResourceState.NO_RECORD })),
+        },
         "@shared/utils/renderer": { fsUtil: files }, "@shared/plugin-manager/renderer": plugins,
     }).default;
     player.setMusicQueue([A, B]);
@@ -74,6 +87,83 @@ const tick = async () => {
         const result = await player.fetchMediaSource({ ...A, downloadData: { path: "old/A.mp3" } });
         assert.equal(result.mediaSource.url, "file://new/A.mp3");
         assert.equal(result.quality, "high");
+    }
+    // Missing files update resource state before selecting the online source.
+    {
+        const downloaded = { ...A, downloadData: { path: "gone.mp3", quality: "high" } };
+        let checks = 0;
+        const { player, plugins } = createPlayer({ downloaded, internalData: song => song?.downloadData,
+            reconcile: async () => {
+                checks++; return { state: "MISSING" };
+            },
+        });
+        plugins.callPluginDelegateMethod = async () => ({ url: "online" });
+        assert.equal((await player.fetchMediaSource(A)).mediaSource.url, "online");
+        assert.equal(checks, 1);
+    }
+    // An actual local open error gets one guarded network fallback, preserving seek/pause intent.
+    for (const paused of [false, true]) {
+        const downloaded = { ...A, downloadData: { path: "local.mp3", quality: "high" } };
+        const reconciled = [];
+        const held = deferred();
+        const { player, plugins, stores } = createPlayer({ downloaded, internalData: song => song?.downloadData,
+            files: { addFileScheme: fp => "file://" + fp },
+            reconcile: async (_song, failedPath) => {
+                reconciled.push(failedPath); return { state: failedPath ? "UNAVAILABLE" : "AVAILABLE" };
+            },
+        });
+        player.createAudioController(); player.fetchCurrentLyric = async () => {};
+        let calls = 0;
+        plugins.callPluginDelegateMethod = async (_context, method) => method === "getMediaSource" ? (++calls, held.promise) : null;
+        await player.playIndex(0); stores.progressStore.setValue({ currentTime: 7, duration: 20 });
+        // Cancelling a quality switch must leave the installed local source eligible for recovery.
+        await player.setQuality(player.currentQuality);
+        const recovering = player.audioController.onError(0, new Error("local open failed"));
+        await tick();
+        await player.audioController.onError(0, new Error("duplicate local error"));
+        if (paused) player.pause();
+        held.resolve({ url: "network" }); await recovering;
+        assert.equal(player.audioController.tracks.at(-1).source.url, "network");
+        assert.equal(player.audioController.seek, 7); assert.equal(player.audioController.playing, !paused);
+        assert.equal(calls, 1); assert(reconciled.includes("local.mp3"));
+    }
+    // A's delayed recovery cannot replace B or issue an unnecessary online request for A.
+    {
+        const downloaded = { ...A, downloadData: { path: "local.mp3", quality: "high" } };
+        const held = deferred();
+        const { player, plugins } = createPlayer({ downloaded, internalData: song => song?.downloadData,
+            files: { addFileScheme: fp => "file://" + fp },
+            reconcile: async (_song, failedPath) => failedPath ? held.promise : { state: "AVAILABLE" },
+        });
+        player.createAudioController(); player.fetchCurrentLyric = async () => {};
+        const network = [];
+        plugins.callPluginDelegateMethod = async (_context, method, song) => {
+            if (method !== "getMediaSource") return null;
+            network.push(song.id); return { url: "online-" + song.id };
+        };
+        await player.playIndex(0); const recovering = player.audioController.onError(0, new Error("local failed"));
+        await player.playIndex(1); held.resolve({ state: "MISSING" }); await recovering;
+        assert.equal(player.audioController.tracks.at(-1).source.url, "online-B"); assert.deepEqual(network, ["B"]);
+    }
+    // A pure local item has no network fallback; an unsuccessful online fallback cannot loop.
+    for (const pureLocal of [false, true]) {
+        const constants = load("src/common/constant.ts");
+        const song = { ...A, platform: pureLocal ? constants.localPluginName : A.platform };
+        const downloaded = { ...song, downloadData: { path: "local.mp3", quality: "high" } };
+        const { player, plugins } = createPlayer({ downloaded, internalData: item => item?.downloadData,
+            files: { addFileScheme: fp => "file://" + fp }, reconcile: async () => ({ state: "AVAILABLE" }),
+        });
+        player.setMusicQueue([song]); player.createAudioController(); player.fetchCurrentLyric = async () => {};
+        let calls = 0, errors = 0;
+        plugins.callPluginDelegateMethod = async (_context, method) => {
+            if (method === "getMediaSource") calls++; return null;
+        };
+        player.on(load("src/renderer/core/track-player/enum.ts").PlayerEvents.Error, () => errors++);
+        await player.playIndex(0); await player.audioController.onError(0, new Error("local failed"));
+        assert.equal(calls, pureLocal ? 0 : 1); assert.equal(errors, 1);
+        if (!pureLocal) {
+            await player.audioController.onError(0, new Error("still failed")); assert.equal(calls, 1);
+        }
     }
     // A's delayed failure must not reset B or its quality.
     {

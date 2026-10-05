@@ -217,6 +217,54 @@ module.exports = async (testRoot, base) => {
     await Promise.all([sheet.addDownloadedMusicToList(complete(A, replacementA)), sheet.refreshDownloadedMusicList()]);
     assert.equal(dataOf(A).path, replacementA); assert.equal((await db.musicStore.get([A.platform, A.id]))[constants.musicRefSymbol], 2);
     assert.equal(alerts.length, 0);
+    // Real HTMLAudio: delete the verified local WAV immediately before opening it.
+    const enumModule = compile("src/renderer/core/track-player/enum.ts");
+    const Hls = req("hls.js");
+    const AudioController = compile("src/renderer/core/track-player/controller/audio-controller.ts", {
+        "@/common/normalize-util": compile("src/common/normalize-util.ts"), "@/assets/imgs/album-cover.jpg": "",
+        "@/renderer/utils/get-url-ext": url => path.extname(new URL(url).pathname),
+        "hls.js": { __esModule: true, default: Hls, Events: Hls.Events }, "@/common/constant": constants,
+        "@shared/service-manager/renderer": { RequestForwarderService: { forwardRequest: () => null } },
+        "@renderer/core/track-player/controller/controller-base": compile("src/renderer/core/track-player/controller/controller-base.ts").default,
+        "@renderer/core/track-player/enum": enumModule, "@/common/void-callback": () => {},
+    }).default;
+    const playerStore = compile("src/renderer/core/track-player/store.ts", {
+        "@/common/store": Store, "@/common/constant": constants,
+    }).default;
+    let fallbackCalls = 0;
+    const player = compile("src/renderer/core/track-player/index.ts", {
+        "./enum": enumModule, "@/common/download-resource": resource,
+        "@/common/media-util": { ...media, getQualityOrder: () => ["standard"] }, "@/common/constant": constants,
+        "@/renderer/utils/lyric-parser": class {}, "@/renderer/utils/user-perference": prefs,
+        "@shared/app-config/renderer": { getConfig: () => "standard" },
+        "@/common/index-map": compile("src/common/index-map.ts", { "./media-util": media }),
+        "./store": playerStore, "@renderer/core/track-player/controller/audio-controller": AudioController,
+        "@shared/logger/renderer": logger, "@/common/void-callback": () => {},
+        "@/common/time-util": { delay: ms => new Promise(resolve => setTimeout(resolve, ms)) },
+        "@/common/unique-map": {}, "@renderer/core/link-lyric": { getLinkedLyric: async () => null },
+        "@renderer/core/downloader/downloaded-sheet": sheet, "@shared/utils/renderer": { fsUtil: files },
+        "@shared/plugin-manager/renderer": { callPluginDelegateMethod: async (_context, method) => {
+            if (method !== "getMediaSource") return null;
+            fallbackCalls++; return { url: base + "/fallback.wav" };
+        } },
+    }).default;
+    const local = song("actual-audio"), wavPath = path.join(race2, "actual-audio.wav");
+    fs.writeFileSync(wavPath, Buffer.from(await (await fetch(base + "/seed.wav")).arrayBuffer()));
+    await sheet.addDownloadedMusicToList(complete(local, wavPath));
+    player.audioController.destroy(); player.createAudioController(); player.audioController.audio.muted = true;
+    player.fetchCurrentLyric = async () => {}; player.setMusicQueue([local]);
+    const setTrack = player.setTrack.bind(player);
+    player.setTrack = (source, item, options) => {
+        if (source.url.startsWith("file:")) fs.unlinkSync(wavPath);
+        setTrack(source, item, options);
+    };
+    const playerErrors = [];
+    player.on(enumModule.PlayerEvents.Error, (_item, error) => playerErrors.push(error));
+    await player.playIndex(0);
+    await until(() => player.audioController.audio.src === base + "/fallback.wav"
+        && player.audioController.audio.currentTime > 0.02, "actual local open error recovers to decoded network WAV");
+    assert.equal(fallbackCalls, 1); assert.equal(playerErrors.length, 0); assert.equal(effective(local), State.MISSING);
+    player.audioController.destroy();
     view.unmount(); await sheet.stopDownloadedMusicMonitor(); window.Worker = originalWorker; db.close();
-    return "PASS: real Windows watcher + IndexedDB + React, external deletion/restoration/directory recreation, hash-verified moves, manual refresh, offline/permission/I/O/content/playback unavailability, stale configuration exclusion, commit rollback, concurrent re-download ownership";
+    return "PASS: real Windows watcher + IndexedDB + React, external deletion/restoration/directory recreation, hash-verified moves, manual refresh, offline/permission/I/O/content/playback unavailability, stale configuration exclusion, commit rollback, concurrent re-download ownership, real HTMLAudio local-open failure and decoded network fallback";
 };

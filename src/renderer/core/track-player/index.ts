@@ -7,7 +7,8 @@ import {
     isSameMedia,
     sortByTimestampAndIndex,
 } from "@/common/media-util";
-import { PlayerState, RepeatMode, sortIndexSymbol, timeStampSymbol } from "@/common/constant";
+import { PlayerState, RepeatMode, sortIndexSymbol, timeStampSymbol, localPluginName } from "@/common/constant";
+import { DownloadResourceState, effectiveResourceState } from "@/common/download-resource";
 import LyricParser, { IParsedLrcItem } from "@/renderer/utils/lyric-parser";
 import {
     getUserPreference,
@@ -29,7 +30,7 @@ import { createUniqueMap } from "@/common/unique-map";
 import { getLinkedLyric } from "@renderer/core/link-lyric";
 import { fsUtil } from "@shared/utils/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
-import { getDownloadedMusicItem } from "@renderer/core/downloader/downloaded-sheet";
+import { getDownloadedMusicItem, refreshDownloadedMusicItem } from "@renderer/core/downloader/downloaded-sheet";
 
 const {
     musicQueueStore,
@@ -132,6 +133,9 @@ class TrackPlayer {
 
     private sourceRequestId = 0;
     private lyricRequestId = 0;
+    private localSource?: { path: string; requestId: number };
+    private localFallbackRequestId?: number;
+    private playbackIntent = false;
 
     private audioController: IAudioController;
 
@@ -222,6 +226,30 @@ class TrackPlayer {
         };
 
         audioController.onError = async (type, reason) => {
+            const item = audioController.musicItem;
+            const failed = this.localSource;
+            if (this.localFallbackRequestId === this.sourceRequestId) return;
+            if (failed?.requestId === this.sourceRequestId && this.isCurrentMusic(item) && item.platform !== localPluginName) {
+                const requestId = ++this.sourceRequestId;
+                this.localFallbackRequestId = requestId;
+                const seekTo = this.progress.currentTime ?? 0;
+                const quality = this.currentQuality;
+                try {
+                    await refreshDownloadedMusicItem(item, failed.path);
+                    if (requestId !== this.sourceRequestId || !this.isCurrentMusic(item)) return;
+                    const source = await this.fetchMediaSource(item, quality, true);
+                    if (requestId !== this.sourceRequestId || !this.isCurrentMusic(item)) return;
+                    if (!source.mediaSource?.url) throw new Error("No network source for the unavailable local file");
+                    this.setCurrentQuality(source.quality);
+                    this.setTrack(source.mediaSource, item, { seekTo, autoPlay: this.playbackIntent });
+                    return;
+                } catch (error) {
+                    if (requestId !== this.sourceRequestId || !this.isCurrentMusic(item)) return;
+                    reason = error;
+                } finally {
+                    if (this.localFallbackRequestId === requestId) this.localFallbackRequestId = undefined;
+                }
+            }
             this.ee.emit(PlayerEvents.Error, audioController.musicItem, reason);
         };
 
@@ -313,6 +341,7 @@ class TrackPlayer {
         }
         // 1. normalize index
         index = (index + this.musicQueue.length) % this.musicQueue.length;
+        this.playbackIntent = true;
 
         // 2. same media
         if (this.currentIndex === index && this.isCurrentMusic(this.musicQueue[index]) && !refreshSource) {
@@ -456,6 +485,7 @@ class TrackPlayer {
     }
 
     public pause() {
+        this.playbackIntent = false;
         this.audioController.pause();
         if (this.playerState !== this.audioController.playerState) {
             this.setPlayerState(this.audioController.playerState);
@@ -463,6 +493,7 @@ class TrackPlayer {
     }
 
     public resume() {
+        this.playbackIntent = true;
         this.audioController.play();
 
         if (this.playerState !== this.audioController.playerState) {
@@ -587,6 +618,7 @@ class TrackPlayer {
         if (currentMusic && quality === this.currentQuality && this.audioController.hasSource) {
             // Selecting the active quality also supersedes an unfinished switch.
             ++this.sourceRequestId;
+            if (this.localSource) this.localSource.requestId = this.sourceRequestId;
             return;
         }
         if (currentMusic) {
@@ -703,7 +735,7 @@ class TrackPlayer {
     }
 
 
-    private async fetchMediaSource(musicItem: IMusic.IMusicItem, quality?: IMusic.IQualityKey) {
+    private async fetchMediaSource(musicItem: IMusic.IMusicItem, quality?: IMusic.IQualityKey, skipLocal = false) {
         const defaultQuality = AppConfig.getConfig("playMusic.defaultQuality");
         const whenQualityMissing = AppConfig.getConfig("playMusic.whenQualityMissing");
 
@@ -717,17 +749,16 @@ class TrackPlayer {
             getDownloadedMusicItem(musicItem) ?? musicItem,
             "downloadData",
         );
-        if (downloadedData) {
-            const { quality, path: _path } = downloadedData;
-            if (await fsUtil.isFile(_path)) {
+        if (downloadedData && !skipLocal) {
+            const status = await refreshDownloadedMusicItem(musicItem);
+            const latest = getInternalData<IMusic.IMusicItemInternalData>(getDownloadedMusicItem(musicItem), "downloadData") ?? downloadedData;
+            if (effectiveResourceState(status) === DownloadResourceState.AVAILABLE) {
                 return {
-                    quality,
+                    quality: latest.quality,
                     mediaSource: {
-                        url: fsUtil.addFileScheme(_path),
+                        url: fsUtil.addFileScheme(latest.path),
                     },
                 };
-            } else {
-                // TODO 删除
             }
         }
 
@@ -824,6 +855,10 @@ class TrackPlayer {
         autoPlay: true,
     }) {
         this.resetProgress();
+        this.playbackIntent = options.autoPlay === true;
+        const download = getInternalData<IMusic.IMusicItemInternalData>(getDownloadedMusicItem(musicItem), "downloadData");
+        this.localSource = download && mediaSource.url === fsUtil.addFileScheme(download.path)
+            ? { path: download.path, requestId: this.sourceRequestId } : undefined;
         this.audioController.setTrackSource(mediaSource, musicItem);
 
         if (options.seekTo >= 0) {
