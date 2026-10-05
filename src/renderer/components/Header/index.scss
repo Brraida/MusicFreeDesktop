@@ -19,15 +19,21 @@
 
     & .logo {
       width: 142px;
-      height: 1.2rem;
+      min-width: max-content;
+      flex-shrink: 0;
       color: var(--headerTextColor);
       display: flex;
       align-items: center;
-
-      & svg {
-        height: 1.1rem;
-        width: auto;
-      }
+      gap: 8px;
+      padding-right: 8px;
+      box-sizing: border-box;
+      font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+      font-size: 22px;
+      font-weight: 650;
+      letter-spacing: 0.2px;
+      line-height: 1.4;
+      white-space: nowrap;
+      overflow: visible;
     }
 
     & .header-search {
