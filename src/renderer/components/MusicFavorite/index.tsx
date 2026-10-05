@@ -25,7 +25,7 @@ export default function MusicFavorite(props: IMusicFavoriteProps) {
                 e.stopPropagation();
             }}
             style={{
-                color: isFav ? "red" : "var(--textColor)",
+                color: isFav ? "var(--favoriteColor, red)" : "var(--textColor)",
                 width: size,
                 height: size,
             }}

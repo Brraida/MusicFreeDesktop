@@ -3,6 +3,7 @@ import type { IMod } from "./type";
 import { toast } from "react-toastify";
 import { useEffect } from "react";
 import debounce from "@/common/debounce";
+import { selectBuiltinTheme, setupBuiltinTheme } from "./builtin";
 
 const mod = window["@shared/themepack" as any] as unknown as IMod;
 
@@ -11,12 +12,22 @@ const localThemePacksStore = new Store<Array<ICommon.IThemePack | null>>([]);
 // 当前选中的主题包
 const currentThemePackStore = new Store<ICommon.IThemePack | null>(null);
 
-async function selectTheme(themePack: ICommon.IThemePack | null) {
+async function applyThemePack(themePack: ICommon.IThemePack | null) {
     if (!themePack?.hash) {
         themePack = null;
     }
     await mod.selectTheme(themePack);
     currentThemePackStore.setValue(themePack);
+}
+
+async function selectTheme(themePack: ICommon.IThemePack | null) {
+    await applyThemePack(themePack);
+    selectBuiltinTheme("classic");
+}
+
+async function selectJiangnanTheme() {
+    await applyThemePack(null);
+    selectBuiltinTheme("jiangnan");
 }
 
 async function selectThemeByHash(hash: string) {
@@ -25,8 +36,7 @@ async function selectThemeByHash(hash: string) {
         .find((it) => it.hash === hash);
 
     if (targetTheme) {
-        await mod.selectTheme(targetTheme);
-        currentThemePackStore.setValue(targetTheme);
+        await selectTheme(targetTheme);
     }
 }
 
@@ -35,7 +45,11 @@ async function setupThemePacks() {
     try {
         const currentTheme = await mod.initCurrentTheme();
         // 选中主题
-        await selectTheme(currentTheme);
+        await applyThemePack(currentTheme);
+        if (currentTheme?.hash) {
+            selectBuiltinTheme("classic");
+        }
+        setupBuiltinTheme();
         // 调度
         requestIdleCallback(() => {
             if (!themePacksLoaded) {
@@ -126,6 +140,7 @@ function useLocalThemePacks() {
 
 const ThemePack = {
     selectTheme,
+    selectJiangnanTheme,
     selectThemeByHash,
     setupThemePacks,
     loadThemePacks,

@@ -7,6 +7,7 @@ interface _IAppConfig {
     "normal.taskbarThumb": "window" | "artwork";
     "normal.musicListColumnsShown": Array<"duration" | "platform">;
     "normal.language": string;
+    "normal.builtinTheme": "classic" | "jiangnan";
 
     /** 歌单内搜索区分大小写 */
     "playMusic.caseSensitiveInSearch": boolean;
