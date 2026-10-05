@@ -37,7 +37,12 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
     const eeModule = compile("src/renderer/core/downloader/ee.ts");
     const prefs = compile("src/renderer/utils/user-perference.ts", { "@/common/safe-serialization": compile("src/common/safe-serialization.ts") });
     const db = compile("src/renderer/core/db/music-sheet-db.ts", { "@/common/constant": constants }).default;
+    const resource = compile("src/common/download-resource.ts");
+    const fileSystem = compile("src/common/download-file-system.ts", { "./download-resource": resource });
     const files = {
+        inspectDownloadFile: fileSystem.inspectDownloadFile,
+        watchDownloadDirectories: async () => {},
+        stopDownloadWatcher: async () => {},
         async isFile(file) {
             try {
                 return (await fs.promises.stat(file)).isFile();
@@ -53,7 +58,7 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
             }
         },
     };
-    const sheetMocks = {
+    const sheetMocks = { "@/common/download-resource": resource,
         "@shared/app-config/renderer": { getConfig: () => testRoot, onConfigUpdate() {} },
         "@/shared/global-context/renderer": { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: testRoot } }) },
         "@/common/media-util": media,
@@ -185,6 +190,30 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
             await new Promise(resolve => setTimeout(resolve, 15));
         }
     }
+    // File restoration is a resource change, not completion of an active download task.
+    const restoredDuringTransfer = makeSong("queue-restored");
+    const restoredPath = path.join(testRoot, "queue-restored-artist.mp3");
+    fs.writeFileSync(restoredPath, "restored bytes");
+    await recovered.addDownloadedMusicToList(completed(restoredDuringTransfer, restoredPath));
+    fs.unlinkSync(restoredPath); await recovered.refreshDownloadedMusicList();
+    const delegate = plugin.callPluginDelegateMethod;
+    let releaseRestored;
+    plugin.callPluginDelegateMethod = async song => song.id === restoredDuringTransfer.id
+        ? new Promise(resolve => {
+            releaseRestored = resolve;
+        }) : delegate(song);
+    await core.startDownload(restoredDuringTransfer);
+    await until(() => releaseRestored, "held source for restoration race");
+    fs.writeFileSync(restoredPath, "restored bytes"); await recovered.refreshDownloadedMusicList();
+    assert(recovered.isDownloaded(restoredDuringTransfer));
+    assert.strictEqual(core.getDownloadStatus(restoredDuringTransfer).state, DS.DOWNLOADING,
+        "a restored file must not finish an active transfer or remove its pause controls");
+    releaseRestored({ url: baseURL + "/ok" });
+    await until(() => statuses.get(restoredDuringTransfer.id)?.state === DS.DONE
+        && media.getInternalData(recovered.getDownloadedMusicItem(restoredDuringTransfer), "downloadData").path !== restoredPath,
+    "actual completed file replaces restored association");
+    assert.strictEqual((await db.musicStore.get([restoredDuringTransfer.platform, restoredDuringTransfer.id]))[constants.musicRefSymbol], 1);
+    plugin.callPluginDelegateMethod = delegate;
     const slow = makeSong("queue-slow"), next = makeSong("queue-next");
     assert.strictEqual((await core.startDownload([slow, next, next])).added, 2);
     await until(() => statuses.get(slow.id)?.downloaded > 0, "active network transfer");

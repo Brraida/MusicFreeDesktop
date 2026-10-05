@@ -6,4 +6,5 @@ export enum DownloadEvts {
     DownloadStatusUpdated = "DownloadStatusUpdated",
     Downloaded = "Downloaded",
     RemoveDownload = "RemoveDownload",
+    ResourcesChanged = "ResourcesChanged",
 }

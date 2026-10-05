@@ -2,6 +2,14 @@ import { contextBridge, ipcRenderer } from "electron";
 import fs from "fs/promises";
 import { rimraf } from "rimraf";
 import url from "url";
+import { inspectDownloadFile } from "@/common/download-file-system";
+import { DownloadDirectoryWatcher } from "@/common/download-directory-watcher";
+import type { DownloadWatchEvent } from "@/common/download-resource";
+
+const downloadWatcher = new DownloadDirectoryWatcher();
+window.addEventListener("unload", () => {
+    void downloadWatcher.stop();
+});
 
 
 /****** fs utils ******/
@@ -41,6 +49,9 @@ function addFileScheme(filePath: string) {
 }
 
 const fsUtil = {
+    inspectDownloadFile,
+    watchDownloadDirectories: (directories: string[], notify: (event: DownloadWatchEvent) => void) => downloadWatcher.watch(directories, notify),
+    stopDownloadWatcher: () => downloadWatcher.stop(),
     writeFile,
     readFile,
     isFile,

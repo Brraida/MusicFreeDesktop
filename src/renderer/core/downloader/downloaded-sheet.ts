@@ -1,5 +1,6 @@
 import { getInternalData, getMediaPrimaryKey, setInternalData } from "@/common/media-util";
 import Store from "@/common/store";
+import { DownloadResourceState, DownloadResourceStatus, DownloadFileInspection, DownloadWatchEvent, effectiveResourceState } from "@/common/download-resource";
 import { getUserPreferenceIDB, setUserPreferenceIDB } from "@/renderer/utils/user-perference";
 import musicSheetDB from "../db/music-sheet-db";
 import { internalDataKey, musicRefSymbol } from "@/common/constant";
@@ -11,26 +12,49 @@ import AppConfig from "@shared/app-config/renderer";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 
 const downloadedMusicListStore = new Store<IMusic.IMusicItem[]>([]);
+const resourceStore = new Store(new Map<string, DownloadResourceStatus>());
 const downloadedSet = new Set<string>();
+// Includes missing and unavailable associations so file restoration can recover them.
 const downloadedRecords = new Map<string, IMusic.IMusicItem>();
 const mutations = new PQueue({ concurrency: 1 });
 let initialization: Promise<void>;
-
 let observingConfig = false;
+let configurationGeneration = 0;
+let monitorGeneration = 0;
+let monitorSignature = "";
+let monitoring = true;
+let compensationTimer: ReturnType<typeof setInterval>;
+let deliveryTimer: ReturnType<typeof setTimeout>;
+let retryTimer: ReturnType<typeof setTimeout>;
+let delivering = false;
+let pendingFull = false;
+const pendingPaths = new Set<string>();
+
+function downloadDirectory() {
+    return AppConfig.getConfig("download.path") || getGlobalContext().appPath.downloads;
+}
 
 export function setupDownloadedMusicList() {
     if (!observingConfig) {
         observingConfig = true;
         AppConfig.onConfigUpdate((patch) => {
             if ("download.path" in patch) {
-                refreshDownloadedMusicList().catch((error) => {
-                    reportSaveError("Failed to reconcile the download directory", error);
-                });
+                ++configurationGeneration;
+                ++monitorGeneration;
+                monitorSignature = "";
+                requestReconciliation({ paths: [], full: true });
             }
+        });
+        compensationTimer = setInterval(() => requestReconciliation({ paths: [], full: true }), 300000);
+        let lastFocus = 0;
+        window.addEventListener("focus", () => {
+            if (Date.now() - lastFocus < 30000) return;
+            lastFocus = Date.now();
+            requestReconciliation({ paths: [], full: true });
         });
     }
     if (!initialization) {
-        initialization = reconcileDownloadedMusicList().catch((error) => {
+        initialization = mutations.add(() => reconcileDownloadedMusicList()).catch(error => {
             initialization = undefined;
             throw error;
         });
@@ -38,9 +62,79 @@ export function setupDownloadedMusicList() {
     return initialization;
 }
 
+function requestReconciliation(event: DownloadWatchEvent) {
+    if (!monitoring) return;
+    if (event.error) reportSaveError("Download file watcher needs recovery", new Error(event.error));
+    pendingFull ||= event.full === true;
+    event.paths.forEach(filePath => pendingPaths.add(pathKey(filePath)));
+    if (pendingPaths.size > 1000) {
+        pendingFull = true; pendingPaths.clear();
+    }
+    scheduleReconciliation();
+}
+
+function scheduleReconciliation() {
+    if (!monitoring || delivering || deliveryTimer || retryTimer) return;
+    deliveryTimer = setTimeout(() => {
+        deliveryTimer = undefined;
+        delivering = true;
+        const paths = pendingFull ? undefined : new Set(pendingPaths);
+        pendingFull = false; pendingPaths.clear();
+        void setupDownloadedMusicList().then(() => mutations.add(() => reconcileDownloadedMusicList(paths, !!paths)))
+            .catch((error) => {
+                reportSaveError("Failed to reconcile download files", error);
+                pendingFull = true;
+                retryTimer = setTimeout(() => {
+                    retryTimer = undefined; scheduleReconciliation();
+                }, 5000);
+            }).finally(() => {
+                delivering = false;
+                if (pendingFull || pendingPaths.size) scheduleReconciliation();
+            });
+    }, 250);
+}
+
+async function updateMonitor() {
+    if (!monitoring) return;
+    const directories = [...new Set([downloadDirectory(), ...[...downloadedRecords.values()]
+        .map(item => window.path.dirname(getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData").path))])];
+    const signature = directories.map(pathKey).sort().join("\n");
+    if (signature === monitorSignature) return;
+    monitorSignature = signature;
+    const generation = ++monitorGeneration;
+    try {
+        await fsUtil.watchDownloadDirectories(directories, event => {
+            if (generation === monitorGeneration) requestReconciliation(event);
+        });
+    } catch (error) {
+        monitorSignature = "";
+        requestReconciliation({ paths: [], full: true, error: error.message });
+    }
+}
+
+export async function stopDownloadedMusicMonitor() {
+    monitoring = false;
+    ++monitorGeneration;
+    clearInterval(compensationTimer); clearTimeout(deliveryTimer); clearTimeout(retryTimer);
+    pendingPaths.clear(); pendingFull = false;
+    await fsUtil.stopDownloadWatcher();
+}
+
 export async function refreshDownloadedMusicList() {
     await setupDownloadedMusicList();
-    await mutations.add(reconcileDownloadedMusicList);
+    await mutations.add(() => reconcileDownloadedMusicList(undefined, true));
+}
+
+export async function refreshDownloadedMusicItem(item: IMedia.IMediaBase, failedPath?: string) {
+    await setupDownloadedMusicList();
+    await mutations.add(async () => {
+        const record = downloadedRecords.get(getMediaPrimaryKey(item));
+        const data = getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData");
+        if (!data?.path || (failedPath && pathKey(data.path) !== pathKey(failedPath))) return;
+        const paths = new Set([pathKey(data.path), pathKey(window.path.join(downloadDirectory(), window.path.basename(data.path)))]);
+        await reconcileDownloadedMusicList(paths, !!failedPath, failedPath ? getMediaPrimaryKey(item) : undefined);
+    }, { priority: 1 });
+    return getDownloadResourceStatus(item);
 }
 
 function pathKey(filePath: string) {
@@ -48,78 +142,140 @@ function pathKey(filePath: string) {
     return getGlobalContext().platform === "win32" ? resolved.toLowerCase() : resolved;
 }
 
-async function reconcileDownloadedMusicList() {
-    const directory = AppConfig.getConfig("download.path") || getGlobalContext().appPath.downloads;
-    const keys = (await getUserPreferenceIDB("downloadedList")) ?? [];
-    // Missing-file metadata is retained so moved files can be recovered later.
-    const records = await musicSheetDB.musicStore.toArray();
-    const byKey = new Map(records.map((item) => [getMediaPrimaryKey(item), item]));
-    const ordered = new Map<string, IMusic.IMusicItem>();
-    [...keys, ...records].forEach((item) => {
-        const pk = getMediaPrimaryKey(item);
-        const record = byKey.get(pk);
-        if (record && getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData")?.path) {
-            ordered.set(pk, record);
+function touches(paths: Set<string>, filePath: string) {
+    const file = pathKey(filePath);
+    return [...paths].some(changed => file === changed || file.startsWith(changed.endsWith(window.path.sep) ? changed : changed + window.path.sep));
+}
+
+async function reconcileDownloadedMusicList(paths?: Set<string>, forceHash = false, playbackFailure?: string) {
+    const generation = configurationGeneration;
+    const directory = downloadDirectory();
+    const partial = !!paths;
+    const records = partial ? [...downloadedRecords.values()] : await musicSheetDB.musicStore.toArray();
+    const all = records.filter(item => getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData")?.path);
+    const candidates = all.filter(item => {
+        const data = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+        return !paths || touches(paths, data.path) || touches(paths, window.path.join(directory, window.path.basename(data.path)));
+    });
+    if (!candidates.length && partial) return;
+    const previous = resourceStore.getValue();
+    const checking = new Map(previous);
+    candidates.forEach(item => {
+        const key = getMediaPrimaryKey(item);
+        checking.set(key, { ...previous.get(key), state: DownloadResourceState.CHECKING,
+            previousState: effectiveResourceState(previous.get(key) ?? { state: DownloadResourceState.NO_RECORD }) });
+    });
+    resourceStore.setValue(checking);
+    try {
+        const checked = new Map<string, DownloadFileInspection>();
+        // Bound hashing and disk reads, including migration of old records without fingerprints.
+        for (let index = 0; index < candidates.length; index += 4) {
+            await Promise.all(candidates.slice(index, index + 4).map(async item => {
+                const data = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+                checked.set(getMediaPrimaryKey(item), await fsUtil.inspectDownloadFile(data.path, data.fingerprint, forceHash));
+            }));
         }
-    });
-    const candidates = [...ordered.values()];
-    const recordedPath = (item: IMusic.IMusicItem) => getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData").path;
-    const exists = await Promise.all(candidates.map((item) => fsUtil.isFile(recordedPath(item))));
-    const claimedPaths = new Set(candidates.filter((_item, index) => exists[index]).map((item) => pathKey(recordedPath(item))));
-    const missing = candidates.filter((_item, index) => !exists[index]).map((item) => ({
-        item, oldPath: recordedPath(item), newPath: window.path.join(directory, window.path.basename(recordedPath(item))),
-    }));
-    const destinationCounts = new Map<string, number>();
-    missing.forEach(({ newPath }) => {
-        const key = pathKey(newPath);
-        destinationCounts.set(key, (destinationCounts.get(key) ?? 0) + 1);
-    });
-    const relocated = (await Promise.all(missing.map(async (candidate) => {
-        const key = pathKey(candidate.newPath);
-        // One file must not be silently associated with multiple song identities.
-        return destinationCounts.get(key) === 1 && !claimedPaths.has(key) && await fsUtil.isFile(candidate.newPath)
-            ? candidate : undefined;
-    }))).filter(Boolean);
-    const committed = relocated.length ? await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
-        const current = await musicSheetDB.musicStore.bulkGet(relocated.map(({ item }) => [item.platform, item.id]));
-        const updated = current.flatMap((item, index) => {
-            const downloadData = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
-            if (downloadData?.path !== relocated[index].oldPath) {
-                return [];
+        const destinationCounts = new Map<string, number>();
+        const claimed = new Set<string>();
+        all.forEach(item => {
+            const key = getMediaPrimaryKey(item);
+            const data = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+            if ((checked.get(key)?.state ?? effectiveResourceState(previous.get(key) ?? { state: DownloadResourceState.NO_RECORD })) === DownloadResourceState.AVAILABLE) {
+                claimed.add(pathKey(data.path));
             }
-            return [setInternalData<IMusic.IMusicItemInternalData, "downloadData", typeof item>(item, "downloadData", {
-                ...downloadData, path: relocated[index].newPath,
-            }, true)];
+            const destination = pathKey(window.path.join(directory, window.path.basename(data.path)));
+            destinationCounts.set(destination, (destinationCounts.get(destination) ?? 0) + 1);
         });
-        await musicSheetDB.musicStore.bulkPut(updated);
-        return updated;
-    }) : [];
-    const committedByKey = new Map(committed.map((item) => [getMediaPrimaryKey(item), item]));
-    const valid = candidates.flatMap((item, index) => {
-        const updated = committedByKey.get(getMediaPrimaryKey(item));
-        return updated ? [updated] : exists[index] ? [item] : [];
-    });
-    const validKeys = new Set(valid.map(getMediaPrimaryKey));
-    const removed = [...downloadedRecords.values()].filter((item) => !validKeys.has(getMediaPrimaryKey(item)));
-    const added = valid.filter((item) => !isDownloaded(item) || committedByKey.has(getMediaPrimaryKey(item)));
-    downloadedSet.clear();
-    downloadedRecords.clear();
-    valid.forEach((item) => {
-        const pk = getMediaPrimaryKey(item);
-        downloadedSet.add(pk);
-        downloadedRecords.set(pk, item);
-    });
-    downloadedMusicListStore.setValue(valid);
-    for (const [event, items] of [[DownloadEvts.RemoveDownload, removed], [DownloadEvts.Downloaded, added]] as const) {
-        if (items.length) {
-            try {
-                ee.emit(event, items);
-            } catch (error) {
-                reportSaveError("Download reconciliation observer failed", error);
+        const updates = new Map<string, { item: IMusic.IMusicItem; data: IMusic.IMusicItemInternalData["downloadData"] }>();
+        for (const item of candidates) {
+            const key = getMediaPrimaryKey(item);
+            const data = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+            let inspection = checked.get(key);
+            let target = data.path;
+            const candidate = window.path.join(directory, window.path.basename(data.path));
+            // A filename alone is not an identity. Legacy missing records require a new download.
+            if (inspection.state === DownloadResourceState.MISSING && data.fingerprint && pathKey(candidate) !== pathKey(data.path)
+                && destinationCounts.get(pathKey(candidate)) === 1 && !claimed.has(pathKey(candidate))) {
+                const relocated = await fsUtil.inspectDownloadFile(candidate, { ...data.fingerprint, device: undefined }, true);
+                if (relocated.state === DownloadResourceState.AVAILABLE) {
+                    target = candidate; inspection = relocated; claimed.add(pathKey(candidate));
+                }
             }
+            if (playbackFailure === key && inspection.state === DownloadResourceState.AVAILABLE) {
+                inspection = { ...inspection, state: DownloadResourceState.UNAVAILABLE, reason: "playback" };
+            }
+            checked.set(key, inspection);
+            if (inspection.identity && (target !== data.path || JSON.stringify(data.fingerprint) !== JSON.stringify(inspection.identity))) {
+                updates.set(key, { item, data: { ...data, path: target, fingerprint: inspection.identity } });
+            }
+        }
+        if (generation !== configurationGeneration) return;
+        const committed = updates.size ? await musicSheetDB.transaction("rw", musicSheetDB.musicStore, async () => {
+            const changes = [...updates.values()];
+            const current = await musicSheetDB.musicStore.bulkGet(changes.map(({ item }) => [item.platform, item.id]));
+            const updated = current.flatMap((item, index) => {
+                const old = getInternalData<IMusic.IMusicItemInternalData>(changes[index].item, "downloadData");
+                const now = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+                return now?.path === old.path ? [setInternalData<IMusic.IMusicItemInternalData, "downloadData", typeof item>(item, "downloadData", changes[index].data, true)] : [];
+            });
+            if (generation !== configurationGeneration) throw new Error("Download configuration changed during reconciliation");
+            await musicSheetDB.musicStore.bulkPut(updated);
+            if (generation !== configurationGeneration) throw new Error("Download configuration changed during reconciliation");
+            return updated;
+        }) : [];
+        if (generation !== configurationGeneration) return;
+        const committedByKey = new Map(committed.map(item => [getMediaPrimaryKey(item), item]));
+        const nextRecords = partial ? new Map(downloadedRecords) : new Map(all.map(item => [getMediaPrimaryKey(item), item]));
+        const statuses = partial ? new Map(previous) : new Map<string, DownloadResourceStatus>();
+        candidates.forEach(item => {
+            const key = getMediaPrimaryKey(item);
+            const record = committedByKey.get(key) ?? item;
+            const inspection = checked.get(key);
+            // If the write was skipped because an association changed, keep the previous conclusion.
+            if (updates.has(key) && !committedByKey.has(key)) return;
+            nextRecords.set(key, record);
+            statuses.set(key, { state: inspection.state, reason: inspection.reason,
+                path: getInternalData<IMusic.IMusicItemInternalData>(record, "downloadData").path });
+        });
+        publishResources(nextRecords, statuses);
+        await setUserPreferenceIDB("downloadedList", downloadedMusicListStore.getValue().map(primaryKeyMap));
+        await updateMonitor();
+    } finally {
+        // Failed commits and superseded checks retain the last confirmed UI result.
+        if (resourceStore.getValue() === checking) resourceStore.setValue(previous);
+    }
+}
+
+function publishResources(records: Map<string, IMusic.IMusicItem>, statuses: Map<string, DownloadResourceStatus>, taskCompletion = false) {
+    const removed = [...downloadedSet].filter(key => statuses.get(key)?.state !== DownloadResourceState.AVAILABLE)
+        .map(key => downloadedRecords.get(key)).filter(Boolean);
+    const added = [...records.values()].filter(item => statuses.get(getMediaPrimaryKey(item))?.state === DownloadResourceState.AVAILABLE
+        && (!downloadedSet.has(getMediaPrimaryKey(item)) || downloadedRecords.get(getMediaPrimaryKey(item)) !== item));
+    downloadedRecords.clear(); downloadedSet.clear();
+    records.forEach((item, key) => {
+        downloadedRecords.set(key, item);
+        if (statuses.get(key)?.state === DownloadResourceState.AVAILABLE) downloadedSet.add(key);
+    });
+    resourceStore.setValue(statuses);
+    const visible = [...records.values()].filter(item => [DownloadResourceState.AVAILABLE, DownloadResourceState.UNAVAILABLE].includes(statuses.get(getMediaPrimaryKey(item))?.state));
+    downloadedMusicListStore.setValue(visible);
+    for (const [event, items] of [[DownloadEvts.RemoveDownload, removed], [taskCompletion ? DownloadEvts.Downloaded : DownloadEvts.ResourcesChanged, added]] as const) {
+        if (!items.length) continue;
+        try {
+            ee.emit(event, items);
+        } catch (error) {
+            reportSaveError("Download resource observer failed", error);
         }
     }
-    await setUserPreferenceIDB("downloadedList", valid.map(primaryKeyMap));
+}
+
+export function getDownloadResourceStatus(item: IMedia.IMediaBase): DownloadResourceStatus {
+    return resourceStore.getValue().get(getMediaPrimaryKey(item)) ?? { state: DownloadResourceState.NO_RECORD };
+}
+
+export function useDownloadResourceStatus(item: IMedia.IMediaBase) {
+    resourceStore.useValue();
+    return getDownloadResourceStatus(item);
 }
 
 function primaryKeyMap(item: IMedia.IMediaBase) {
@@ -137,13 +293,24 @@ function reportSaveError(message: string, error: Error) {
 export async function addDownloadedMusicToList(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
 ): Promise<boolean> {
+    await setupDownloadedMusicList();
     const result = await mutations.add(async () => {
         let committed = false;
         try {
-            await setupDownloadedMusicList();
             const uniqueItems = new Map((Array.isArray(musicItems) ? musicItems : [musicItems])
                 .map((item) => [getMediaPrimaryKey(item), item]));
-            const validItems = [...uniqueItems.values()].filter((item) => !isDownloaded(item));
+            const validItems: IMusic.IMusicItem[] = [];
+            for (const item of uniqueItems.values()) {
+                const data = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+                if (!data?.path) return false;
+                const existing = getInternalData<IMusic.IMusicItemInternalData>(getDownloadedMusicItem(item), "downloadData");
+                if (isDownloaded(item) && existing?.path === data.path) continue;
+                const file = await fsUtil.inspectDownloadFile(data.path, undefined, true);
+                if (file.state !== DownloadResourceState.AVAILABLE) return false;
+                validItems.push(setInternalData<IMusic.IMusicItemInternalData, "downloadData", typeof item>(item, "downloadData", {
+                    ...data, fingerprint: file.identity,
+                }, true));
+            }
             if (!validItems.length) {
                 return true;
             }
@@ -164,17 +331,15 @@ export async function addDownloadedMusicToList(
             });
             committed = true;
             // Publish changes after commit. The preference index lives in a different database.
-            allMusic.forEach((item) => {
-                const pk = getMediaPrimaryKey(item);
-                downloadedSet.add(pk);
-                downloadedRecords.set(pk, item);
+            const records = new Map(downloadedRecords), statuses = new Map(resourceStore.getValue());
+            allMusic.forEach(item => {
+                const key = getMediaPrimaryKey(item);
+                records.set(key, item);
+                statuses.set(key, { state: DownloadResourceState.AVAILABLE,
+                    path: getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData").path });
             });
-            downloadedMusicListStore.setValue((previous) => [...previous, ...allMusic]);
-            try {
-                ee.emit(DownloadEvts.Downloaded, allMusic);
-            } catch (error) {
-                reportSaveError("Download metadata saved, but a completion observer failed", error);
-            }
+            publishResources(records, statuses, true);
+            await updateMonitor();
             const savedIndex = await setUserPreferenceIDB("downloadedList", downloadedMusicListStore.getValue().map(primaryKeyMap));
             if (!savedIndex) {
                 logger.logInfo("Download index will be reconstructed from committed music metadata on startup");
@@ -186,7 +351,7 @@ export async function addDownloadedMusicToList(
                 : "Failed to save downloaded music metadata", error);
             return committed;
         }
-    });
+    }, { priority: 1 });
     return result === true;
 }
 
@@ -194,12 +359,12 @@ export async function removeDownloadedMusic(
     musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
     removeFile = false,
 ): Promise<ICommon.ICommonReturnType> {
+    await setupDownloadedMusicList();
     const result = await mutations.add(async (): Promise<ICommon.ICommonReturnType> => {
         try {
-            await setupDownloadedMusicList();
             const items = Array.isArray(musicItems) ? musicItems : [musicItems];
             const records = await musicSheetDB.musicStore.bulkGet(items.map((item) => [item.platform, item.id]));
-            const valid = records.filter(Boolean);
+            const valid = records.filter(item => getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData")?.path);
             const results = removeFile ? await Promise.all(valid.map((item) => fsUtil.rimraf(
                 getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData")?.path,
             ))) : valid.map(() => true);
@@ -220,18 +385,18 @@ export async function removeDownloadedMusic(
                 await musicSheetDB.musicStore.bulkDelete(deleted);
                 await musicSheetDB.musicStore.bulkPut(updated);
             });
-            removedKeys.forEach((pk) => {
-                downloadedSet.delete(pk);
-                downloadedRecords.delete(pk);
+            const nextRecords = new Map(downloadedRecords), statuses = new Map(resourceStore.getValue());
+            removedKeys.forEach(key => {
+                nextRecords.delete(key); statuses.delete(key);
             });
-            downloadedMusicListStore.setValue((previous) => previous.filter((item) => !removedKeys.has(getMediaPrimaryKey(item))));
-            ee.emit(DownloadEvts.RemoveDownload, removed);
+            publishResources(nextRecords, statuses);
+            await updateMonitor();
             await setUserPreferenceIDB("downloadedList", downloadedMusicListStore.getValue().map(primaryKeyMap));
             return results.every(Boolean) ? [true] : [false, { msg: "部分歌曲删除失败" }];
         } catch (error) {
             return [false, { msg: error?.message }];
         }
-    });
+    }, { priority: 1 });
     return result || [false, { msg: "Download mutation did not complete" }];
 }
 

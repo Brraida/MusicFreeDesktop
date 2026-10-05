@@ -93,7 +93,22 @@
     "pause_hint": "Active transfers and queued tasks are paused. Unfinished songs restart when resumed.",
     "save_failed": "File downloaded, but its record could not be saved. Retry failed tasks to save the record again.",
     "invalid_source": "Unable to get a download URL",
-    "control_failed": "Unable to change download state"
+    "control_failed": "Unable to change download state",
+    "refresh_files": "Refresh local files",
+    "refreshing_files": "Checking local files…",
+    "refresh_failed": "Failed to refresh local files",
+    "checking": "Checking local file",
+    "local_unavailable": "Local file unavailable: {{reason}}; click to download again",
+    "file_reasons": {
+      "offline": "drive offline",
+      "permission": "read permission denied",
+      "io": "read failed",
+      "changed": "file changed or damaged",
+      "empty": "empty file",
+      "not-file": "path is not a file",
+      "playback": "cannot open or decode audio",
+      "missing": "file missing"
+    }
   },
   "plugin_management_page": {
     "plugin_management": "Plugin Management",

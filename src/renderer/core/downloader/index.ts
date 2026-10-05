@@ -5,6 +5,7 @@ import PQueue from "p-queue";
 import {
     addDownloadedMusicToList, isDownloaded, removeDownloadedMusic,
     setupDownloadedMusicList, useDownloaded, useDownloadedMusicList,
+    refreshDownloadedMusicList, useDownloadResourceStatus,
 } from "./downloaded-sheet";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import Store from "@/common/store";
@@ -89,14 +90,13 @@ function finishDownload(item: IMusic.IMusicItem) {
 }
 
 function getDownloadStatus(item: IMusic.IMusicItem): IDownloadStatus | null {
-    return isDownloaded(item)
-        ? { state: DownloadState.DONE }
-        : downloadingProgress.get(getMediaPrimaryKey(item)) ?? null;
+    return downloadingProgress.get(getMediaPrimaryKey(item))
+        ?? (isDownloaded(item) ? { state: DownloadState.DONE } : null);
 }
 
 function updateStatus(item: IMusic.IMusicItem, status: IDownloadStatus) {
-    // Committed metadata takes precedence over a delayed progress/error callback.
-    if (isDownloaded(item)) {
+    // Only a finished task discards late callbacks; restoration must not finish an active transfer.
+    if (isDownloaded(item) && !downloadingProgress.has(getMediaPrimaryKey(item))) {
         finishDownload(item);
         return;
     }
@@ -217,6 +217,7 @@ function enqueue(item: IMusic.IMusicItem) {
 async function startDownload(musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) {
     setupDownloaderWorker();
     const items = Array.isArray(musicItems) ? musicItems : [musicItems];
+    await setupDownloadedMusicList();
     const seen = new Set<string>();
     const validItems = items.filter((item) => {
         const pk = getMediaPrimaryKey(item);
@@ -293,7 +294,7 @@ async function retryFailedDownloads() {
 
 function useDownloadStatus(musicItem: IMusic.IMusicItem) {
     const [status, setStatus] = useState<IDownloadStatus | null>(() => getDownloadStatus(musicItem));
-    const downloaded = useDownloaded(musicItem);
+    useDownloaded(musicItem);
     useEffect(() => {
         setStatus(getDownloadStatus(musicItem));
         const update = (item: IMusic.IMusicItem, next: IDownloadStatus) => {
@@ -306,9 +307,7 @@ function useDownloadStatus(musicItem: IMusic.IMusicItem) {
             ee.off(DownloadEvts.DownloadStatusUpdated, update);
         };
     }, [musicItem]);
-    return downloaded || isDownloaded(musicItem)
-        ? { state: DownloadState.DONE }
-        : status?.state === DownloadState.DONE ? null : status;
+    return getDownloadStatus(musicItem) ?? (status?.state === DownloadState.DONE ? null : status);
 }
 
 function useDownloadState(musicItem: IMusic.IMusicItem) {
@@ -321,4 +320,5 @@ export default {
     getDownloadStatus, useDownloadStatus, useDownloadingMusicList: downloadingMusicStore.useValue,
     useDownloaded, isDownloaded, useDownloadedMusicList, removeDownloadedMusic,
     setDownloadingConcurrency, useDownloadState,
+    refreshDownloadedMusicList, useDownloadResourceStatus,
 };

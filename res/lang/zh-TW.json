@@ -93,7 +93,22 @@
     "pause_hint": "已停止目前傳輸與佇列任務；繼續時未完成的歌曲會重新下載。",
     "save_failed": "檔案已下載，但記錄儲存失敗；點擊「重試失敗任務」可重新儲存記錄。",
     "invalid_source": "無法取得歌曲下載網址",
-    "control_failed": "下載控制操作失敗"
+    "control_failed": "下載控制操作失敗",
+    "refresh_files": "重新整理本機檔案狀態",
+    "refreshing_files": "正在核對本機檔案…",
+    "refresh_failed": "本機檔案狀態更新失敗",
+    "checking": "正在核對本機檔案",
+    "local_unavailable": "本機檔案暫時無法使用：{{reason}}；點擊重新下載",
+    "file_reasons": {
+      "offline": "磁碟離線",
+      "permission": "沒有讀取權限",
+      "io": "讀取失敗",
+      "changed": "檔案內容改變或損壞",
+      "empty": "檔案為空",
+      "not-file": "路徑不是檔案",
+      "playback": "無法開啟或解碼音訊",
+      "missing": "檔案遺失"
+    }
   },
   "plugin_management_page": {
     "plugin_management": "插件管理",

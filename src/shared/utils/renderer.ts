@@ -1,8 +1,12 @@
 import type fs from "fs/promises";
 import type rimraf from "rimraf";
+import type { DownloadFileIdentity, DownloadFileInspection, DownloadWatchEvent } from "@/common/download-resource";
 
 interface IMod {
     fs: {
+        inspectDownloadFile(path: string, expected?: DownloadFileIdentity, forceHash?: boolean): Promise<DownloadFileInspection>;
+        watchDownloadDirectories(directories: string[], notify: (event: DownloadWatchEvent) => void): Promise<void>;
+        stopDownloadWatcher(): Promise<void>;
         writeFile(...args: Parameters<typeof fs.writeFile>): ReturnType<typeof fs.writeFile>;
         readFile(...args: Parameters<typeof fs.readFile>): ReturnType<typeof fs.readFile>;
         isFile: (path: string) => Promise<boolean>;

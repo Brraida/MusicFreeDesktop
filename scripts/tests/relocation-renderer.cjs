@@ -46,7 +46,12 @@ module.exports = async (testRoot) => {
     await config.setup();
     const ee = compile("src/renderer/core/downloader/ee.ts");
     const PQueue = compile(req.resolve("p-queue")).default;
+    const resource = compile("src/common/download-resource.ts");
+    const fileSystem = compile("src/common/download-file-system.ts", { "./download-resource": resource });
     const files = {
+        inspectDownloadFile: fileSystem.inspectDownloadFile,
+        watchDownloadDirectories: async () => {},
+        stopDownloadWatcher: async () => {},
         async isFile(fp) {
             try {
                 return (await fs.promises.stat(fp)).isFile();
@@ -61,7 +66,7 @@ module.exports = async (testRoot) => {
     };
     const context = { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: oldDir }, workersPath: { downloader: "test" } }) };
     const logger = { logError() {}, logInfo() {} };
-    const mocks = { "@/common/media-util": media, "@/common/store": Store,
+    const mocks = { "@/common/download-resource": resource, "@/common/media-util": media, "@/common/store": Store,
         "@/renderer/utils/user-perference": prefs, "../db/music-sheet-db": db,
         "@/common/constant": constants, "./ee": ee, "@shared/utils/renderer": { fsUtil: files },
         "p-queue": PQueue, "@shared/logger/renderer": logger,
@@ -93,7 +98,7 @@ module.exports = async (testRoot) => {
     const React = req("react"), { createRoot } = req("react-dom/client");
     const icon = compile("src/renderer/components/MusicDownloaded/index.tsx", {
         "@/common/media-util": media, "@/renderer/components/SvgAsset": props => React.createElement("span", { "data-icon": props.iconName }),
-        "./index.scss": {}, "@/common/constant": constants, "@/renderer/core/downloader": core,
+        "@/common/download-resource": resource, "./index.scss": {}, "@/common/constant": constants, "@/renderer/core/downloader": core,
         "react-i18next": { useTranslation: () => ({ t: key => key }) },
     }).default;
     const container = document.getElementById("test-root"), view = createRoot(container);

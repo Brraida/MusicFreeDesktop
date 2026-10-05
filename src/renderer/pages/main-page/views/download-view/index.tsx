@@ -5,11 +5,24 @@ import Downloading from "./components/Downloading";
 import { useTranslation } from "react-i18next";
 import Downloader from "@/renderer/core/downloader";
 import { toast } from "react-toastify";
+import { useState } from "react";
 
 export default function DownloadView() {
     const { t } = useTranslation();
     const queueState = Downloader.useQueueState();
     const tasks = Downloader.useDownloadingMusicList();
+    const [refreshing, setRefreshing] = useState(false);
+
+    async function refreshFiles() {
+        setRefreshing(true);
+        try {
+            await Downloader.refreshDownloadedMusicList();
+        } catch (error) {
+            toast.error(error?.message ?? t("download_page.refresh_failed"));
+        } finally {
+            setRefreshing(false);
+        }
+    }
 
     async function togglePause() {
         try {
@@ -29,6 +42,9 @@ export default function DownloadView() {
             className="page-container download-view--container"
         >
             <div className="download-queue-controls">
+                <button type="button" disabled={refreshing} onClick={refreshFiles}>
+                    {t(refreshing ? "download_page.refreshing_files" : "download_page.refresh_files")}
+                </button>
                 <button
                     type="button"
                     disabled={queueState.changing || (!queueState.paused && !tasks.length)}

@@ -83,7 +83,22 @@
     "pause_hint": "已停止当前传输和排队任务；继续时未完成的歌曲会重新下载。",
     "save_failed": "文件已下载，但记录保存失败；点击“重试失败任务”可重新保存记录。",
     "invalid_source": "无法获取歌曲下载地址",
-    "control_failed": "下载控制操作失败"
+    "control_failed": "下载控制操作失败",
+    "refresh_files": "刷新本地文件状态",
+    "refreshing_files": "正在核对本地文件…",
+    "refresh_failed": "本地文件状态刷新失败",
+    "checking": "正在核对本地文件",
+    "local_unavailable": "本地文件暂不可用：{{reason}}；点击重新下载",
+    "file_reasons": {
+      "offline": "磁盘离线",
+      "permission": "没有读取权限",
+      "io": "读取失败",
+      "changed": "文件内容改变或损坏",
+      "empty": "文件为空",
+      "not-file": "路径不是文件",
+      "playback": "无法打开或解码音频",
+      "missing": "文件缺失"
+    }
   },
   "plugin_management_page": {
     "plugin_management": "插件管理",

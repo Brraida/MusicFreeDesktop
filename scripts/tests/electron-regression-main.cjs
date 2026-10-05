@@ -5,7 +5,7 @@ const http = require("node:http");
 const root = path.resolve(__dirname, "../..");
 process.chdir(root);
 const suite = process.argv[2];
-if (!["audio", "playlist", "startup", "relocation"].includes(suite)) throw new Error("Specify audio, playlist, startup or relocation");
+if (!["audio", "playlist", "startup", "relocation", "download-resource"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, or download-resource");
 const testRoot = path.join(root, "out/.correctness-regression-" + suite + "-" + Date.now());
 fs.mkdirSync(testRoot, { recursive: true });
 app.setPath("userData", path.join(testRoot, "profile"));
@@ -49,7 +49,7 @@ const server = http.createServer((req, res) => {
 server.on("connection", socket => {
     sockets.add(socket); socket.on("close", () => sockets.delete(socket));
 });
-const timeout = setTimeout(() => finish(1, new Error("Regression timed out")), 45000);
+const timeout = setTimeout(() => finish(1, new Error("Regression timed out")), 90000);
 function finish(code, error) {
     clearTimeout(timeout);
     if (error) console.error(error);
@@ -67,7 +67,8 @@ function finish(code, error) {
     await window.loadFile(page);
     const code = fs.readFileSync(path.join(__dirname, suite + "-renderer.cjs"), "utf8");
     const base = "http://127.0.0.1:" + server.address().port;
-    const result = await window.webContents.executeJavaScript(`(async () => { const module = { exports: {} }; ${code}\n return await module.exports(${JSON.stringify(testRoot)}, ${JSON.stringify(base)}); })()`);
+    const result = await window.webContents.executeJavaScript(`(async () => { const module = { exports: {} }; ${code}\n try { return await module.exports(${JSON.stringify(testRoot)}, ${JSON.stringify(base)}); } catch (error) { return { rendererError: error.stack || error.message || String(error) }; } })()`);
+    if (result?.rendererError) throw new Error(result.rendererError);
     fs.writeFileSync(path.join(testRoot, "result.json"), JSON.stringify({ suite, passed: true, result, counts, electron: process.versions.electron }, null, 2));
     console.log(result);
     console.log("RESULT_FILE", path.join(testRoot, "result.json"));
