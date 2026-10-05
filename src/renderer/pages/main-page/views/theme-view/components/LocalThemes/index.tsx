@@ -3,12 +3,14 @@ import SvgAsset from "@/renderer/components/SvgAsset";
 import { useTranslation } from "react-i18next";
 import ThemePack from "@/shared/themepack/renderer";
 import ThemeItem from "../ThemeItem";
+import useAppConfig from "@/hooks/useAppConfig";
 
 import "./index.scss";
 import { dialogUtil } from "@shared/utils/renderer";
 
 export default function LocalThemes() {
     const currentThemePack = ThemePack.useCurrentThemePack();
+    const builtinTheme = useAppConfig("normal.builtinTheme");
     const localThemePacks = ThemePack.useLocalThemePacks();
 
     const { t } = useTranslation();
@@ -16,6 +18,17 @@ export default function LocalThemes() {
     return (
         <div className="local-themes-container">
             <div className="local-themes-inner-container">
+                <button
+                    type="button"
+                    className="builtin-theme-choice"
+                    aria-pressed={builtinTheme === "jiangnan" && !currentThemePack}
+                    onClick={() => {
+                        ThemePack.selectJiangnanTheme().catch(() => toast.error(t("theme.invalid_theme", { reason: "" })));
+                    }}
+                >
+                    <div className="builtin-theme-preview" aria-hidden="true"></div>
+                    <span className="builtin-theme-name">江南 · 青花</span>
+                </button>
                 <div className="theme-item-container">
                     <div
                         title={t("theme.install_theme")}
@@ -83,7 +96,7 @@ export default function LocalThemes() {
                         } as any
                     }
                     type="local"
-                    selected={!currentThemePack}
+                    selected={!currentThemePack && builtinTheme !== "jiangnan"}
                 ></ThemeItem>
             </div>
         </div>

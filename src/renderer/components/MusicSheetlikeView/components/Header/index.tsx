@@ -22,13 +22,14 @@ export default function Header(props: IProps) {
     const { t } = useTranslation();
 
     return (
-        <div className="music-sheetlike-view--header-container" ref={containerRef}>
+        <div className="music-sheetlike-view--header-container" ref={containerRef} data-has-artwork={!!(musicSheet?.artwork || musicSheet?.coverImg)}>
             <img
                 draggable={false}
                 src={musicSheet?.artwork ?? musicSheet?.coverImg ?? albumImg}
                 onError={setFallbackAlbum}
                 alt={musicSheet?.title}></img>
             <div className="sheet-info-container">
+                <span className="jiangnan-theme-label">江南 · 青花</span>
                 <div className="title-container">
                     {(musicSheet?.platform && !hidePlatform) ? (
                         <Tag>{musicSheet?.platform}</Tag>

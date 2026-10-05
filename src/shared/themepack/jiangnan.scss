@@ -1,0 +1,340 @@
+// Only active while the built-in theme is selected. External packs keep their own styles.
+.jiangnan-theme-label {
+  display: none;
+}
+
+.builtin-theme-choice {
+  appearance: none;
+  background: var(--backgroundColor, white);
+  color: var(--textColor, #253a47);
+  border: 1px solid var(--dividerColor);
+  border-radius: 10px;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  overflow: hidden;
+
+  .builtin-theme-preview {
+    height: 100px;
+    background: white url("../../assets/imgs/themes/jiangnan-water-town.png") center bottom / cover;
+  }
+
+  .builtin-theme-name {
+    display: block;
+    padding: 12px;
+    font-weight: 600;
+  }
+
+  &[aria-pressed="true"] {
+    border-color: var(--primaryColor);
+    box-shadow: 0 0 0 2px var(--primaryColor);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--primaryColor);
+    outline-offset: 4px;
+  }
+}
+
+html[data-builtin-theme="jiangnan"] {
+  --primaryColor: #245a81;
+  --favoriteColor: #245a81;
+  --backgroundColor: #f7f8f4;
+  --textColor: #253a47;
+  --headerTextColor: #245a81;
+  --headerPlaceholderColor: #edf2f5;
+  --dividerColor: #dce5eb;
+  --listEvenColor: #ffffff;
+  --listHoverColor: #f0f5f7;
+  --listActiveColor: #e8f0f4;
+  --maskColor: #253a4770;
+  --shadowColor: #245a8124;
+  --placeholderColor: #edf2f5;
+  --backdropColor: #ffffff;
+  --linkColor: #245a81;
+  --infoColor: #245a81;
+  --appHeaderHeight: 60px;
+  --appMusicBarHeight: 78px;
+  color: var(--textColor);
+  color-scheme: light;
+  font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+
+  button,
+  input {
+    font-family: inherit;
+  }
+
+  .app-container {
+    background: #ffffff;
+  }
+
+  .header-container {
+    background: #fbfcfa;
+    border-bottom: 1px solid var(--dividerColor);
+
+    .header-search {
+      border: 1px solid #d1dfe8;
+      border-radius: 10px;
+      padding: 9px 12px;
+    }
+  }
+
+  .side-bar-container {
+    background-color: #f5f8f9;
+    background-image: linear-gradient(#f5f8f99a, #f5f8f99a), url("../../assets/imgs/themes/jiangnan-lotus.png");
+    background-size: auto, 200px auto;
+    background-position: center, left bottom;
+    background-repeat: no-repeat;
+    padding: 14px 10px 20px;
+
+    .side-bar--list-item-container {
+      font-size: 14px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      padding-left: 12px;
+
+      &[data-selected="true"] {
+        font-weight: 600;
+
+        &::before {
+          display: none;
+        }
+      }
+
+      svg {
+        color: var(--primaryColor);
+      }
+    }
+  }
+
+  .page-container {
+    background: #ffffff;
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  .music-sheetlike-view--header-container {
+    position: relative;
+    isolation: isolate;
+    min-height: 210px;
+    box-sizing: border-box;
+    align-items: center;
+    border-radius: 12px;
+    margin: 18px 0 20px;
+    padding: 24px;
+    background: #ffffff url("../../assets/imgs/themes/jiangnan-water-town.png") right bottom / 100% auto no-repeat;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(90deg, #fffffffa 0%, #ffffffeb 32%, #ffffff20 72%);
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    > img {
+      width: 96px;
+      height: 96px;
+      box-shadow: 0 3px 14px #245a8118;
+    }
+
+    &[data-has-artwork="false"] > img {
+      display: none;
+    }
+
+    &[data-has-artwork="false"] .sheet-info-container {
+      margin-left: 0;
+    }
+
+    .sheet-info-container {
+      max-width: min(580px, 75%);
+      row-gap: 10px;
+    }
+
+    .title-container .title {
+      color: #183f5b;
+      font-size: 2.6rem;
+      line-height: 1.35;
+      font-family: "SimSun", serif;
+    }
+
+    .title-container {
+      order: -1;
+    }
+
+    .info-container {
+      opacity: 1;
+      color: #476277;
+    }
+
+    .jiangnan-theme-label {
+      display: block;
+      color: #245a81;
+      font-size: 1.15rem;
+      letter-spacing: 0.15em;
+    }
+  }
+
+  .music-sheetlike-view--body-container .operations {
+    margin-bottom: 14px;
+  }
+
+  [role="button"][data-type="primaryButton"],
+  [role="button"][data-type="normalButton"] {
+    border-radius: 8px;
+    padding: 9px 14px;
+  }
+
+  [role="button"][data-type="primaryButton"] {
+    background: linear-gradient(150deg, #2b658e, #245a81);
+    box-shadow: 0 2px 5px #245a811c;
+  }
+
+  .music-list-batch-toolbar button {
+    border-radius: 7px;
+    padding: 7px 12px;
+  }
+
+  .music-list-container thead {
+    background: #edf2f5;
+  }
+
+  .music-list-container {
+    font-size: 14px;
+  }
+
+  .music-list-container tbody td {
+    border-bottom-color: #e7edf1;
+  }
+
+  .music-bar-container {
+    background: #fbfcfa;
+    color: var(--primaryColor);
+    box-shadow: 0 -3px 16px #245a8108;
+
+    .music-info .music-title {
+      color: var(--textColor);
+    }
+
+    .music-info .music-artist {
+      color: #526d81;
+    }
+
+    .music-controller .play-or-pause {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(150deg, #326f98, #245a81);
+      box-shadow: 0 2px 6px #245a8126;
+    }
+
+    .music-bar--slider-container .bar {
+      background-color: #dce6ed;
+    }
+  }
+
+  .music-detail--container {
+    background: #ffffff;
+    isolation: isolate;
+
+    &::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 var(--appMusicBarHeight);
+      z-index: -1;
+      pointer-events: none;
+      background: url("../../assets/imgs/themes/jiangnan-water-town.png") center bottom / 100% auto no-repeat;
+      opacity: 0.8;
+    }
+
+    .music-detail-background {
+      display: none;
+    }
+
+    .music-title {
+      color: #183f5b;
+      font-weight: 600;
+      margin-top: 0;
+    }
+
+    .music-info {
+      color: #526d81;
+    }
+
+    .music-body {
+      padding: 2rem 0 4rem;
+      column-gap: 6vw;
+
+      .music-album-options,
+      .music-album {
+        width: min(52vmin, 42vw);
+        height: min(52vmin, 42vw);
+      }
+    }
+
+    .lyric-container-outer {
+      border-radius: 20px;
+      background: linear-gradient(90deg, #ffffff00, #ffffffeb 12%, #ffffffeb 88%, #ffffff00);
+    }
+
+    .lyric-container {
+      font-size: 1.35rem;
+    }
+
+    .lyric-item {
+      color: #526d81;
+      opacity: 1;
+
+      &[data-highlight="true"] {
+        color: var(--primaryColor);
+      }
+    }
+  }
+
+  .minimode-header-container {
+    background: #fbfcfa;
+    border: 1px solid #cedee9;
+    border-radius: 10px;
+    overflow: hidden;
+    isolation: isolate;
+
+    .mini-mode-header-background-mask {
+      background: #fbfcfa url("../../assets/imgs/themes/jiangnan-lotus.png") right bottom / 65px auto no-repeat;
+    }
+
+    .mini-mode-header-background {
+      display: none;
+    }
+
+    .body-container .text-container,
+    .body-container .options-container .option-item,
+    .body-container .options-container .close-button {
+      color: var(--primaryColor);
+    }
+
+    .album-container:focus-visible {
+      outline-color: var(--primaryColor);
+    }
+  }
+
+  button:focus-visible,
+  input:focus-visible,
+  [role="button"]:focus-visible {
+    outline: 2px solid var(--primaryColor);
+    outline-offset: 3px;
+  }
+
+  @media (max-width: 900px) {
+    .side-bar-container {
+      width: 185px;
+      background-size: auto, 160px auto;
+    }
+
+    .music-sheetlike-view--header-container {
+      min-height: 180px;
+      padding: 18px;
+    }
+  }
+}
