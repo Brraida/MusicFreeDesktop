@@ -45,7 +45,8 @@ export default function AppHeader() {
         <div className="header-container">
             <div className="left-part">
                 <div className="logo">
-                    <SvgAsset iconName="logo"></SvgAsset>
+                    <span className="musicfree-wordmark-note" aria-hidden="true">♪</span>
+                    <span className="musicfree-wordmark-text">MusicFree</span>
                 </div>
                 <HeaderNavigator></HeaderNavigator>
                 <div id="header-search" className="header-search">
