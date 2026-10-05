@@ -19,6 +19,7 @@ import { IAppState } from "@shared/message-bus/type";
 import MusicDetail from "@renderer/components/MusicDetail";
 import shortCut from "@shared/short-cut/renderer";
 import logger from "@shared/logger/renderer";
+import { setupBuiltinTheme } from "@shared/themepack/builtin";
 
 
 setAutoFreeze(false);
@@ -40,7 +41,10 @@ async function initializeStage(stage: string, initialize: () => Promise<unknown>
 
 export default async function () {
     await Promise.all([
-        initializeStage("配置", () => AppConfig.setup()),
+        initializeStage("配置", async () => {
+            await AppConfig.setup();
+            setupBuiltinTheme();
+        }),
         initializeStage("插件", () => PluginManager.setup()),
     ]);
     await Promise.all([

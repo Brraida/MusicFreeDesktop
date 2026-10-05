@@ -22,7 +22,7 @@ async function applyThemePack(themePack: ICommon.IThemePack | null) {
 
 async function selectTheme(themePack: ICommon.IThemePack | null) {
     await applyThemePack(themePack);
-    selectBuiltinTheme("classic");
+    selectBuiltinTheme(themePack?.hash ? "classic" : "jiangnan");
 }
 
 async function selectJiangnanTheme() {
@@ -42,14 +42,12 @@ async function selectThemeByHash(hash: string) {
 
 let themePacksLoaded = false;
 async function setupThemePacks() {
+    setupBuiltinTheme();
     try {
         const currentTheme = await mod.initCurrentTheme();
         // 选中主题
         await applyThemePack(currentTheme);
-        if (currentTheme?.hash) {
-            selectBuiltinTheme("classic");
-        }
-        setupBuiltinTheme();
+        selectBuiltinTheme(currentTheme?.hash ? "classic" : "jiangnan");
         // 调度
         requestIdleCallback(() => {
             if (!themePacksLoaded) {
