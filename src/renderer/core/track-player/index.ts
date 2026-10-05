@@ -149,6 +149,9 @@ class TrackPlayer {
 
     on<T extends keyof InternalPlayerEvents>(event: T, callback: InternalPlayerEvents[T]) {
         this.ee.on(event, callback as any);
+        return () => {
+            this.ee.off(event, callback as any);
+        };
     }
 
     private setupEvents() {

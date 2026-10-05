@@ -54,6 +54,14 @@ const songs = names.map((title, index) => ({ platform: "本地", id: "jiangnan-d
     artwork: pathToFileURL(coverPath).href, "$$ref": 3,
     rawLrc: "[00:00.00]听雨声轻轻落在水面\n[00:20.00]小桥迎来一缕风\n[00:40.00]乌篷缓缓驶过石桥\n[01:00.00]晚灯照着归来的船\n[01:20.00]把这一刻留给旋律",
 }));
+// Existing imported songs and downloads may have never stored a duration.
+songs[1].duration = undefined;
+songs[2].platform = "示例音源";
+songs[2].duration = " ";
+songs[2].$ = { downloadData: { path: wavPath, quality: "standard" } };
+songs[3].duration = "240";
+songs[4].duration = "1:02:03";
+songs[5].duration = null;
 const refs = songs.map(({ platform, id }) => ({ platform, id }));
 const sheets = [
     { id: "favorite", title: "我喜欢", platform: "本地", musicList: refs, "$$sortIndex": -1 },
@@ -172,6 +180,23 @@ async function reloadMain() {
     await reloadMain();
     await navigate("/main/musicsheet/" + encodeURIComponent("本地") + "/favorite");
     await waitFor(() => evaluate(main, "document.querySelectorAll('.music-list-container tbody tr[data-index]').length === 6 || document.querySelector('.music-list-container tbody')?.textContent.includes('云水之间')"), "six demo songs");
+    const expectedDurations = ["03:00", "03:00", "03:00", "04:00", "1:02:03", "03:00"];
+    await waitFor(() => evaluate(main, `JSON.stringify([...document.querySelectorAll('.music-list-container tbody td[data-id="duration"]')].map(cell=>cell.textContent.trim()))===${JSON.stringify(JSON.stringify(['03:00','03:00','03:00','04:00','1:02:03','03:00']))}`), "local and downloaded duration hydration");
+    const durationCells = await evaluate(main, `[...document.querySelectorAll('.music-list-container tbody td[data-id="duration"]')].map(cell=>({text:cell.textContent.trim(),width:cell.clientWidth,content:cell.scrollWidth}))`);
+    assert.deepEqual(durationCells.map(cell=>cell.text), expectedDurations);
+    assert(durationCells.every(cell=>cell.width>=cell.content), "Duration text must fit the visible column");
+    const savedDurations = await evaluate(main, `(async()=>{
+        const db=await new Promise(resolve=>{const request=indexedDB.open('musicSheetDB');request.onsuccess=()=>resolve(request.result);});
+        const tx=db.transaction('musicStore');const values=await Promise.all(${JSON.stringify(songs.map(s=>[s.platform,s.id]))}.map(key=>new Promise(resolve=>{const request=tx.objectStore('musicStore').get(key);request.onsuccess=()=>resolve(request.result.duration);})));db.close();return values;
+    })()`);
+    assert.equal(savedDurations[1],180,"Old local song duration persisted");
+    assert.equal(savedDurations[2],180,"Old downloaded song duration persisted without changing its plugin identity");
+    assert.equal(savedDurations[5],180,"Missing local duration persisted");
+    await navigate("/main/musicsheet/" + encodeURIComponent("本地") + "/theme-rain");
+    await waitFor(() => evaluate(main, `JSON.stringify([...document.querySelectorAll('.music-list-container tbody td[data-id="duration"]')].map(cell=>cell.textContent.trim()))===${JSON.stringify(JSON.stringify(expectedDurations))}`), "duration retained in another playlist");
+    await reloadMain();
+    await navigate("/main/musicsheet/" + encodeURIComponent("本地") + "/favorite");
+    await waitFor(() => evaluate(main, `JSON.stringify([...document.querySelectorAll('.music-list-container tbody td[data-id="duration"]')].map(cell=>cell.textContent.trim()))===${JSON.stringify(JSON.stringify(expectedDurations))}`), "duration retained after renderer reload");
     const resources = await evaluate(main, `(async () => {
         const urls=['.side-bar-container','.music-sheetlike-view--header-container'].map(selector=>getComputedStyle(document.querySelector(selector)).backgroundImage.match(/url\\([\"']?(.*?)[\"']?\\)/)[1]);
         return Promise.all(urls.map(async src=>{const image=new Image();image.src=src;await image.decode();return {src,width:image.naturalWidth,height:image.naturalHeight};}));
@@ -301,10 +326,10 @@ async function reloadMain() {
     main.webContents.session.flushStorageData();
     assert.deepEqual(failures, []);
     assert.deepEqual(remoteRequests, [], "Theme preview must work offline");
-    const report = { passed: true, firstShownSnapshot, firstStartupMarks, heldChunk, logoChecks, legacyClassicMigrated:true, brokenExternalPackFallsBackToBlue:true, realChunkFailureRetryPassed:true, packagedMainPreloadRenderer: true, isolatedProfile: app.getPath("userData"), portableProfileTarget: path.join(portable, "userData"),
+    const report = { passed: true, durationCells, savedDurations, firstShownSnapshot, firstStartupMarks, heldChunk, logoChecks, legacyClassicMigrated:true, brokenExternalPackFallsBackToBlue:true, realChunkFailureRetryPassed:true, packagedMainPreloadRenderer: true, isolatedProfile: app.getPath("userData"), portableProfileTarget: path.join(portable, "userData"),
         appName: app.getName(), protocolCalls, platform: process.platform, electron: process.versions.electron,
         chromium: process.versions.chrome, network: "HTTP(S) blocked; no requests attempted", resources,
-        checks: ["blue default and local images", "real six-song playlist", "select all then deselect one", "850px narrow page",
+        checks: ["old local and downloaded songs recover and persist duration; numeric and formatted strings render", "blue default and local images", "real six-song playlist", "select all then deselect one", "850px narrow page",
             "local synthesized WAV playback", "detail and mini circular covers", "real mini-window state sync", "pause in both windows",
             "legacy classic migrated to porcelain without an orange frame", "external pack precedence and restore", "theme persisted after reload", "nonblank first frame before 3.2s delayed player chunk", "music note, regular F and last e at 1050/1200px and 100/125/150/200 percent zoom", "chunk failure retry", "production identity; registration intercepted and isolated test profile"],
         demo: "Six fictional tracks share a locally synthesized quiet chime; original lyrics; isolated preview music only",
