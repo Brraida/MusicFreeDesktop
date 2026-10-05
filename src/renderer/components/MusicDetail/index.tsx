@@ -2,12 +2,14 @@ import AnimatedDiv from "../AnimatedDiv";
 import "./index.scss";
 import albumImg from "@/assets/imgs/album-cover.jpg";
 import Tag from "../Tag";
-import { setFallbackAlbum } from "@/renderer/utils/img-on-error";
 import Header from "./widgets/Header";
 import Lyric from "./widgets/Lyric";
 import Condition from "../Condition";
 import { useTranslation } from "react-i18next";
-import { useCurrentMusic } from "@renderer/core/track-player/hooks";
+import { useCurrentMusic, usePlayerState } from "@renderer/core/track-player/hooks";
+import { PlayerState } from "@/common/constant";
+import { getMediaPrimaryKey } from "@/common/media-util";
+import VinylCover from "@/renderer/components/VinylCover";
 import { useEffect } from "react";
 import { musicDetailShownStore } from "@renderer/components/MusicDetail/store";
 
@@ -16,6 +18,7 @@ export const useMusicDetailShown = musicDetailShownStore.useValue;
 
 function MusicDetail() {
     const musicItem = useCurrentMusic();
+    const playerState = usePlayerState();
     const musicDetailShown = musicDetailShownStore.useValue();
 
     const { t } = useTranslation();
@@ -75,11 +78,14 @@ function MusicDetail() {
             </div>
             <div className="music-body">
                 <div className="music-album-options">
-                    <img
-                        className="music-album shadow"
-                        onError={setFallbackAlbum}
-                        src={musicItem?.artwork ?? albumImg}
-                    ></img>
+                    <VinylCover
+                        className="music-album"
+                        artwork={musicItem?.artwork}
+                        alt={musicItem?.title || t("media.unknown_title")}
+                        playing={!!musicItem && playerState === PlayerState.Playing}
+                        active={musicDetailShown}
+                        trackKey={musicItem ? getMediaPrimaryKey(musicItem) : undefined}
+                    />
                 </div>
 
                 <Lyric></Lyric>

@@ -13,7 +13,7 @@ const cases = group === "node"
         name: "node-" + name, args: ["scripts/tests/" + name + "-regression.cjs"],
     }))
     : [{ name: "electron-downloader", args: ["scripts/tests/downloader-main.cjs"] },
-        ...["audio", "playlist", "startup", "relocation", "download-resource"].map(name => ({
+        ...["audio", "playlist", "startup", "relocation", "download-resource", "vinyl"].map(name => ({
             name: "electron-" + name, args: ["scripts/tests/electron-regression-main.cjs", name],
         }))];
 const executable = group === "node" ? process.execPath : require("electron");

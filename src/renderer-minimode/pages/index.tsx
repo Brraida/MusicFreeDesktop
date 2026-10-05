@@ -2,6 +2,8 @@ import { useState } from "react";
 import SvgAsset from "@/renderer/components/SvgAsset";
 import { PlayerState } from "@/common/constant";
 import albumImg from "@/assets/imgs/album-cover.jpg";
+import VinylCover from "@/renderer/components/VinylCover";
+import { getMediaPrimaryKey } from "@/common/media-util";
 
 import "./index.scss";
 import { useTranslation } from "react-i18next";
@@ -93,19 +95,30 @@ export default function MinimodePage() {
                         backgroundImage: `url(${currentMusicItem?.artwork || albumImg})`,
                     }}
                 ></div>
-                <img
+                <VinylCover
+                    compact
                     title={
                         (currentMusicItem?.title || t("media.unknown_title")) +
                         " - " +
                         (currentMusicItem?.artist || t("media.unknown_artist"))
                     }
-                    draggable="false"
+                    role="button"
+                    tabIndex={0}
                     className="album-container"
-                    src={currentMusicItem?.artwork || albumImg}
+                    artwork={currentMusicItem?.artwork}
+                    alt={currentMusicItem?.title || t("media.unknown_title")}
+                    playing={!!currentMusicItem && playerState === PlayerState.Playing}
+                    trackKey={currentMusicItem ? getMediaPrimaryKey(currentMusicItem) : undefined}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            appWindowUtil.showMainWindow();
+                        }
+                    }}
                     onDoubleClick={() => {
                         appWindowUtil.showMainWindow();
                     }}
-                ></img>
+                />
                 <div className="body-container">{hover ? options : textContent}</div>
             </div>
         </div>

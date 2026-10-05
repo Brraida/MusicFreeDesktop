@@ -1,20 +1,22 @@
 import SvgAsset from "@/renderer/components/SvgAsset";
-import { setFallbackAlbum } from "@/renderer/utils/img-on-error";
 import "./index.scss";
 
 import Tag from "@/renderer/components/Tag";
 import { secondsToDuration } from "@/common/time-util";
 import MusicFavorite from "@/renderer/components/MusicFavorite";
 import MusicDetail, { useMusicDetailShown } from "@/renderer/components/MusicDetail";
-import albumImg from "@/assets/imgs/album-cover.jpg";
 import { useTranslation } from "react-i18next";
-import { useCurrentMusic, useProgress } from "@renderer/core/track-player/hooks";
+import { useCurrentMusic, usePlayerState, useProgress } from "@renderer/core/track-player/hooks";
+import VinylCover from "@/renderer/components/VinylCover";
+import { PlayerState } from "@/common/constant";
+import { getMediaPrimaryKey } from "@/common/media-util";
 import { hidePanel, showPanel } from "@renderer/components/Panel";
 import MusicDownloaded from "@renderer/components/MusicDownloaded";
 import PluginManager from "@shared/plugin-manager/renderer";
 
 export default function MusicInfo() {
     const musicItem = useCurrentMusic();
+    const playerState = usePlayerState();
     const musicDetailShown = useMusicDetailShown();
 
     const { t } = useTranslation();
@@ -34,13 +36,25 @@ export default function MusicInfo() {
                 <div className="music-info-container">
                     {!musicItem ? null : (
                         <>
-                            <img
+                            <VinylCover
+                                compact
                                 role="button"
                                 className="music-cover"
-                                crossOrigin="anonymous"
-                                src={musicItem.artwork ?? albumImg}
-                                onError={setFallbackAlbum}
-                            ></img>
+                                artwork={musicItem.artwork}
+                                alt={musicItem.title || t("media.unknown_title")}
+                                aria-label={musicDetailShown ? t("music_bar.close_music_detail_page") : t("music_bar.open_music_detail_page")}
+                                tabIndex={musicDetailShown ? -1 : 0}
+                                onClick={toggleMusicDetail}
+                                onKeyDown={(event) => {
+                                    if (event.key === "Enter" || event.key === " ") {
+                                        event.preventDefault();
+                                        toggleMusicDetail();
+                                    }
+                                }}
+                                playing={playerState === PlayerState.Playing}
+                                active={!musicDetailShown}
+                                trackKey={getMediaPrimaryKey(musicItem)}
+                            />
 
                             <div
                                 className="open-detail"

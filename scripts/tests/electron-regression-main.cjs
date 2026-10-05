@@ -5,7 +5,7 @@ const http = require("node:http");
 const root = path.resolve(__dirname, "../..");
 process.chdir(root);
 const suite = process.argv[2];
-if (!["audio", "playlist", "startup", "relocation", "download-resource"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, or download-resource");
+if (!["audio", "playlist", "startup", "relocation", "download-resource", "vinyl"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, download-resource or vinyl");
 const testRoot = path.join(root, "out/.correctness-regression-" + suite + "-" + Date.now());
 fs.mkdirSync(testRoot, { recursive: true });
 app.setPath("userData", path.join(testRoot, "profile"));
@@ -59,7 +59,7 @@ function finish(code, error) {
 (async () => {
     await app.whenReady();
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-    window = new BrowserWindow({ show: false, webPreferences: {
+    window = new BrowserWindow({ show: false, ...(suite === "vinyl" ? { width: 1200, height: 1000 } : {}), webPreferences: {
         nodeIntegration: true, contextIsolation: false, backgroundThrottling: false,
     } });
     const page = path.join(testRoot, "index.html");
@@ -69,6 +69,19 @@ function finish(code, error) {
     const base = "http://127.0.0.1:" + server.address().port;
     const result = await window.webContents.executeJavaScript(`(async () => { const module = { exports: {} }; ${code}\n try { return await module.exports(${JSON.stringify(testRoot)}, ${JSON.stringify(base)}); } catch (error) { return { rendererError: error.stack || error.message || String(error) }; } })()`);
     if (result?.rendererError) throw new Error(result.rendererError);
+    if (suite === "vinyl") {
+        for (const mode of ["playing", "paused", "bar-mini"]) {
+            await window.webContents.executeJavaScript(`window.vinylPreviewMode(${JSON.stringify(mode)})`);
+            fs.writeFileSync(path.join(testRoot, mode + ".png"), (await window.webContents.capturePage()).toPNG());
+        }
+        window.webContents.debugger.attach("1.3");
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+        const reduced = await window.webContents.executeJavaScript("new Promise(resolve => requestAnimationFrame(() => resolve([...document.querySelectorAll('.vinyl-record')].every(x => getComputedStyle(x).animationName === 'none'))))");
+        if (!reduced) throw new Error("Reduced motion preference not respected");
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
+        window.webContents.debugger.detach();
+        await window.webContents.executeJavaScript("window.vinylFinish()");
+    }
     fs.writeFileSync(path.join(testRoot, "result.json"), JSON.stringify({ suite, passed: true, result, counts, electron: process.versions.electron }, null, 2));
     console.log(result);
     console.log("RESULT_FILE", path.join(testRoot, "result.json"));
