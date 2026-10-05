@@ -6,7 +6,7 @@ import messageBus from "@shared/message-bus/renderer/extension";
 export default async function () {
     // TODO: broadcast
     await AppConfig.setup();
-    setupBuiltinTheme();
+    setupBuiltinTheme(AppConfig.getConfig("normal.builtinTheme") || "jiangnan");
     await setupI18n();
     messageBus.subscribeAppState(["playerState", "musicItem", "repeatMode", "parsedLrc", "lyricText"]);
     messageBus.sendCommand("SyncAppState");

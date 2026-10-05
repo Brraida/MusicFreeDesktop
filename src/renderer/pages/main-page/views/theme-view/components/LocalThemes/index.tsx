@@ -88,16 +88,6 @@ export default function LocalThemes() {
                         selected={it.hash === currentThemePack?.hash}
                     ></ThemeItem>
                 ))}
-                <ThemeItem
-                    config={
-                        {
-                            name: t("common.default"),
-                            preview: "#f17d34",
-                        } as any
-                    }
-                    type="local"
-                    selected={!currentThemePack && builtinTheme !== "jiangnan"}
-                ></ThemeItem>
             </div>
         </div>
     );

@@ -22,6 +22,7 @@ Object.defineProperty(global, "navigator", { configurable: true, value: { mediaD
                     await initialize("下载记录")();
                 } },
                 "@shared/app-config/renderer": { setup: initialize("配置"), getConfig: () => false },
+                "@shared/themepack/builtin": { setupBuiltinTheme() {} },
                 "@/shared/i18n/renderer": { setupI18n: initialize("语言") }, "@/shared/themepack/renderer": {},
                 "../core/recently-playlist": { setupRecentlyPlaylist() {} },
                 "@shared/service-manager/renderer": { setup() {} },
