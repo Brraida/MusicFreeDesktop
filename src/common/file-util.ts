@@ -22,7 +22,7 @@ export async function parseLocalMusicItem(
         // tokenizer on files shorter than the 128-byte ID3v1 block. Buffering
         // only these tiny files preserves fallback metadata without leaking an FD.
         const size = (await fs.stat(filePath)).size;
-        const { common = {} as ICommonTagsResult } = size < 128
+        const { common = {} as ICommonTagsResult, format } = size < 128
             ? await parseBuffer(await fs.readFile(filePath), { path: filePath })
             : await parseFile(filePath);
 
@@ -85,6 +85,7 @@ export async function parseLocalMusicItem(
                 ? getB64Picture(common.picture[0])
                 : undefined,
             album: common.album ?? "未知专辑",
+            duration: Number.isFinite(format.duration) && format.duration > 0 ? format.duration : undefined,
             url: addFileScheme(filePath),
             localPath: filePath,
             platform: localPluginName,

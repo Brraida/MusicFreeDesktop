@@ -4,6 +4,7 @@ import type { DownloadFileIdentity, DownloadFileInspection, DownloadWatchEvent }
 
 interface IMod {
     fs: {
+        getLocalMusicDuration(path: string): Promise<number | undefined>;
         inspectDownloadFile(path: string, expected?: DownloadFileIdentity, forceHash?: boolean): Promise<DownloadFileInspection>;
         watchDownloadDirectories(directories: string[], notify: (event: DownloadWatchEvent) => void): Promise<void>;
         stopDownloadWatcher(): Promise<void>;

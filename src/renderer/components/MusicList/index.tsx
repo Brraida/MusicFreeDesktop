@@ -10,7 +10,7 @@ import {
 
 import "./index.scss";
 import Tag from "../Tag";
-import { secondsToDuration } from "@/common/time-util";
+import MusicDuration from "./MusicDuration";
 import MusicSheet from "@/renderer/core/music-sheet";
 import trackPlayer from "@renderer/core/track-player";
 import Condition, { IfTruthy } from "../Condition";
@@ -126,8 +126,7 @@ const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
         size: 64,
         maxSize: 150,
         minSize: 48,
-        cell: (info) =>
-            info.getValue() ? secondsToDuration(info.getValue()) : "--:--",
+        cell: (info) => <MusicDuration key={getMediaPrimaryKey(info.row.original)} musicItem={info.row.original} />,
         // @ts-ignore
         fr: 1,
     }),

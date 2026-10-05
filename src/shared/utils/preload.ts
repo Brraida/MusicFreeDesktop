@@ -50,6 +50,21 @@ function addFileScheme(filePath: string) {
 
 const fsUtil = {
     inspectDownloadFile,
+    // Load the metadata parser only when a visible song needs its duration.
+    async getLocalMusicDuration(filePath: string) {
+        try {
+            const { parseFile, parseBuffer } = await import("music-metadata");
+            const actualPath = filePath.startsWith("file:") ? url.fileURLToPath(filePath) : filePath;
+            const options = { skipCovers: true, duration: true };
+            // Preserve the tiny-file workaround used by the local scanner.
+            const { format } = (await fs.stat(actualPath)).size < 128
+                ? await parseBuffer(await fs.readFile(actualPath), { path: actualPath }, options)
+                : await parseFile(actualPath, options);
+            return Number.isFinite(format.duration) && format.duration > 0 ? format.duration : undefined;
+        } catch {
+            return undefined;
+        }
+    },
     watchDownloadDirectories: (directories: string[], notify: (event: DownloadWatchEvent) => void) => downloadWatcher.watch(directories, notify),
     stopDownloadWatcher: () => downloadWatcher.stop(),
     writeFile,
