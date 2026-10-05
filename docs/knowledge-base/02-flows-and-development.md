@@ -5,11 +5,13 @@
 ## 1. 启动顺序
 
 1. `src/main/index.ts` 识别 Windows 便携目录，申请单实例锁。
-2. `app.whenReady()` 初始化全局路径、设置、语言、插件、托盘、快捷键和消息总线，创建主窗口。
-3. `renderer/document/bootstrap.ts` 先初始化设置/插件，再初始化歌单/播放器，随后建立扫描、下载记录索引、最近播放和服务状态。下载文件核对与旧记录 SHA-256 补建在后台分批执行。
+2. `app.whenReady()` 初始化全局路径、设置、语言、插件、托盘、快捷键和消息总线，创建暂时隐藏的主窗口；青花 HTML 首帧完成后再显示窗口。
+3. `renderer/document/startup.js` 先让本地青花骨架绘制，再动态加载完整播放器。`renderer/document/bootstrap.ts` 先初始化设置/插件，再初始化歌单/播放器，随后建立扫描、下载记录索引、最近播放和服务状态。下载文件核对与旧记录 SHA-256 补建在后台分批执行。
 4. `renderer/document/index.tsx` 先挂载 React 的 Initialize 界面；bootstrap 成功后挂载播放器，失败则显示阶段与错误，提供整页重载重试。主窗口通过 IPC/MessagePort 向托盘、歌词窗口和迷你窗口同步状态。
 
-源码入口：[main](../../src/main/index.ts)、[bootstrap](../../src/renderer/document/bootstrap.ts)、[React 入口](../../src/renderer/document/index.tsx)、[Initialize](../../src/renderer/document/initialize.tsx)。BUG-11 已修复并通过真实 React 首屏验证。
+源码入口：[main](../../src/main/index.ts)、[bootstrap](../../src/renderer/document/bootstrap.ts)、[轻量启动入口](../../src/renderer/document/startup.js)、[React 入口](../../src/renderer/document/index.tsx)、[Initialize](../../src/renderer/document/initialize.tsx)。BUG-11 已修复并通过真实 React 首屏验证。
+
+最新的窗口白屏、主题首帧与标题修复见 [13 的启动说明](13-jiangnan-theme-implementation.md)。完整播放器准备前，启动骨架不提供歌曲播放操作；它显示准备状态并允许最小化或退出。
 
 ### 首屏与下载文件核对
 
@@ -36,7 +38,7 @@ flowchart TD
     end
 ```
 
-**拖慢首屏的是下载记录初始化中的磁盘检查。** 没有文件指纹的旧记录还需要读取整首文件计算 SHA-256。唱片组件在主界面挂载后才出现，初始化等待期间没有旋转动画运行；因此本轮保留唱片效果。
+**此前初始化等待的主要问题是下载记录中的磁盘检查，现已改为后台执行。** 没有文件指纹的旧记录还需要读取整首文件计算 SHA-256。唱片组件在主界面挂载后才出现，初始化等待期间没有旋转动画运行；因此本轮保留唱片效果。
 
 - 首屏仍等待必要配置、歌单与播放状态、语言和下载记录索引，不等待全库文件核对。
 - 未检查的记录保持 `CHECKING`，图标提示“正在核对本地文件”；不会直接宣称已下载。已下载列表在检查后逐批补全。

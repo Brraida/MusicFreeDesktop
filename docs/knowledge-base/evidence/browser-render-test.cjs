@@ -73,7 +73,7 @@ async function inspectThemeImplementation() {
             return {src:image.currentSrc,width:rect.width,height:rect.height,naturalWidth:image.naturalWidth,
                 naturalHeight:image.naturalHeight,containerWidth:chapter.clientWidth};});
     })()`);
-    assert.equal(views.length, 7);
+    assert.equal(views.length, 8);
     for(const view of views){
         assert.equal(new URL(view.src).protocol,'file:');
         assert(view.src.includes('/assets/previews/jiangnan-actual-'));

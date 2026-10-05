@@ -25,7 +25,7 @@
 | [12 江南 · 青花主题预览](12-jiangnan-porcelain-theme.md) | 已确认的开发前效果图，供与实际页面对照 |
 | [13 青花主题实际预览](13-jiangnan-theme-implementation.md) | 已合入 dev 的主题、真实编译截图、切换同步与运行入口 |
 
-**当前主题实现：** [13 青花主题实际预览](13-jiangnan-theme-implementation.md)。青花主题已从独立 worktree 合入 `dev`；[12](12-jiangnan-porcelain-theme.md)保留开发前效果图。
+**当前主题实现：** [13 青花主题实际预览](13-jiangnan-theme-implementation.md)。青花主题已从独立 worktree 合入 `dev`，并补修启动白屏、首帧主题和标题裁切；[12](12-jiangnan-porcelain-theme.md)保留开发前效果图。
 
 ## 主要结论
 
