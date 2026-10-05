@@ -21,6 +21,11 @@ export default function useBootstrap() {
         if (AppConfig.getConfig("normal.checkUpdate")) {
             checkUpdate();
         }
-        logger.logPerf("Bundle First Screen");
+        const frame = requestAnimationFrame(() => {
+            document.getElementById("startup-shell")?.remove();
+            performance.mark("player-first-screen");
+            logger.logPerf("Bundle First Screen");
+        });
+        return () => cancelAnimationFrame(frame);
     }, []);
 }

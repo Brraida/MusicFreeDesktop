@@ -2,13 +2,73 @@
 <html data-builtin-theme="jiangnan">
   <head>
     <meta charset="UTF-8" />
-    <title>Music Free</title>
+    <title>MusicFree</title>
     <meta name="referrer" content="no-referrer"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>html,body { background:#f7f8f4; color:#253a47; }</style>
+    <style>
+      html { --primaryColor:#245a81; --backgroundColor:#f7f8f4; --textColor:#253a47; color-scheme:light; }
+      html,body { margin:0; width:100%; height:100%; overflow:hidden; background:#f7f8f4; }
+      #startup-shell { position:fixed; inset:0; z-index:10000; color:#253a47; background:white; font:14px "Segoe UI","Microsoft YaHei",sans-serif; }
+      .startup-header { height:60px; display:flex; align-items:center; gap:32px; padding:0 16px; box-sizing:border-box; background:#fbfcfa; border-bottom:1px solid #dce5eb; -webkit-app-region:drag; }
+      .startup-brand { flex:none; color:#245a81; font-size:22px; font-weight:650; letter-spacing:.2px; line-height:1.4; }
+      .startup-search { width:244px; height:36px; border:1px solid #d1dfe8; border-radius:10px; background:#edf2f5; }
+      .startup-window-buttons { margin-left:auto; display:flex; gap:4px; -webkit-app-region:no-drag; }
+      .startup-window-buttons button { width:28px; height:28px; border:0; background:transparent; color:#526d81; font-size:20px; cursor:pointer; }
+      .startup-window-buttons button:hover { background:#e8f0f4; }
+      .startup-body { display:flex; height:calc(100% - 138px); }
+      .startup-sidebar { flex:0 0 220px; background:#f5f8f9; border-right:1px solid #dce5eb; box-sizing:border-box; padding:26px 22px; }
+      .startup-placeholder { background:#e8f0f4; border-radius:6px; height:14px; margin-bottom:26px; }
+      .startup-sidebar .startup-placeholder:nth-child(2n) { width:76%; }
+      .startup-page { flex:1; min-width:0; padding:18px 24px; }
+      .startup-hero { height:210px; display:flex; flex-direction:column; justify-content:center; padding:0 24px; box-sizing:border-box; border-radius:12px; background:linear-gradient(120deg,#fff,#f0f5f7); }
+      .startup-title { font:34px "SimSun",serif; color:#183f5b; margin-bottom:10px; }
+      .startup-subtitle { color:#245a81; letter-spacing:2px; }
+      .startup-feedback { display:flex; align-items:center; gap:12px; margin:26px 0; color:#526d81; }
+      .startup-spinner { width:16px; height:16px; border:2px solid #dce5eb; border-top-color:#245a81; border-radius:50%; animation:startup-spin 1s linear infinite; }
+      .startup-row { display:flex; align-items:center; gap:24px; height:34px; border-bottom:1px solid #e7edf1; }
+      .startup-row .startup-placeholder { margin:0; width:25%; height:10px; }
+      .startup-row .startup-placeholder:nth-child(2) { width:16%; }
+      .startup-row .startup-placeholder:nth-child(3) { width:20%; }
+      .startup-footer { position:absolute; bottom:0; width:100%; height:78px; display:flex; align-items:center; justify-content:center; background:#fbfcfa; border-top:1px solid #dce5eb; }
+      .startup-play { width:42px; height:42px; border-radius:50%; background:#e8f0f4; }
+      .startup-play::after { content:""; display:block; margin:13px 0 0 17px; border:8px solid transparent; border-left:12px solid #9bb5c8; }
+      #startup-retry { border:1px solid #245a81; border-radius:6px; padding:6px 12px; background:white; color:#245a81; cursor:pointer; }
+      #startup-shell[data-failed] .startup-spinner { display:none; }
+      .initialization-status { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+      @keyframes startup-spin { to { transform:rotate(360deg); } }
+      @media(prefers-reduced-motion:reduce) { .startup-spinner { animation:none; } }
+    </style>
     <style id="themepack-node"></style>
   </head>
   <body>
+    <div id="startup-shell" aria-busy="true">
+      <header class="startup-header">
+        <span class="startup-brand">MusicFree</span>
+        <div class="startup-search" aria-hidden="true"></div>
+        <div class="startup-window-buttons">
+          <button type="button" data-window-action="minimize" aria-label="最小化">−</button>
+          <button type="button" data-window-action="close" aria-label="退出播放器">×</button>
+        </div>
+      </header>
+      <div class="startup-body">
+        <aside class="startup-sidebar" aria-hidden="true">
+          <div class="startup-placeholder"></div><div class="startup-placeholder"></div>
+          <div class="startup-placeholder"></div><div class="startup-placeholder"></div>
+          <div class="startup-placeholder"></div><div class="startup-placeholder"></div>
+        </aside>
+        <main class="startup-page">
+          <div class="startup-hero"><div class="startup-title">江南 · 青花</div><div class="startup-subtitle">留一刻，听音乐</div></div>
+          <div class="startup-feedback"><span class="startup-spinner" aria-hidden="true"></span><span id="startup-status" role="status" aria-live="polite">正在准备曲库…</span><button id="startup-retry" type="button" data-window-action="retry" hidden>重新加载</button></div>
+          <div aria-hidden="true">
+            <div class="startup-row"><div class="startup-placeholder"></div><div class="startup-placeholder"></div><div class="startup-placeholder"></div></div>
+            <div class="startup-row"><div class="startup-placeholder"></div><div class="startup-placeholder"></div><div class="startup-placeholder"></div></div>
+            <div class="startup-row"><div class="startup-placeholder"></div><div class="startup-placeholder"></div><div class="startup-placeholder"></div></div>
+            <div class="startup-row"><div class="startup-placeholder"></div><div class="startup-placeholder"></div><div class="startup-placeholder"></div></div>
+          </div>
+        </main>
+      </div>
+      <footer class="startup-footer" aria-hidden="true"><div class="startup-play"></div></footer>
+    </div>
     <div id="root"></div>
   </body>
 </html>

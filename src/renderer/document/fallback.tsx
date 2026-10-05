@@ -1,5 +1,6 @@
 import trackPlayer from "../core/track-player";
 import "./styles/fallback.scss";
+import { useLayoutEffect } from "react";
 
 interface IProps {
     error: Error,
@@ -8,6 +9,10 @@ interface IProps {
 
 export default function Fallback(props: IProps) {
     const { error, resetErrorBoundary } = props;
+
+    useLayoutEffect(() => {
+        document.getElementById("startup-shell")?.remove();
+    }, []);
 
     return (
         <div className="fallback-container" role="alert">

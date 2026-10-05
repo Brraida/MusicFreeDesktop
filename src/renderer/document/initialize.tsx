@@ -1,10 +1,14 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useLayoutEffect, useState } from "react";
 import bootstrap from "./bootstrap";
 import logger from "@shared/logger/renderer";
 
 export default function Initialize({ children }: { children: ReactNode }) {
     const [ready, setReady] = useState(false);
     const [error, setError] = useState<Error | null>(null);
+
+    useLayoutEffect(() => {
+        if (error) document.getElementById("startup-shell")?.remove();
+    }, [error]);
 
     useEffect(() => {
         let active = true;
@@ -39,6 +43,6 @@ export default function Initialize({ children }: { children: ReactNode }) {
             </div>
         </div>;
     }
-    if (!ready) return <div role="status">正在初始化播放器…</div>;
+    if (!ready) return <div className="initialization-status" role="status">正在准备曲库…</div>;
     return <>{children}</>;
 }

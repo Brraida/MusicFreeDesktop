@@ -14,6 +14,10 @@ module.exports = async () => {
         }, []); return React.createElement("span", null, "Player ready");
     }
     for (const fail of [true, false]) {
+        const shell = document.createElement("div");
+        shell.id = "startup-shell";
+        shell.textContent = "Porcelain startup shell";
+        document.body.appendChild(shell);
         const held = deferred();
         const Initialize = load("src/renderer/document/initialize.tsx", {
             "./bootstrap": () => held.promise,
@@ -24,6 +28,7 @@ module.exports = async () => {
         const view = ReactDOM.createRoot(container);
         await act(async () => view.render(React.createElement(Initialize, null, React.createElement(Child))));
         assert.ok(container.querySelector("[role=status]")); assert.equal(mounted, 0);
+        assert.ok(document.getElementById("startup-shell"), "Keep first-paint content while initialization is pending");
         await act(async () => {
             fail ? held.reject(new Error("下载记录初始化失败：Injected IndexedDB failure")) : held.resolve();
             await Promise.resolve();
@@ -33,10 +38,12 @@ module.exports = async () => {
             assert.ok(container.textContent.includes("Injected IndexedDB failure"));
             assert.equal(container.querySelector("button").textContent, "重新启动");
             assert.equal(mounted, 0);
+            assert.equal(document.getElementById("startup-shell"), null, "Startup shell must not obscure initialization errors");
         } else {
             assert.ok(container.textContent.includes("Player ready")); assert.equal(mounted, 1);
         }
         await act(async () => view.unmount());
+        shell.remove();
     }
     return "PASS: real React startup loading/error/restart UI, logger failure isolation and no player mount before successful initialization";
 };
