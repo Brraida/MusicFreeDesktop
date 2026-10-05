@@ -1,7 +1,7 @@
 import { getInternalData, getMediaPrimaryKey, setInternalData } from "@/common/media-util";
 import Store from "@/common/store";
 import { DownloadResourceState, DownloadResourceStatus, DownloadFileInspection, DownloadWatchEvent, effectiveResourceState } from "@/common/download-resource";
-import { getUserPreferenceIDB, setUserPreferenceIDB } from "@/renderer/utils/user-perference";
+import { setUserPreferenceIDB } from "@/renderer/utils/user-perference";
 import musicSheetDB from "../db/music-sheet-db";
 import { internalDataKey, musicRefSymbol } from "@/common/constant";
 import { DownloadEvts, ee } from "./ee";

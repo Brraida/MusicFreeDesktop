@@ -12,7 +12,7 @@ async function classifyMissing(filePath: string, identity?: DownloadFileIdentity
     const root = path.parse(path.resolve(filePath)).root;
     try {
         await fs.stat(root);
-    } catch (error) {
+    } catch {
         return { state: DownloadResourceState.UNAVAILABLE, reason: "offline" };
     }
     // On Unix an unmounted volume can leave an accessible mount point behind.

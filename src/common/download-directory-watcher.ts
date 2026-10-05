@@ -65,6 +65,7 @@ export class DownloadDirectoryWatcher {
             try {
                 notify(event);
             } catch (error) {
+                // eslint-disable-next-line no-console -- Observer failures must remain visible in the preload context.
                 console.error("Download watcher observer failed", error);
             }
         };
