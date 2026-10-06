@@ -1,0 +1,259 @@
+{
+  "date": "2026-10-05",
+  "baseRevision": "934b7ca862ca6f3508aac3a4ea1d1be269a802a0",
+  "includesUncommittedFix": true,
+  "platform": "win32",
+  "architecture": "x64",
+  "electron": "25.3.0",
+  "passed": true,
+  "sourceSha256": {
+    "src/common/download-resource.ts": "b3880c436775bb6feb3e65f0a6e12e746afcb5608fdd75bf42142e8db983f6d9",
+    "src/renderer/core/downloader/downloaded-sheet.ts": "58d872a707dd78ea28767cfa6c11ef0aefb636e2a5d8ce040316de5d74ff95d9",
+    "src/renderer/core/downloader/index.ts": "e78d5f3801cab457823687ab54d33b27b839094a5e9158d0f2b449191ec58c07",
+    "src/renderer/core/track-player/index.ts": "55726686729ee0f595de3fe045e4ef819e6480a9dad34cf25d83e9028c63c825",
+    "src/renderer/components/MusicDownloaded/index.tsx": "41e1d0cd3378cbda9a6161f65e20fd03ffa1acf5eedeaa15670c5d4365569657",
+    "src/types/media.d.ts": "66c8a53d3f677ad9009084f7e0c78efba437bd29b8bb82df154e010191e0ccc5",
+    "scripts/tests/download-resource-renderer.cjs": "9e5694d0272fbe43f134500c33128c2463c60b1c4a178687bd8fab7ee60dd754"
+  },
+  "nodeSuites": [
+    {
+      "name": "node-player",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2948
+    },
+    {
+      "name": "node-service",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 844
+    },
+    {
+      "name": "node-scanner",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3027
+    },
+    {
+      "name": "node-audio",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 656
+    },
+    {
+      "name": "node-store",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 493
+    },
+    {
+      "name": "node-startup",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 854
+    },
+    {
+      "name": "node-ci",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 618
+    },
+    {
+      "name": "node-download-resource",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3371
+    },
+    {
+      "name": "node-duration",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1043
+    }
+  ],
+  "electronSuites": [
+    {
+      "name": "electron-downloader",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 3000
+    },
+    {
+      "name": "electron-audio",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1553
+    },
+    {
+      "name": "electron-playlist",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1235
+    },
+    {
+      "name": "electron-startup",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1068
+    },
+    {
+      "name": "electron-relocation",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 2687
+    },
+    {
+      "name": "electron-download-resource",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 6133
+    },
+    {
+      "name": "electron-vinyl",
+      "passed": true,
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 10010
+    }
+  ],
+  "finalResourceRerun": {
+    "suite": "download-resource",
+    "passed": true,
+    "result": "PASS: cached restart before any disk reads, incremental correction during baseline, real Windows watcher + IndexedDB + React, external deletion/restoration/directory recreation, hash-verified moves, manual refresh, offline/permission/I/O/content/playback unavailability, stale configuration exclusion, commit rollback, concurrent re-download ownership, real HTMLAudio local-open failure and decoded network fallback",
+    "counts": {
+      "/seed.wav": 1,
+      "/fallback.wav": 1
+    },
+    "electron": "25.3.0"
+  },
+  "typeCheck": "passed",
+  "formatCheck": "passed",
+  "packagedRuntime": {
+    "passed": true,
+    "version": "0.0.80",
+    "platform": "win32",
+    "arch": "x64",
+    "electron": "25.3.0",
+    "sqliteNativeLoaded": true,
+    "sharpImageProcessed": true
+  },
+  "packagedUi": {
+    "passed": true,
+    "cachedDownloadFrame": {
+      "count": 1,
+      "atMs": 594.6999999880791,
+      "title": "上次核对：已下载，后台复核中"
+    },
+    "durationCells": [
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "04:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "1:02:03",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      }
+    ],
+    "persistedDurations": [
+      180,
+      180,
+      180,
+      "240",
+      "1:02:03",
+      180
+    ],
+    "checks": [
+      "cached download icon appears before background confirmation; tooltip marks historical result",
+      "old local and downloaded songs recover and persist duration; numeric and formatted strings render",
+      "blue default and local images",
+      "real six-song playlist",
+      "select all then deselect one",
+      "850px narrow page",
+      "local synthesized WAV playback",
+      "detail and mini circular covers",
+      "real mini-window state sync",
+      "pause in both windows",
+      "legacy classic migrated to porcelain without an orange frame",
+      "external pack precedence and restore",
+      "theme persisted after reload",
+      "nonblank first frame before 3.2s delayed player chunk",
+      "music note, regular F and last e at 1050/1200px and 100/125/150/200 percent zoom",
+      "chunk failure retry",
+      "production identity; registration intercepted and isolated test profile"
+    ],
+    "network": "HTTP(S) blocked; no requests attempted"
+  },
+  "cacheRegression": {
+    "records": 24,
+    "diskInspectionsDuringRestore": 0,
+    "cachedStates": [
+      "AVAILABLE",
+      "MISSING",
+      "UNAVAILABLE"
+    ],
+    "invalidVersionPathDirectoryAndFingerprint": "not restored",
+    "visibleChecks": "deduplicated and prioritized",
+    "fileEventDuringBaseline": "corrected before next ordinary batch",
+    "referenceCounts": "unchanged",
+    "correctedMissingAfterRestart": "restored without disk inspection",
+    "emptyPlaybackState": "renders without a selected song"
+  },
+  "knowledgeBase": {
+    "totalDiagrams": 14,
+    "desktopRendered": 14,
+    "narrowRendered": 14,
+    "printRendered": 14,
+    "httpRequests": 0
+  },
+  "limits": [
+    "Legacy records need an initial verification before a valid state snapshot exists.",
+    "Stored duration is immediate; unknown duration still requires local metadata, plugin detail, or playback.",
+    "Historical file status can be temporarily stale after external changes while the app was closed; actions verify their target.",
+    "Fixture timings are not a benchmark of the user's 1000-song library.",
+    "Linux GUI and macOS runtime were not validated in this cache optimization."
+  ],
+  "build": "out/MusicFree-win32-x64/MusicFree.exe",
+  "testArtifacts": "out/.history/download-cache-20261005",
+  "codeCommit": "93ac313bf683ee764b84a1e7c32920d9f083bc21",
+  "userValidation": {
+    "date": "2026-10-06",
+    "result": "用户反馈测试没有问题"
+  }
+}

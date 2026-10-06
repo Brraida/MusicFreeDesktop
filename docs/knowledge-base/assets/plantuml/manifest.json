@@ -3,12 +3,12 @@
     "source": "../design/download-file-state/before.puml",
     "svg": "assets/plantuml/before.svg",
     "sourceSha256": "a107d38e3d84b837b0ad6ca89272b6673c03b01313cb2ec7962cf538532e8fa6",
-    "svgSha256": "efa24b150360f515ba93eb8e2063bec24fa696ff78f33f80263d59ac059a3259"
+    "svgSha256": "34729f6747440c49a5c99b689a50067e482336f941791eae54340831869b240a"
   },
   {
     "source": "../design/download-file-state/implemented.puml",
     "svg": "assets/plantuml/implemented.svg",
-    "sourceSha256": "9cdbd4cd4943f86153ed76e7678912e88f625da83a10ec37cf3af5114834f7bf",
-    "svgSha256": "169614feafc8a700d0bca22d77e38a6683083cd01ebbcf1ca5e3c4a18619169c"
+    "sourceSha256": "10a7d70bff4b90a97281f571639fd8b8e2df0ac66f939f3b32945d08b36f83d1",
+    "svgSha256": "94372e40b14d3525543efc24cfc7f50589ffe740357a8667277f2bd2991f5d5e"
   }
 ]
