@@ -261,6 +261,29 @@ const tick = async () => {
         assert.equal(player.audioController.tracks.length, 0);
         assert.equal(player.lyric, null);
     }
+    // Repeated text at a later timestamp must still update the attached windows.
+    {
+        const { player } = createPlayer();
+        const Parser = load("src/renderer/utils/lyric-parser.ts").default;
+        const parser = new Parser("[00:05]相同歌词\n[00:10]相同歌词\n[00:15]下一句");
+        const events = load("src/renderer/core/track-player/enum.ts").PlayerEvents;
+        const changes = [], full = [];
+        player.on(events.CurrentLyricChanged, line => changes.push(line));
+        player.on(events.LyricChanged, data => full.push(data));
+        player.setCurrentLyric({ parser, currentLrc: parser.getPosition(5) });
+        assert.equal(full.length, 1);
+        assert.equal(changes[0].time, 5, "Initial parser must emit its current line too");
+        player.createAudioController();
+        player.audioController.onProgressUpdate({ currentTime: 10, duration: 30 });
+        assert.equal(changes.at(-1).time, 10);
+        assert.equal(changes.length, 2, "Identical text at a later timestamp still advances the line");
+        player.audioController.onProgressUpdate({ currentTime: 11, duration: 30 });
+        assert.equal(changes.length, 2, "Progress inside a line must not emit another line event");
+        player.audioController.onProgressUpdate({ currentTime: 0, duration: 30 });
+        assert.equal(changes.at(-1), null, "Seeking into the intro clears attached lyrics");
+        player.setCurrentLyric(null);
+        assert.equal(full.at(-1), null);
+    }
     console.log("PASS: player source/lyrics generations, A-B-A, quality races, stale errors and reset");
 })().catch(error => {
     console.error(error); process.exitCode = 1;

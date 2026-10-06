@@ -8,6 +8,6 @@ export default async function () {
     await AppConfig.setup();
     setupBuiltinTheme(AppConfig.getConfig("normal.builtinTheme") || "jiangnan");
     await setupI18n();
-    messageBus.subscribeAppState(["playerState", "musicItem", "repeatMode", "parsedLrc", "lyricText"]);
+    messageBus.subscribeAppState(["playerState", "musicItem", "repeatMode", "parsedLrc", "lyricText", "fullLyric", "lyricHasTimeline", "lyricOffset", "duration"]);
     messageBus.sendCommand("SyncAppState");
 }

@@ -8,6 +8,9 @@ export interface IAppState {
   lyricText?: string | null;
   parsedLrc?: IParsedLrcItem | null;
   fullLyric?: IParsedLrcItem[] | null;
+  lyricHasTimeline?: boolean;
+  /** LRC offset in seconds, for progress-driven long-line scrolling. */
+  lyricOffset?: number;
   progress?: number;
   duration?: number;
 }

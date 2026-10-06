@@ -205,7 +205,7 @@ class TrackPlayer {
             // 检查歌词
             if (this.lyric?.parser) {
                 const lyricItem = this.lyric.parser.getPosition(progress.currentTime);
-                if (this.lyric.currentLrc?.lrc !== lyricItem?.lrc) {
+                if (this.lyric.currentLrc !== lyricItem) {
                     this.setCurrentLyric({
                         parser: this.lyric.parser,
                         currentLrc: lyricItem,
@@ -830,7 +830,8 @@ class TrackPlayer {
 
         if (lyric?.parser !== prev?.parser) {
             this.ee.emit(PlayerEvents.LyricChanged, lyric?.parser ?? null);
-        } else if (lyric?.currentLrc !== prev?.currentLrc) {
+        }
+        if (lyric?.parser !== prev?.parser || lyric?.currentLrc !== prev?.currentLrc) {
             this.ee.emit(PlayerEvents.CurrentLyricChanged, lyric?.currentLrc ?? null);
         }
     }

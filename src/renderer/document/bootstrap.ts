@@ -215,6 +215,8 @@ function setupCommandAndEvents() {
             lyricText: trackPlayer.lyric?.currentLrc?.lrc || null,
             parsedLrc: trackPlayer.lyric?.currentLrc || null,
             fullLyric: trackPlayer.lyric?.parser?.getLyricItems() || [],
+            lyricHasTimeline: trackPlayer.lyric?.parser?.hasTimeTags ?? false,
+            lyricOffset: trackPlayer.lyric?.parser?.getMeta()?.offset ?? 0,
             progress: trackPlayer.progress?.currentTime || 0,
             duration: trackPlayer.progress?.duration || 0,
         };
@@ -242,7 +244,7 @@ function setupCommandAndEvents() {
 
     trackPlayer.on(PlayerEvents.CurrentLyricChanged, lyric => {
         messageBus.syncAppState({
-            lyricText: lyric.lrc,
+            lyricText: lyric?.lrc ?? null,
             parsedLrc: lyric,
         });
     });
@@ -250,6 +252,10 @@ function setupCommandAndEvents() {
     trackPlayer.on(PlayerEvents.LyricChanged, lyric => {
         messageBus.syncAppState({
             fullLyric: lyric?.getLyricItems?.() || [],
+            parsedLrc: trackPlayer.lyric?.currentLrc ?? null,
+            lyricText: trackPlayer.lyric?.currentLrc?.lrc ?? null,
+            lyricHasTimeline: lyric?.hasTimeTags ?? false,
+            lyricOffset: lyric?.getMeta()?.offset ?? 0,
         });
     });
 
@@ -268,6 +274,8 @@ function setupCommandAndEvents() {
             musicItem,
             lyricText: null,
             fullLyric: [],
+            lyricHasTimeline: false,
+            lyricOffset: 0,
             parsedLrc: null,
             progress: 0,
             duration: 0,

@@ -432,5 +432,10 @@
     "how_to_submit_new_theme": "💡How to submit a new theme: The themes in the theme marketplace are synchronized with the <Github>MusicFreeThemePacks</Github> repository. If you need to submit a new theme, please make a pull request directly.",
     "load_remote_theme_error": "An error occurred...",
     "invalid_theme": "Invalid theme: {{reason}}"
+  },
+  "lyric_pair": {
+    "current": "Current lyric",
+    "next": "Next lyric",
+    "instrumental": "Instrumental"
   }
 }

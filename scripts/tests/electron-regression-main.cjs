@@ -5,7 +5,7 @@ const http = require("node:http");
 const root = path.resolve(__dirname, "../..");
 process.chdir(root);
 const suite = process.argv[2];
-if (!["audio", "playlist", "startup", "relocation", "download-resource", "vinyl"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, download-resource or vinyl");
+if (!["audio", "playlist", "startup", "relocation", "download-resource", "vinyl", "lyric"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, download-resource, vinyl or lyric");
 const testRoot = path.join(root, "out/.correctness-regression-" + suite + "-" + Date.now());
 fs.mkdirSync(testRoot, { recursive: true });
 app.setPath("userData", path.join(testRoot, "profile"));
@@ -59,7 +59,7 @@ function finish(code, error) {
 (async () => {
     await app.whenReady();
     await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-    window = new BrowserWindow({ show: false, ...(suite === "vinyl" ? { width: 1200, height: 1000 } : {}), webPreferences: {
+    window = new BrowserWindow({ show: false, ...(["vinyl", "lyric"].includes(suite) ? { width: 1200, height: 1000 } : {}), webPreferences: {
         nodeIntegration: true, contextIsolation: false, backgroundThrottling: false,
     } });
     const page = path.join(testRoot, "index.html");
@@ -81,6 +81,19 @@ function finish(code, error) {
         await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
         window.webContents.debugger.detach();
         await window.webContents.executeJavaScript("window.vinylFinish()");
+    }
+    if (suite === "lyric") {
+        for (const mode of ["normal", "long", "last"]) {
+            await window.webContents.executeJavaScript(`window.lyricPreviewMode(${JSON.stringify(mode)})`);
+            fs.writeFileSync(path.join(testRoot, mode + ".png"), (await window.webContents.capturePage()).toPNG());
+        }
+        await window.webContents.executeJavaScript("window.lyricPreviewMode('long')");
+        window.webContents.debugger.attach("1.3");
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+        const reduced = await window.webContents.executeJavaScript("new Promise(resolve => requestAnimationFrame(() => resolve(getComputedStyle(document.querySelector('.lyric-next-row span')).animationName === 'none')))");
+        if (!reduced) throw new Error("Lyric preview ignores reduced motion");
+        window.webContents.debugger.detach();
+        await window.webContents.executeJavaScript("window.lyricFinish()");
     }
     fs.writeFileSync(path.join(testRoot, "result.json"), JSON.stringify({ suite, passed: true, result, counts, electron: process.versions.electron }, null, 2));
     console.log(result);

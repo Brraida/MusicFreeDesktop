@@ -4,7 +4,7 @@
   background-color: transparent;
   user-select: none;
 
-  & .minimode-header-container {
+  .minimode-header-container {
     width: 100%;
     height: 72px;
     box-sizing: border-box;
@@ -14,31 +14,39 @@
     align-items: center;
     border-radius: 6px;
 
-    & .mini-mode-header-background-mask {
+    .mini-mode-header-background-mask {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       z-index: -2;
       background-color: #333333;
     }
 
-    & .mini-mode-header-background {
+    .mini-mode-header-background {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background-size: cover;
       background-position: center;
       z-index: -1;
       opacity: 0.6;
-      transition: all 300ms ease-in-out;
+      transition: opacity 300ms ease-in-out;
       filter: blur(15px);
     }
 
-    & .album-container {
+    .mini-cover-container {
+      position: relative;
+      flex: 0 0 56px;
+      width: 56px;
+      height: 56px;
+
+      &:hover .options-container,
+      &:focus-within .options-container {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+      }
+    }
+
+    .album-container {
       width: 56px;
       height: 56px;
       cursor: pointer;
@@ -49,62 +57,117 @@
       }
     }
 
-    & .body-container {
+    .body-container {
       flex: 1;
+      min-width: 0;
       height: 100%;
-      font-size: 13px;
 
-      & .text-container {
-        width: 100%;
+      .text-container {
         height: 100%;
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
         justify-content: center;
-        overflow: hidden;
+        gap: 4px;
         color: white;
 
-        & span {
-          // 最多两行
-          display: -webkit-box;
-          -webkit-box-orient: vertical;
-          -webkit-line-clamp: 2;
+        span {
+          display: block;
+          white-space: nowrap;
           overflow: hidden;
           text-overflow: ellipsis;
+          text-align: left;
+        }
+
+        .mini-current-lyric {
+          font-size: 15px;
+          line-height: 20px;
+          font-weight: 600;
+        }
+
+        .mini-next-lyric {
+          font-size: 13px;
+          line-height: 18px;
+          opacity: 0.78;
+
+          &[data-empty="true"] {
+            visibility: hidden;
+          }
         }
       }
+    }
 
-      & .options-container {
+    .options-container {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2px;
+      padding: 3px;
+      border-radius: 6px;
+      box-sizing: border-box;
+      background: #173544f5;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 150ms ease;
+
+      button {
         display: flex;
-        align-items: center;
         justify-content: center;
-        gap: 20px;
-        height: 100%;
-        padding-right: 48px;
-        position: relative;
+        align-items: center;
+        padding: 0;
+        min-width: 0;
+        border: 0;
+        border-radius: 3px;
+        background: transparent;
+        color: white;
+        cursor: pointer;
 
-        & .close-button {
-          position: absolute;
-          right: 0;
-          top: 0;
-          color: white;
-
-          & svg {
-            width: 16px;
-            height: 16px;
-          }
+        &:hover {
+          background: #ffffff25;
         }
 
-        & .option-item {
-          color: white;
+        &:focus-visible {
+          outline: 2px solid white;
+          outline-offset: -2px;
+        }
 
-          & svg {
-            width: 28px;
-            height: 28px;
-          }
-          opacity: 0.8;
+        svg {
+          width: 16px;
+          height: 16px;
         }
       }
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .minimode-page-container .options-container {
+    transition: none;
+  }
+}
+
+// Match the approved blue lyric card while retaining the active theme outside it.
+html[data-builtin-theme="jiangnan"] .minimode-page-container {
+  .minimode-header-container {
+    background: linear-gradient(120deg, #19405c, #245d73);
+    border-color: #75a1b233;
+
+    .mini-mode-header-background-mask {
+      background: transparent;
+    }
+
+    .body-container .text-container {
+      color: #e8f7ff;
+    }
+
+    .mini-next-lyric {
+      color: #d8e5ed;
+    }
+
+    .album-container:focus-visible {
+      outline-color: #e8f7ff;
     }
   }
 }

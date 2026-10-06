@@ -1,125 +1,80 @@
-import { useState } from "react";
 import SvgAsset from "@/renderer/components/SvgAsset";
 import { PlayerState } from "@/common/constant";
 import albumImg from "@/assets/imgs/album-cover.jpg";
 import VinylCover from "@/renderer/components/VinylCover";
 import { getMediaPrimaryKey } from "@/common/media-util";
-
+import useLyricPair from "@/renderer/utils/use-lyric-pair";
 import "./index.scss";
 import { useTranslation } from "react-i18next";
-import { useUserPreference } from "@/renderer/utils/user-perference";
 import { appWindowUtil } from "@shared/utils/renderer";
-import messageBus, { useAppStatePartial } from "@shared/message-bus/renderer/extension";
-
+import messageBus from "@shared/message-bus/renderer/extension";
 
 export default function MinimodePage() {
-    const [hover, setHover] = useState(false);
-    const currentMusicItem = useAppStatePartial("musicItem");
-    const playerState = useAppStatePartial("playerState");
-    const lyricItem = useAppStatePartial("parsedLrc");
-
+    const { pair, musicItem, playerState } = useLyricPair();
     const { t } = useTranslation();
-    const [showTranslation] = useUserPreference("showTranslation");
-
-    const textContent = (
-        <div className="text-container">
-            <span>
-                {lyricItem?.lrc || currentMusicItem?.title || t("media.unknown_title")}
-            </span>
-            {showTranslation ? <span>{lyricItem?.translation}</span> : null}
-        </div>
-    );
-
-    const options = (
-        <div className="options-container">
-            <div
-                role="button"
-                className="close-button"
-                onClick={() => {
-                    appWindowUtil.setMinimodeWindow(false);
-                    appWindowUtil.showMainWindow();
-                }}
-            >
-                <SvgAsset iconName="x-mark"></SvgAsset>
-            </div>
-            <div
-                role="button"
-                className="option-item"
-                onClick={() => {
-                    messageBus.sendCommand("SkipToPrevious");
-                }}
-            >
-                <SvgAsset iconName="skip-left"></SvgAsset>
-            </div>
-            <div
-                role="button"
-                className="option-item"
-                onClick={() => {
-                    messageBus.sendCommand(
-                        "TogglePlayerState",
-                    );
-                }}
-            >
-                <SvgAsset
-                    iconName={playerState === PlayerState.Playing ? "pause" : "play"}
-                ></SvgAsset>
-            </div>
-
-            <div
-                role="button"
-                className="option-item"
-                onClick={() => {
-                    messageBus.sendCommand("SkipToNext");
-                }}
-            >
-                <SvgAsset iconName="skip-right"></SvgAsset>
-            </div>
-        </div>
-    );
+    const playing = playerState === PlayerState.Playing;
+    const currentText = pair.current?.lrc || (pair.phase === "instrumental"
+        ? t("lyric_pair.instrumental") : musicItem?.title || t("media.unknown_title"));
+    const nextText = pair.next?.lrc || "";
+    const title = (musicItem?.title || t("media.unknown_title")) + " - "
+        + (musicItem?.artist || t("media.unknown_artist"));
 
     return (
         <div className="minimode-page-container">
-            <div
-                className="minimode-header-container"
-                onMouseEnter={() => {
-                    setHover(true);
-                }}
-                onMouseLeave={() => {
-                    setHover(false);
-                }}
-            >
+            <div className="minimode-header-container">
                 <div className="mini-mode-header-background-mask"></div>
-                <div
-                    className="mini-mode-header-background"
-                    style={{
-                        backgroundImage: `url(${currentMusicItem?.artwork || albumImg})`,
-                    }}
-                ></div>
-                <VinylCover
-                    compact
-                    title={
-                        (currentMusicItem?.title || t("media.unknown_title")) +
-                        " - " +
-                        (currentMusicItem?.artist || t("media.unknown_artist"))
-                    }
-                    role="button"
-                    tabIndex={0}
-                    className="album-container"
-                    artwork={currentMusicItem?.artwork}
-                    alt={currentMusicItem?.title || t("media.unknown_title")}
-                    playing={!!currentMusicItem && playerState === PlayerState.Playing}
-                    trackKey={currentMusicItem ? getMediaPrimaryKey(currentMusicItem) : undefined}
-                    onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            appWindowUtil.showMainWindow();
-                        }
-                    }}
-                    onDoubleClick={() => {
-                        appWindowUtil.showMainWindow();
-                    }}
-                />
-                <div className="body-container">{hover ? options : textContent}</div>
+                <div className="mini-mode-header-background" style={{
+                    backgroundImage: `url(${musicItem?.artwork || albumImg})`,
+                }}></div>
+                <div className="mini-cover-container">
+                    <VinylCover
+                        compact title={title} role="button" tabIndex={0}
+                        className="album-container" artwork={musicItem?.artwork}
+                        alt={musicItem?.title || t("media.unknown_title")}
+                        playing={!!musicItem && playing}
+                        trackKey={musicItem ? getMediaPrimaryKey(musicItem) : undefined}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                appWindowUtil.showMainWindow();
+                            }
+                        }}
+                        onDoubleClick={() => appWindowUtil.showMainWindow()}
+                    />
+                    <div className="options-container">
+                        <button className="option-item" title={t("music_bar.previous_music")}
+                            aria-label={t("music_bar.previous_music")}
+                            onClick={() => messageBus.sendCommand("SkipToPrevious")}>
+                            <SvgAsset iconName="skip-left" />
+                        </button>
+                        <button className="option-item" title={t("media.music_state_play_or_pause")}
+                            aria-label={t("media.music_state_play_or_pause")}
+                            onClick={() => messageBus.sendCommand("TogglePlayerState")}>
+                            <SvgAsset iconName={playing ? "pause" : "play"} />
+                        </button>
+                        <button className="option-item" title={t("music_bar.next_music")}
+                            aria-label={t("music_bar.next_music")}
+                            onClick={() => messageBus.sendCommand("SkipToNext")}>
+                            <SvgAsset iconName="skip-right" />
+                        </button>
+                        <button className="close-button" title={t("common.exit")}
+                            aria-label={t("common.exit")}
+                            onClick={() => {
+                                appWindowUtil.setMinimodeWindow(false);
+                                appWindowUtil.showMainWindow();
+                            }}>
+                            <SvgAsset iconName="x-mark" />
+                        </button>
+                    </div>
+                </div>
+                <div className="body-container">
+                    <div className="text-container" data-phase={pair.phase}>
+                        <span className="mini-current-lyric" title={currentText}
+                            aria-label={t("lyric_pair.current")}>{currentText}</span>
+                        <span className="mini-next-lyric" title={nextText} aria-label={t("lyric_pair.next")}
+                            data-empty={!nextText}>{nextText || "\u00a0"}</span>
+                    </div>
+                </div>
             </div>
         </div>
     );

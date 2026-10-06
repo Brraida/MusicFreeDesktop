@@ -1,0 +1,54 @@
+const assert = require("node:assert/strict");
+const { load } = require("./source-loader.cjs");
+const Parser = load("src/renderer/utils/lyric-parser.ts").default;
+const { deriveLyricPair: pair } = load("src/renderer/utils/lyric-pair.ts");
+const layout = load("src/common/lyric-layout.ts");
+const lyric = new Parser("[00:15]第三句\n[00:05]相同歌词\n[00:10]相同歌词\n[00:20]\n[00:25]最后一句");
+const lines = lyric.getLyricItems();
+assert.deepEqual(lines.map(x => x.index), [0, 1, 2, 3, 4]);
+assert.deepEqual(lines.map(x => x.time), [5, 10, 15, 20, 25]);
+assert.equal(lyric.hasTimeTags, true);
+const at = time => pair(lines, lyric.getPosition(time), lyric.hasTimeTags);
+assert.equal(at(0).next.lrc, "相同歌词");
+assert.equal(at(0).phase, "intro");
+assert.equal(at(5).current.index, 0);
+assert.equal(at(5).next.index, 1);
+assert.equal(at(10).current.index, 1);
+assert.equal(at(10).next.lrc, "第三句");
+assert.equal(at(15).next.lrc, "最后一句");
+assert.equal(at(15).endTime, 20, "Current long line stops at the blank timestamp, not at next sung line");
+assert.equal(at(21).phase, "instrumental");
+assert.equal(at(21).current, undefined);
+assert.equal(at(21).next.lrc, "最后一句");
+assert.equal(at(25).next, undefined);
+assert.equal(at(25).current.lrc, "最后一句");
+assert.equal(at(0).current, undefined, "Seeking into the intro clears the current line");
+assert.equal(at(10).current.index, 1, "Forward seek after a backward seek resolves again");
+const sameTime = new Parser("[00:05]主唱\n[00:05]和声\n[00:09]下一句");
+assert.equal(pair(sameTime.getLyricItems(), sameTime.getLyricItems()[0], true).next.lrc, "下一句");
+assert.equal(pair(lines, { index: 0, time: 5, lrc: "另一首歌" }, true).phase, "loading");
+assert.equal(pair(lines, { index: 0, time: 5, lrc: "另一首歌" }, true).next, undefined);
+assert.equal(pair([], null, false).phase, "empty");
+const plain = new Parser("没有时间戳\n不伪造下一句");
+assert.equal(plain.hasTimeTags, false);
+assert.equal(pair(plain.getLyricItems(), plain.getPosition(4), false).phase, "unsynced");
+const zero = new Parser("[00:00]唯一的一句");
+assert.equal(zero.hasTimeTags, true);
+assert.equal(pair(zero.getLyricItems(), zero.getPosition(0), true).current.lrc, "唯一的一句");
+const translated = new Parser("[00:05]原文\n[00:10]下一句原文", { translation: "[00:05]译文\n[00:10]下一句译文" });
+assert.equal(pair(translated.getLyricItems(), translated.getPosition(5), true).next.lrc, "下一句原文");
+assert.equal(translated.getPosition(5).translation, "译文");
+for (const offset of [1000, -1000]) {
+    const shifted = new Parser(`[offset:${offset}]\n[00:05]第一句\n[00:10]第二句`);
+    assert.equal(shifted.getMeta().offset, offset / 1000);
+    assert.equal(shifted.getPosition(5 + offset / 1000).lrc, "第一句");
+    assert.equal(shifted.getPosition(4 + offset / 1000), null);
+}
+for (let font = 16; font <= 80; ++font) {
+    assert.equal(layout.lyricFontSizeForHeight(layout.lyricWindowHeight(font)), font, "Resize round-trip must not shrink the font repeatedly");
+}
+assert.equal(layout.lyricWindowHeight(54), 179);
+assert.equal(layout.normalizeLyricFontSize(NaN), 54);
+assert.equal(layout.lyricFontSizeForHeight(50), 16);
+assert.equal(layout.lyricFontSizeForHeight(1000), 80);
+console.log("PASS: lyric pairs, normalized indices, repeated/simultaneous lines, blank intervals, intro/seek/last, stale snapshots, plain text, zero timestamp, translation, offsets and resize round-trip");
