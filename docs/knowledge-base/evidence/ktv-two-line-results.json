@@ -1,10 +1,10 @@
 {
-  "status": "implemented-and-verified-in-feature-worktree",
-  "recordedAt": "2026-10-05T12:18:25.986497+00:00",
-  "branch": "feature/ktv-two-line-lyrics",
-  "baseCommit": "631ae59a07be98b8d4cabf821d1b0c0ab6efd1bb",
-  "uncommittedChanges": true,
-  "mergedIntoDev": false,
+  "status": "rebased-into-dev-and-integrated-build-verified",
+  "recordedAt": "2026-10-06T02:38:54.424383+00:00",
+  "branch": "dev",
+  "baseCommit": "01ec74ff1411f5b5b00ed3f522bd37c2febad025",
+  "uncommittedChanges": false,
+  "mergedIntoDev": true,
   "scope": "Current and next timed lyric in desktop and mini windows; approved style retained; no word-by-word timestamps added",
   "platform": {
     "os": "Windows",
@@ -18,7 +18,7 @@
     "typescriptNoEmit": true,
     "eslint": {
       "errors": 0,
-      "warnings": 138,
+      "warnings": 139,
       "scope": "src; existing warnings retained"
     },
     "node": [
@@ -27,63 +27,70 @@
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 2489
+        "durationMs": 2582
       },
       {
         "name": "node-service",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 709
+        "durationMs": 705
       },
       {
         "name": "node-scanner",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 3021
+        "durationMs": 5260
       },
       {
         "name": "node-audio",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 583
+        "durationMs": 603
       },
       {
         "name": "node-store",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 435
+        "durationMs": 433
       },
       {
         "name": "node-startup",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 796
+        "durationMs": 822
       },
       {
         "name": "node-ci",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 680
+        "durationMs": 652
       },
       {
         "name": "node-download-resource",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 3347
+        "durationMs": 3350
+      },
+      {
+        "name": "node-duration",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1746
       },
       {
         "name": "node-lyric",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 512
+        "durationMs": 681
       }
     ],
     "electron": [
@@ -92,56 +99,56 @@
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 3065
+        "durationMs": 5176
       },
       {
         "name": "electron-audio",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 1557
+        "durationMs": 2572
       },
       {
         "name": "electron-playlist",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 1214
+        "durationMs": 1245
       },
       {
         "name": "electron-startup",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 1033
+        "durationMs": 1061
       },
       {
         "name": "electron-relocation",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 2539
+        "durationMs": 2613
       },
       {
         "name": "electron-download-resource",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 5242
+        "durationMs": 6403
       },
       {
         "name": "electron-vinyl",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 10091
+        "durationMs": 12936
       },
       {
         "name": "electron-lyric",
         "passed": true,
         "exitCode": 0,
         "signal": null,
-        "durationMs": 5082
+        "durationMs": 4196
       }
     ]
   },
@@ -159,15 +166,15 @@
       "version": "0.0.80",
       "platform": "win32",
       "arch": "x64",
-      "commit": "631ae59a07be98b8d4cabf821d1b0c0ab6efd1bb",
-      "builtAt": "2026-10-05T12:10:17.394Z"
+      "commit": "c814d799fa56744d41272b684ca841577bfe96eb",
+      "builtAt": "2026-10-06T02:37:58.929Z"
     },
     "executableSha256": "6f063977ef60816c9932c396018eb1ec4cd1a6dd380ece54d51aa7e88b58e4b2"
   },
   "packagedWindowCheck": {
     "passed": true,
-    "recordedAt": "2026-10-05T12:15:48.643Z",
-    "packageRoot": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\MusicFree-win32-x64",
+    "recordedAt": "2026-10-06T02:38:26.017Z",
+    "packageRoot": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\dev-ktv\\MusicFree-win32-x64",
     "scope": "Unmodified packaged main/preload/renderer bundles, local silent WAV, real MessagePorts, isolated profile; hosted by installed Electron matching the shipped version",
     "electron": "25.3.0",
     "chromium": "114.0.5735.199",
@@ -188,21 +195,21 @@
     "remoteRequests": 0,
     "preloadErrors": 0,
     "screenshots": [
-      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-intro.png",
-      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-playing.png",
-      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\mini-playing.png",
-      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\mini-hover.png",
-      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-paused.png",
-      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-last.png"
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619\\desktop-intro.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619\\desktop-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619\\mini-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619\\mini-hover.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619\\desktop-paused.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619\\desktop-last.png"
     ],
-    "output": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271"
+    "output": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-ktv-1791254298619"
   },
   "sourceSha256": {
-    "res/lang/en-US.json": "a2a3178fb3515f2f6680b4af2315efaad9686bf3d49e62ed4385d62197d0eed7",
-    "res/lang/zh-CN.json": "9a97fafa00522a30cab2f1fe6e233efbbbe716f56d189effdca16d60f0523d51",
-    "res/lang/zh-TW.json": "a76f1d56b61197bbba8689a58109901665f237a8cf74237e37f4f4dff8fd7dd4",
-    "scripts/ci/run-tests.cjs": "b76316dabee827c0f81806ffecba986722ef888c40114f7f2333091e7c19d08d",
-    "scripts/tests/README.md": "9e28b9f34cb54f33318406bc3e38df3694e9076551a63c04c46f3b5bf7c0a3cb",
+    "res/lang/en-US.json": "d0aba8a512c90ba6c1ac33575ce156892eb3953ac8225f2cc89becaff36185c7",
+    "res/lang/zh-CN.json": "131297a40d9c4e5ea24a563498c61e7ae59779faee220df3d546ff0a90bbc2a9",
+    "res/lang/zh-TW.json": "c008cc786bcb1da6f565296ae81b40eae5be9ea182f4e757e462cb67483bcdfb",
+    "scripts/ci/run-tests.cjs": "083eb270d987c98b133bde647b16fde96b173b5acc6519fe926a0f5be3184394",
+    "scripts/tests/README.md": "f87ff332fcfc5b5dcaae19eeeae7b86d6ebd07b1187a8d81e49e6a41c133fd95",
     "scripts/tests/electron-regression-main.cjs": "0b8cda119f14c58e5bd5e03196626f12d73ecf454eba86588b044792b9b07c7f",
     "scripts/tests/lyric-regression.cjs": "97872ad25d2314f31ce755dc835386c9bd56983071026d95d9e52c039a0095a6",
     "scripts/tests/lyric-renderer.cjs": "7517a361f242b9562ad4081a7111417c1320b2fd5133326c6a14feb4c0358e9f",
@@ -216,7 +223,7 @@
     "src/renderer-minimode/document/bootstrap.ts": "58a0548b3ba015583f8979904f8c7d0019e5320b67fb7cf175e6ea353eda01c2",
     "src/renderer-minimode/pages/index.scss": "48558bf8e5f0b7701453cc6f100e7f95c9df2a7c9bd23ff0ca3757d263733257",
     "src/renderer-minimode/pages/index.tsx": "c5f4aac43a17d9a746ffce52cef892a286e6b7b5ae6d287fb8d2ef4b1e93857c",
-    "src/renderer/core/track-player/index.ts": "8975aa4c1df1f5ad1562c43ccc8e0d7c8a360e57ec7db10233d425f4ba368721",
+    "src/renderer/core/track-player/index.ts": "0a77d0c544ac3dc09f2f8dce6c928eba0abe88c140068fbecf6001feb6be03bf",
     "src/renderer/document/bootstrap.ts": "7d9f463cc76ec35452dd9d0df9e049559b1c29e07837906eecf0500f73085f4e",
     "src/renderer/utils/lyric-pair.ts": "629cfc8864aba2828c225b0608f2b6248e920dc5293b413e5c2c67f3ddbf07c7",
     "src/renderer/utils/lyric-parser.ts": "44dcbda2942c36d5875766d9270a0111de5363129b68aec9cc4b9ac0a043eab2",
@@ -225,22 +232,22 @@
     "src/shared/message-bus/type.d.ts": "3ec3791cb2a22786042dbdd36739729cdb41944cf0c87888915455016c2b8351"
   },
   "bundleSha256": {
-    "resources/app/.webpack/main/479.js": "2c711c5121a19bbaf349c9c0d996ca2305e61f6467aacffe4aa91230be6003a2",
-    "resources/app/.webpack/main/index.js": "30494f25332b73da3193a56d609090afa30b321a1dcb3116202c21f2a9cf9cd2",
-    "resources/app/.webpack/renderer/170/index.js": "72f63ad2e4cb51716a1e6ddcbb85b0d8060d588c46b5d80a54c8a3004a5556d2",
-    "resources/app/.webpack/renderer/db/index.js": "a5495bb9e73eb5c289d696aac2bfa89dbe102c8f116ade1ab51b09787bae6705",
-    "resources/app/.webpack/renderer/local_file_watcher/index.js": "c87efca447e545c827ee8da66c47fda69da469d27d808d866383b05aabde71fc",
+    "resources/app/.webpack/main/525.js": "bac44be8e761b24296846fee78d33874cf80a4c78bfdd4cf09c86443f049ffa8",
+    "resources/app/.webpack/main/index.js": "069825900f1d52d274403feb10c660bcdfa1b9169c5f9319adfb7c1a83b52130",
+    "resources/app/.webpack/renderer/407/index.js": "0ce9ad96230b6582088491353a72fec1620b5a542c15075bc13635a90725d219",
+    "resources/app/.webpack/renderer/db/index.js": "6e73c5d92d6f48c610b84ff62dbc86d59382187e2bbf7c70f9cd0443aa4d80ab",
+    "resources/app/.webpack/renderer/local_file_watcher/index.js": "2f1c1c404556be6d7cbcc33b9bd5e8b13b7847aedaa12fafe370c3932ddb1e2b",
     "resources/app/.webpack/renderer/lrc_window/index.html": "b73fbced84c8b3ce39f7a808ea6a6de88ec61b4a081898a7a087c385a515dafa",
-    "resources/app/.webpack/renderer/lrc_window/index.js": "2b83b42cda4eeb05c65902fa6222492da8a4886e8e4eaa07d020e80653cefb1c",
-    "resources/app/.webpack/renderer/lrc_window/preload.js": "7fc1f017e4394207c88f5638493ed5f6d116445847c9aa18f680abc5eb428b62",
+    "resources/app/.webpack/renderer/lrc_window/index.js": "6d05317cffce2ddb5049ba381fd2da1b33a9099e8a75836d8c748985f1510a3d",
+    "resources/app/.webpack/renderer/lrc_window/preload.js": "1f284bebe76954907da46c6228b1cb2590618d86f423b1f1045ff985ec18cd12",
     "resources/app/.webpack/renderer/main_window/index.html": "401d8751c4cb3759f4ca0e9f4ceb00f32f685b8ce82fe4b616c136d118592492",
-    "resources/app/.webpack/renderer/main_window/index.js": "e6037fe4d02df4c1426ae151508e08a3aecc94966462dc2be2d2f9be656b40d4",
-    "resources/app/.webpack/renderer/main_window/preload.js": "b725f0ace3d5e79810d6d71cf1f033b11825da25d06f5e88b2fc49c88e029a02",
+    "resources/app/.webpack/renderer/main_window/index.js": "cad7d10babcfcef17d8fc4ca5d65232d46a9e777174a66a8a235d5bf6a176fed",
+    "resources/app/.webpack/renderer/main_window/preload.js": "cfa2382e6697467d47f03f4410f5d8f4ec508405e41e6d9e5cc308f385350cd3",
     "resources/app/.webpack/renderer/minimode_window/index.html": "437c03dfbf6a6ad258635d1e187ee3396e3a60fa90479bffc56bcef48e661341",
-    "resources/app/.webpack/renderer/minimode_window/index.js": "c5b4b796a3495e7e9a3e931fc203644650c62bc6a41e14293b5c7c0b9803799d",
-    "resources/app/.webpack/renderer/minimode_window/preload.js": "7fc1f017e4394207c88f5638493ed5f6d116445847c9aa18f680abc5eb428b62",
-    "resources/app/.webpack/renderer/player/index.js": "745000a1f42ba1befcfa67d8f001f3342da1d1f062678c29aa5c2a399b121d13",
-    "resources/app/.webpack/renderer/worker_downloader/index.js": "8f9511b4b71abc6ad7453d9ce1fee6e820f08c69758f7fca55e365927cd86ad0",
+    "resources/app/.webpack/renderer/minimode_window/index.js": "f2608f719591bce5b8800890d1334d51b9fe3d622d75bc446408f2858f5574d7",
+    "resources/app/.webpack/renderer/minimode_window/preload.js": "1f284bebe76954907da46c6228b1cb2590618d86f423b1f1045ff985ec18cd12",
+    "resources/app/.webpack/renderer/player/index.js": "cc810b4a3657892212977f275f05f98b79169eeb5f9e7cf06ea0a577d9ff4e42",
+    "resources/app/.webpack/renderer/worker_downloader/index.js": "7c00ee817ae858ca3a4ace5bc2570f4dcde9802cee7e2b5078119c2885829efe",
     "resources/app/.webpack/main/native_modules/electron-log-preload.js": "5d7a5f8a47f271b66ad02f8868a5b18d94865648ecb7ae20355cb1cb312e3709"
   },
   "screenshotSha256": {
@@ -277,7 +284,353 @@
     "npx eslint src",
     "node scripts/ci/run-tests.cjs node",
     "node scripts/ci/run-tests.cjs electron",
-    ".\\node_modules\\.bin\\electron.cmd docs/knowledge-base/evidence/packaged-ktv-check.cjs out/MusicFree-win32-x64",
+    ".\\node_modules\\.bin\\electron.cmd docs/knowledge-base/evidence/packaged-ktv-check.cjs out/dev-ktv/MusicFree-win32-x64",
     ".\\node_modules\\.bin\\electron.cmd docs/knowledge-base/evidence/browser-render-test.cjs"
-  ]
+  ],
+  "previousVerification": {
+    "branch": "feature/ktv-two-line-lyrics",
+    "baseCommit": "631ae59a07be98b8d4cabf821d1b0c0ab6efd1bb",
+    "recordedAt": "2026-10-05T12:18:25.986497+00:00",
+    "provenance": "Original worktree verification retained in the rebased docs commit c814d79; current record updated after integrated dev build"
+  },
+  "runtimeSourceCommit": "c814d799fa56744d41272b684ca841577bfe96eb",
+  "originalDevelopmentBase": "631ae59a07be98b8d4cabf821d1b0c0ab6efd1bb",
+  "integration": {
+    "method": "feature commits rebased onto 01ec74f, then dev fast-forwarded",
+    "featureCommit": "656b51b",
+    "docsCommit": "c814d79",
+    "preservedDevCommits": [
+      "72f2dde",
+      "934b7ca",
+      "93ac313",
+      "01ec74f"
+    ],
+    "remotePushed": false
+  },
+  "packagedStartupDurationThemeCheck": {
+    "passed": true,
+    "cachedDownloadFrame": {
+      "count": 1,
+      "atMs": 947.5999999996275,
+      "title": "上次核对：已下载，后台复核中"
+    },
+    "durationCells": [
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "04:00",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "1:02:03",
+        "width": 97,
+        "content": 97
+      },
+      {
+        "text": "03:00",
+        "width": 97,
+        "content": 97
+      }
+    ],
+    "savedDurations": [
+      180,
+      180,
+      180,
+      "240",
+      "1:02:03",
+      180
+    ],
+    "firstShownSnapshot": {
+      "shell": true,
+      "ready": false,
+      "theme": "jiangnan",
+      "primary": "#245a81",
+      "status": "正在准备曲库…",
+      "shownAtMs": 308.20000000018626,
+      "wordmark": "MusicFree",
+      "note": "♪",
+      "noteColor": "rgb(36, 90, 129)",
+      "processProbeMs": 702
+    },
+    "firstStartupMarks": [
+      {
+        "name": "player-launcher-ready",
+        "startTime": 233.8000000002794
+      },
+      {
+        "name": "player-shell-painted",
+        "startTime": 262.10000000009313
+      },
+      {
+        "name": "player-first-screen",
+        "startTime": 3868.8000000002794
+      }
+    ],
+    "heldChunk": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/dev-ktv/MusicFree-win32-x64/resources/app/.webpack/renderer/player/index.js",
+    "logoChecks": [
+      {
+        "scale": 1,
+        "windowWidth": 1050,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.046875,
+        "noteGap": 8,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.046875,
+        "right": 14.375,
+        "top": 0,
+        "bottom": 0.796875,
+        "lastWidth": 12.125,
+        "lastRight": 143.625,
+        "viewportWidth": 1050,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 1.25,
+        "windowWidth": 1050,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.050000190734863,
+        "noteGap": 7.999999046325684,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.049999237060547,
+        "right": 14.375003814697266,
+        "top": 0,
+        "bottom": 1.200002670288086,
+        "lastWidth": 12.112503051757812,
+        "lastRight": 143.625,
+        "viewportWidth": 840,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 1.5,
+        "windowWidth": 1050,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.052083969116211,
+        "noteGap": 8.000001907348633,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.052085876464844,
+        "right": 14.375,
+        "top": 0.6666660308837891,
+        "bottom": 0.7916660308837891,
+        "lastWidth": 12.114578247070312,
+        "lastRight": 143.625,
+        "viewportWidth": 700,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 2,
+        "windowWidth": 1050,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.046875,
+        "noteGap": 8,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.046875,
+        "right": 14.3828125,
+        "top": 0.5,
+        "bottom": 1.296875,
+        "lastWidth": 12.109375,
+        "lastRight": 143.6171875,
+        "viewportWidth": 525,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 1,
+        "windowWidth": 1200,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.046875,
+        "noteGap": 8,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.046875,
+        "right": 14.375,
+        "top": 0,
+        "bottom": 0.796875,
+        "lastWidth": 12.125,
+        "lastRight": 143.625,
+        "viewportWidth": 1200,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 1.25,
+        "windowWidth": 1200,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.050000190734863,
+        "noteGap": 7.999999046325684,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.049999237060547,
+        "right": 14.375003814697266,
+        "top": 0,
+        "bottom": 1.200002670288086,
+        "lastWidth": 12.112503051757812,
+        "lastRight": 143.625,
+        "viewportWidth": 960,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 1.5,
+        "windowWidth": 1200,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.052083969116211,
+        "noteGap": 8.000001907348633,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.052085876464844,
+        "right": 14.375,
+        "top": 0.6666660308837891,
+        "bottom": 0.7916660308837891,
+        "lastWidth": 12.114578247070312,
+        "lastRight": 143.625,
+        "viewportWidth": 800,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      },
+      {
+        "scale": 2,
+        "windowWidth": 1200,
+        "text": "MusicFree",
+        "svg": false,
+        "note": "♪",
+        "noteHidden": "true",
+        "noteColor": "rgb(36, 90, 129)",
+        "brandColor": "rgb(36, 90, 129)",
+        "noteWidth": 13.046875,
+        "noteGap": 8,
+        "noteLeft": 16,
+        "roundedF": false,
+        "left": 21.046875,
+        "right": 14.3828125,
+        "top": 0.5,
+        "bottom": 1.296875,
+        "lastWidth": 12.109375,
+        "lastRight": 143.6171875,
+        "viewportWidth": 600,
+        "clipped": [],
+        "font": "\"Segoe UI\", \"Microsoft YaHei\", sans-serif"
+      }
+    ],
+    "legacyClassicMigrated": true,
+    "brokenExternalPackFallsBackToBlue": true,
+    "realChunkFailureRetryPassed": true,
+    "packagedMainPreloadRenderer": true,
+    "isolatedProfile": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\userData",
+    "portableProfileTarget": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\fixture\\userData",
+    "appName": "MusicFree",
+    "protocolCalls": 1,
+    "platform": "win32",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199",
+    "network": "HTTP(S) blocked; no requests attempted",
+    "resources": [
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/dev-ktv/MusicFree-win32-x64/resources/app/.webpack/renderer/9b78b9467662d6b47039.png",
+        "width": 1536,
+        "height": 1024
+      },
+      {
+        "src": "file:///F:/brraida/MusicFreeDesktop/MusicFreeDesktop/out/dev-ktv/MusicFree-win32-x64/resources/app/.webpack/renderer/b4a20f062aa2ad622dd2.png",
+        "width": 1536,
+        "height": 1024
+      }
+    ],
+    "checks": [
+      "cached download icon appears before background confirmation; tooltip marks historical result",
+      "old local and downloaded songs recover and persist duration; numeric and formatted strings render",
+      "blue default and local images",
+      "real six-song playlist",
+      "select all then deselect one",
+      "850px narrow page",
+      "local synthesized WAV playback",
+      "detail and mini circular covers",
+      "real mini-window state sync",
+      "pause in both windows",
+      "legacy classic migrated to porcelain without an orange frame",
+      "external pack precedence and restore",
+      "theme persisted after reload",
+      "nonblank first frame before 3.2s delayed player chunk",
+      "music note, regular F and last e at 1050/1200px and 100/125/150/200 percent zoom",
+      "chunk failure retry",
+      "production identity; registration intercepted and isolated test profile"
+    ],
+    "demo": "Six fictional tracks share a locally synthesized quiet chime; original lyrics; isolated preview music only",
+    "narrowWindow": "Temporarily lowered minimum width to 850px in test; production minimum remains 1050px",
+    "screenshots": [
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\main.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\main-batch.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\main-narrow.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\detail-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\detail-paused.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\mini-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\mini-hover.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\mini-paused.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\theme-selector.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\startup-shell.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\startup-failed.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\.packaged-theme-smoke-1791254306511\\wordmark.png"
+    ]
+  },
+  "completeSourceManifest": {
+    "sha256": "bb072b2579d2a2aa5ef208e5c9892da1382f88d8fd6357010b131e7a378b6994",
+    "fileCount": 525,
+    "algorithm": "Sorted tracked src/res/scripts/config/forge/package paths + colon + raw file SHA-256; joined with LF"
+  },
+  "runPath": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\dev-ktv\\MusicFree-win32-x64\\MusicFree.exe"
 }

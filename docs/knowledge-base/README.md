@@ -28,7 +28,7 @@
 
 **当前主题实现：** [13 青花主题实际预览](13-jiangnan-theme-implementation.md)。青花主题已从独立 worktree 合入 `dev`，并补修启动白屏、首帧主题和标题裁切；[12](12-jiangnan-porcelain-theme.md)保留开发前效果图。
 
-**双行歌词实现：** [14 双行歌词](14-ktv-two-line-lyrics.md)。已在 `feature/ktv-two-line-lyrics` worktree 开发并验证，展示编译版实际截图；尚未合入 dev。
+**双行歌词实现：** [14 双行歌词](14-ktv-two-line-lyrics.md)。已在独立 worktree 开发，并 rebase 到 `dev@01ec74f` 后合入 dev；第 14 章展示编译版实际截图、流程图和验证。
 
 ## 主要结论
 

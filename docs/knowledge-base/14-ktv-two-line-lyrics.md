@@ -2,7 +2,7 @@
 
 [返回目录](README.md)
 
-> **状态：已接入播放器，在独立 worktree 中开发和验证。** 从 `dev@631ae59` 创建分支 `feature/ktv-two-line-lyrics`，尚未合入 dev。本章记录实际实现、截图与验收；此前确认的交互样式作为对照保留。
+> **状态：已接入播放器，以 rebase 方式合入 dev。** 最初从 `dev@631ae59` 创建独立 worktree；本轮将功能提交 rebase 到 `dev@01ec74f`，保留 dev 的歌曲时长恢复和下载状态缓存优化，再快进合入。本章记录实际实现、截图与验收；此前确认的交互样式作为对照保留。
 
 ## 1. 实际效果与使用
 
@@ -108,7 +108,7 @@ F=16／54／80 对应 H=101／179／232 px。主进程最小/最大高度、字�
 | Node 源码回归 | 真实解析器与共享函数：乱序、重复文字、同时间戳、空白、前奏、末句、零时单句、纯文本、翻译、正负 offset、16～80 字号换算 |
 | 主播放器回归 | 首次歌词同时发当前项；重复文字按时间切换；同一项不重复通知；快退到零与清空 |
 | Electron 组件回归 | 真实 React、SCSS、消息状态订阅和 ResizeObserver：两窗一致、长句暂停/恢复/回退、16/54/80 排版、340×72 迷你窗、控件命令、唱片稳定、减少动态效果与卸载清理 |
-| 完整门禁 | 9 组 Node、8 组 Windows Electron 回归；格式检查、TypeScript 检查、ESLint 无错误（138 项既有警告） |
+| 完整门禁 | 10 组 Node、8 组 Windows Electron 回归；格式检查、TypeScript 检查、ESLint 无错误（139 项既有警告） |
 | 编译产物 | Windows x64 构建；实际 EXE 的 Electron Node 模式检查资源、原生 SQLite/Sharp 与 ABI |
 | 编译页面验收 | 未修改的打包主进程/preload/renderer，由相同版本 Electron 承载；静音本地 WAV、真实窗口与 MessagePort、暂停/切歌/seek/字体高度、离线截图 |
 | 知识库网页 | file:// 离线打开；15 张流程图、实际截图解码、章节切换、窄屏、打印和单图失败隔离 |
@@ -120,15 +120,16 @@ F=16／54／80 对应 H=101／179／232 px。主进程最小/最大高度、字�
 ```powershell
 node scripts/tests/lyric-regression.cjs
 .\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs lyric
-.\node_modules\.bin\electron.cmd docs/knowledge-base/evidence/packaged-ktv-check.cjs out/MusicFree-win32-x64
+.\node_modules\.bin\electron.cmd docs/knowledge-base/evidence/packaged-ktv-check.cjs out/dev-ktv/MusicFree-win32-x64
 ```
 
 测试使用独立 profile 和静音示例歌曲，不操作正常歌曲库。编译页面验收使用与包内相同的 Electron 25.3.0；实际 EXE 的原生模块另行检查。这不等于所有在线歌词源、Windows 缩放倍率或 Linux/macOS GUI 都已验收；仍请手动检查自己的歌词、桌面背景、锁定／穿透和常用主题。
 
 ## 6. 本地试用入口
 
-- 分支：`feature/ktv-two-line-lyrics`，基线 `dev@631ae59`，尚未提交或合入 dev。
-- worktree：`F:\brraida\MusicFreeDesktop\MusicFreeDesktop\out\worktrees\ktv-two-line`。
-- 播放器：该目录下 `out\MusicFree-win32-x64\MusicFree.exe`，保留完整同目录资源；本轮不生成 ZIP。
-- 知识库：该目录下 `docs\knowledge-base\index.html`，第 14 章。
-- 本轮源码与文档只修改这个 worktree；其他工作区中的后续开发不在本轮改动范围。
+- 当前分支：`dev`，已包含 rebase 后的双行歌词功能与 dev 原有更新。
+- 原功能分支：`feature/ktv-two-line-lyrics`，开发起点为 `631ae59`，本轮 rebase 目标为 `01ec74f`。
+- 仓库：`F:\brraida\MusicFreeDesktop\MusicFreeDesktop`。
+- 播放器：仓库下 `out\dev-ktv\MusicFree-win32-x64\MusicFree.exe`，保留完整同目录资源；本轮不生成 ZIP。
+- 知识库：仓库下 `docs\knowledge-base\index.html`，第 14 章。
+- 旧 worktree 中的编译包是合入前版本；本次试用请使用上述 dev 主工作区的新版本。

@@ -169,7 +169,7 @@ function assertVisible(diagram) {
                 await capture('download-' + name + '.png');
             }
             const text = await evaluate(`document.querySelector('#download-file-state').textContent`);
-            for (const label of ['当前资源状态机', '历史状态机', '已解决问题', '本轮已实现并验证']) assert(text.includes(label));
+            for (const label of ['当前资源状态机', '历史状态机', '已解决问题', '恢复缓存即显示、后台增量纠正']) assert(text.includes(label));
         }
         if (chapter === 'ktv-two-line-lyrics') {
             assert.equal(diagrams.length, 1);
