@@ -1,0 +1,283 @@
+{
+  "status": "implemented-and-verified-in-feature-worktree",
+  "recordedAt": "2026-10-05T12:18:25.986497+00:00",
+  "branch": "feature/ktv-two-line-lyrics",
+  "baseCommit": "631ae59a07be98b8d4cabf821d1b0c0ab6efd1bb",
+  "uncommittedChanges": true,
+  "mergedIntoDev": false,
+  "scope": "Current and next timed lyric in desktop and mini windows; approved style retained; no word-by-word timestamps added",
+  "platform": {
+    "os": "Windows",
+    "arch": "x64",
+    "node": "20.20.0",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199"
+  },
+  "gates": {
+    "formatCheck": true,
+    "typescriptNoEmit": true,
+    "eslint": {
+      "errors": 0,
+      "warnings": 138,
+      "scope": "src; existing warnings retained"
+    },
+    "node": [
+      {
+        "name": "node-player",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 2489
+      },
+      {
+        "name": "node-service",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 709
+      },
+      {
+        "name": "node-scanner",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 3021
+      },
+      {
+        "name": "node-audio",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 583
+      },
+      {
+        "name": "node-store",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 435
+      },
+      {
+        "name": "node-startup",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 796
+      },
+      {
+        "name": "node-ci",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 680
+      },
+      {
+        "name": "node-download-resource",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 3347
+      },
+      {
+        "name": "node-lyric",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 512
+      }
+    ],
+    "electron": [
+      {
+        "name": "electron-downloader",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 3065
+      },
+      {
+        "name": "electron-audio",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1557
+      },
+      {
+        "name": "electron-playlist",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1214
+      },
+      {
+        "name": "electron-startup",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 1033
+      },
+      {
+        "name": "electron-relocation",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 2539
+      },
+      {
+        "name": "electron-download-resource",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 5242
+      },
+      {
+        "name": "electron-vinyl",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 10091
+      },
+      {
+        "name": "electron-lyric",
+        "passed": true,
+        "exitCode": 0,
+        "signal": null,
+        "durationMs": 5082
+      }
+    ]
+  },
+  "lyricRenderer": {
+    "suite": "lyric",
+    "passed": true,
+    "result": "PASS: actual React/SCSS with MessageChannel snapshots, paired windows, repeated text, intro/backward seek, pause/resume, blank/last/plain text, long-line scrolling, fonts 16/54/80, 340x72 clip checks, hover/focus controls, stable record; cleanup and reduced motion checked by main runner",
+    "counts": {},
+    "electron": "25.3.0"
+  },
+  "packagedRuntime": {
+    "passed": true,
+    "method": "Shipped EXE with ELECTRON_RUN_AS_NODE=1: scripts/ci/verify-build.cjs and verify-runtime.cjs",
+    "buildInfo": {
+      "version": "0.0.80",
+      "platform": "win32",
+      "arch": "x64",
+      "commit": "631ae59a07be98b8d4cabf821d1b0c0ab6efd1bb",
+      "builtAt": "2026-10-05T12:10:17.394Z"
+    },
+    "executableSha256": "6f063977ef60816c9932c396018eb1ec4cd1a6dd380ece54d51aa7e88b58e4b2"
+  },
+  "packagedWindowCheck": {
+    "passed": true,
+    "recordedAt": "2026-10-05T12:15:48.643Z",
+    "packageRoot": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\MusicFree-win32-x64",
+    "scope": "Unmodified packaged main/preload/renderer bundles, local silent WAV, real MessagePorts, isolated profile; hosted by installed Electron matching the shipped version",
+    "electron": "25.3.0",
+    "chromium": "114.0.5735.199",
+    "platform": "win32",
+    "checks": [
+      "intro",
+      "first/identical-text transitions",
+      "paired native windows",
+      "mini pause/resume and focus controls",
+      "seek back to zero",
+      "blank interval",
+      "last line",
+      "next song without stale lyrics",
+      "fonts 16/80/54 and native resize feedback",
+      "340x72 mini",
+      "offline assets and intercepted protocol registration"
+    ],
+    "remoteRequests": 0,
+    "preloadErrors": 0,
+    "screenshots": [
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-intro.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\mini-playing.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\mini-hover.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-paused.png",
+      "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271\\desktop-last.png"
+    ],
+    "output": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.packaged-ktv-1791202541271"
+  },
+  "sourceSha256": {
+    "res/lang/en-US.json": "a2a3178fb3515f2f6680b4af2315efaad9686bf3d49e62ed4385d62197d0eed7",
+    "res/lang/zh-CN.json": "9a97fafa00522a30cab2f1fe6e233efbbbe716f56d189effdca16d60f0523d51",
+    "res/lang/zh-TW.json": "a76f1d56b61197bbba8689a58109901665f237a8cf74237e37f4f4dff8fd7dd4",
+    "scripts/ci/run-tests.cjs": "b76316dabee827c0f81806ffecba986722ef888c40114f7f2333091e7c19d08d",
+    "scripts/tests/README.md": "9e28b9f34cb54f33318406bc3e38df3694e9076551a63c04c46f3b5bf7c0a3cb",
+    "scripts/tests/electron-regression-main.cjs": "0b8cda119f14c58e5bd5e03196626f12d73ecf454eba86588b044792b9b07c7f",
+    "scripts/tests/lyric-regression.cjs": "97872ad25d2314f31ce755dc835386c9bd56983071026d95d9e52c039a0095a6",
+    "scripts/tests/lyric-renderer.cjs": "7517a361f242b9562ad4081a7111417c1320b2fd5133326c6a14feb4c0358e9f",
+    "scripts/tests/player-regression.cjs": "fed04a4f1384e21c163f154726fe986335692fcd8ce9b51a241c0f12b50b3e71",
+    "scripts/tests/vinyl-renderer.cjs": "8b8b2dc63ccac71ac7fc75625ea0ceda0e86b494440fbcdb977081d5b82255ba",
+    "src/common/lyric-layout.ts": "5afbea00cb2c874046d1a8189697da26dfc427ed33d2221b44248ef9007f4beb",
+    "src/main/window-manager/index.ts": "78dbd31b747f4254487ee11d1eaea8b91dd6a4c0a777d81890384950a49d400a",
+    "src/renderer-lrc/document/bootstrap.ts": "2447ed3748a9b7e2e77aacb7f9593a375c6a7ffe5868dc056048652731943074",
+    "src/renderer-lrc/pages/index.scss": "c4ae6a48e902581b7b71787858b8bb397ab74b4353fae67b66751d485e7d3651",
+    "src/renderer-lrc/pages/index.tsx": "2e20345205e610ad8cfee5fe2e0056bd679affc58d21f70f5d9a47aa806e6791",
+    "src/renderer-minimode/document/bootstrap.ts": "58a0548b3ba015583f8979904f8c7d0019e5320b67fb7cf175e6ea353eda01c2",
+    "src/renderer-minimode/pages/index.scss": "48558bf8e5f0b7701453cc6f100e7f95c9df2a7c9bd23ff0ca3757d263733257",
+    "src/renderer-minimode/pages/index.tsx": "c5f4aac43a17d9a746ffce52cef892a286e6b7b5ae6d287fb8d2ef4b1e93857c",
+    "src/renderer/core/track-player/index.ts": "8975aa4c1df1f5ad1562c43ccc8e0d7c8a360e57ec7db10233d425f4ba368721",
+    "src/renderer/document/bootstrap.ts": "7d9f463cc76ec35452dd9d0df9e049559b1c29e07837906eecf0500f73085f4e",
+    "src/renderer/utils/lyric-pair.ts": "629cfc8864aba2828c225b0608f2b6248e920dc5293b413e5c2c67f3ddbf07c7",
+    "src/renderer/utils/lyric-parser.ts": "44dcbda2942c36d5875766d9270a0111de5363129b68aec9cc4b9ac0a043eab2",
+    "src/renderer/utils/use-lyric-pair.ts": "76999e3ded34f866980a6de282b1fe35d22fdd6bda21486c7580fa517caa8b41",
+    "src/shared/app-config/default-app-config.ts": "bf9530be5ebd7cf90469b6efc533f304080631165947e35a5670aa4bab728e36",
+    "src/shared/message-bus/type.d.ts": "3ec3791cb2a22786042dbdd36739729cdb41944cf0c87888915455016c2b8351"
+  },
+  "bundleSha256": {
+    "resources/app/.webpack/main/479.js": "2c711c5121a19bbaf349c9c0d996ca2305e61f6467aacffe4aa91230be6003a2",
+    "resources/app/.webpack/main/index.js": "30494f25332b73da3193a56d609090afa30b321a1dcb3116202c21f2a9cf9cd2",
+    "resources/app/.webpack/renderer/170/index.js": "72f63ad2e4cb51716a1e6ddcbb85b0d8060d588c46b5d80a54c8a3004a5556d2",
+    "resources/app/.webpack/renderer/db/index.js": "a5495bb9e73eb5c289d696aac2bfa89dbe102c8f116ade1ab51b09787bae6705",
+    "resources/app/.webpack/renderer/local_file_watcher/index.js": "c87efca447e545c827ee8da66c47fda69da469d27d808d866383b05aabde71fc",
+    "resources/app/.webpack/renderer/lrc_window/index.html": "b73fbced84c8b3ce39f7a808ea6a6de88ec61b4a081898a7a087c385a515dafa",
+    "resources/app/.webpack/renderer/lrc_window/index.js": "2b83b42cda4eeb05c65902fa6222492da8a4886e8e4eaa07d020e80653cefb1c",
+    "resources/app/.webpack/renderer/lrc_window/preload.js": "7fc1f017e4394207c88f5638493ed5f6d116445847c9aa18f680abc5eb428b62",
+    "resources/app/.webpack/renderer/main_window/index.html": "401d8751c4cb3759f4ca0e9f4ceb00f32f685b8ce82fe4b616c136d118592492",
+    "resources/app/.webpack/renderer/main_window/index.js": "e6037fe4d02df4c1426ae151508e08a3aecc94966462dc2be2d2f9be656b40d4",
+    "resources/app/.webpack/renderer/main_window/preload.js": "b725f0ace3d5e79810d6d71cf1f033b11825da25d06f5e88b2fc49c88e029a02",
+    "resources/app/.webpack/renderer/minimode_window/index.html": "437c03dfbf6a6ad258635d1e187ee3396e3a60fa90479bffc56bcef48e661341",
+    "resources/app/.webpack/renderer/minimode_window/index.js": "c5b4b796a3495e7e9a3e931fc203644650c62bc6a41e14293b5c7c0b9803799d",
+    "resources/app/.webpack/renderer/minimode_window/preload.js": "7fc1f017e4394207c88f5638493ed5f6d116445847c9aa18f680abc5eb428b62",
+    "resources/app/.webpack/renderer/player/index.js": "745000a1f42ba1befcfa67d8f001f3342da1d1f062678c29aa5c2a399b121d13",
+    "resources/app/.webpack/renderer/worker_downloader/index.js": "8f9511b4b71abc6ad7453d9ce1fee6e820f08c69758f7fca55e365927cd86ad0",
+    "resources/app/.webpack/main/native_modules/electron-log-preload.js": "5d7a5f8a47f271b66ad02f8868a5b18d94865648ecb7ae20355cb1cb312e3709"
+  },
+  "screenshotSha256": {
+    "docs/knowledge-base/assets/previews/ktv-actual-desktop-playing.png": "61a9053db2595f359066e8c19de0dd46a8f2067369e280b5132aff44ce78b4e1",
+    "docs/knowledge-base/assets/previews/ktv-actual-mini-hover.png": "839a8d40ef678629c8ebc034f6f26ac8d0e2dfeb6a58b2d1d7a58165520e3b44",
+    "docs/knowledge-base/assets/previews/ktv-actual-mini-playing.png": "62c50d016631ead2efb3cc92caf7d375b88a408d48b48b8acbe7ea35ccd4660c"
+  },
+  "knowledgeBase": {
+    "result": "browser-render-results.json",
+    "diagrams": {
+      "total": 15,
+      "rendered": 15,
+      "failed": 0
+    },
+    "narrowDiagrams": 15,
+    "printDiagrams": 15,
+    "actualScreenshots": [
+      "docs/knowledge-base/assets/previews/ktv-actual-desktop-playing.png",
+      "docs/knowledge-base/assets/previews/ktv-actual-mini-hover.png",
+      "docs/knowledge-base/assets/previews/ktv-actual-mini-playing.png"
+    ],
+    "fourPreviewImagesDecoded": true,
+    "noRemoteRequests": true
+  },
+  "limits": [
+    "Windows tested; Linux/macOS GUI not run",
+    "Compiled window test hosts unmodified shipped bundles in matching installed Electron; shipped EXE native runtime checked separately",
+    "External theme compatibility and Windows display scaling require user checks",
+    "No library or plugin-wide compatibility or performance benchmark claim"
+  ],
+  "reproduce": [
+    "npm run format:check",
+    "npx tsc --noEmit",
+    "npx eslint src",
+    "node scripts/ci/run-tests.cjs node",
+    "node scripts/ci/run-tests.cjs electron",
+    ".\\node_modules\\.bin\\electron.cmd docs/knowledge-base/evidence/packaged-ktv-check.cjs out/MusicFree-win32-x64",
+    ".\\node_modules\\.bin\\electron.cmd docs/knowledge-base/evidence/browser-render-test.cjs"
+  ]
+}

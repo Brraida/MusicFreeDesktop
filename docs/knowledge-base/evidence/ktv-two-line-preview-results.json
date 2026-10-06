@@ -1,0 +1,77 @@
+{
+  "recordedAt": "2026-10-05T10:41:45.683Z",
+  "status": "approved-preview-retained-as-design-reference",
+  "baseline": "dev@631ae59",
+  "branch": "feature/ktv-two-line-lyrics",
+  "scope": "Docs and HTML/CSS preview only; no player implementation or new player build",
+  "platform": "win32",
+  "electron": "25.3.0",
+  "chromium": "114.0.5735.199",
+  "protocol": "file:",
+  "remoteRequests": 0,
+  "consoleErrors": 0,
+  "checks": {
+    "advance": "next becomes current in both windows",
+    "pause": "auto demo unchanged while paused; resumes correctly",
+    "scenarios": {
+      "intro": {
+        "current": "前奏 · 微光",
+        "next": "把这一刻唱给你听",
+        "miniCurrent": "前奏 · 微光",
+        "miniNext": "把这一刻唱给你听"
+      },
+      "instrumental": {
+        "current": "间奏",
+        "next": "沿着微光慢慢靠近",
+        "miniCurrent": "间奏",
+        "miniNext": "沿着微光慢慢靠近"
+      },
+      "last": {
+        "current": "直到星光落在心里",
+        "next": "",
+        "miniCurrent": "直到星光落在心里",
+        "miniNext": ""
+      },
+      "long": {
+        "current": "把很长很长的一段晚风唱进这座城市的灯火与尚未寄出的信里",
+        "next": "让下一段长长的旋律陪着我们穿过街角再迎接一个新的清晨",
+        "miniCurrent": "把很长很长的一段晚风唱进这座城市的灯火与尚未寄出的信里",
+        "miniNext": "让下一段长长的旋律陪着我们穿过街角再迎接一个新的清晨"
+      },
+      "empty": {
+        "current": "微光 — 示例歌手",
+        "next": "",
+        "miniCurrent": "微光 — 示例歌手",
+        "miniNext": ""
+      },
+      "untimed": {
+        "current": "纯文本歌词 · 可在详情阅读",
+        "next": "",
+        "miniCurrent": "纯文本歌词 · 可在详情阅读",
+        "miniNext": ""
+      }
+    },
+    "mini": {
+      "width": 340,
+      "height": 72,
+      "currentHeight": 20,
+      "nextHeight": 18,
+      "currentTop": 851.890625,
+      "nextTop": 875.890625
+    },
+    "fontSizes": [
+      28,
+      64,
+      48
+    ],
+    "narrow": "no page overflow at 600px",
+    "print": "preview toolbar hidden"
+  },
+  "preview": "assets/previews/ktv-two-line-preview.html",
+  "screenshot": "assets/previews/ktv-two-line-overview.png",
+  "previewSha256": "55ada4b803bbc5e2ca85e1c8e0c6c8448a09a82365f11b9e60097eeb069e9891",
+  "screenshotSha256": "1dc48e8a306183a01a480ea9c10a48dff3bee2092f5fbde665699070c9e3e02c",
+  "screenshotOrigin": "Captured from the HTML/CSS preview, not the packaged player",
+  "output": "F:\\brraida\\MusicFreeDesktop\\MusicFreeDesktop\\out\\worktrees\\ktv-two-line\\out\\.ktv-preview-1791196896337",
+  "approval": "User approved the two-line layout and requested implementation."
+}

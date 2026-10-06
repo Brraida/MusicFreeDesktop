@@ -13,7 +13,7 @@ fs.mkdirSync(app.getPath('userData'), { recursive: true });
 let window;
 const remoteRequests = [];
 const consoleErrors = [];
-const expectedDiagrams = 14;
+const expectedDiagrams = 15;
 const deadline = setTimeout(() => {
     console.error('Knowledge-base browser test timed out');
     window?.destroy(); app.exit(1);
@@ -122,7 +122,7 @@ function assertVisible(diagram) {
     const chapters = await evaluate('[...document.querySelectorAll(".chapter")].map(x => x.id)');
     assert(chapters.includes('commit-convention') && chapters.includes('commit-review')
         && chapters.includes('review-evidence') && chapters.includes('download-file-state')
-        && chapters.includes('vinyl-player-preview') && chapters.includes('jiangnan-porcelain-theme') && chapters.includes('jiangnan-theme-implementation'), 'New chapters missing');
+        && chapters.includes('vinyl-player-preview') && chapters.includes('jiangnan-porcelain-theme') && chapters.includes('jiangnan-theme-implementation') && chapters.includes('ktv-two-line-lyrics'), 'New chapters missing');
     assert.equal(await evaluate(`(() => {
         const links = [...document.querySelectorAll('#guide a')];
         return links.some(x => x.getAttribute('href') === '#commit-convention')
@@ -131,12 +131,14 @@ function assertVisible(diagram) {
             && links.some(x => x.getAttribute('href') === '#download-file-state')
             && links.some(x => x.getAttribute('href') === '#vinyl-player-preview')
             && links.some(x => x.getAttribute('href') === '#jiangnan-porcelain-theme')
-            && links.some(x => x.getAttribute('href') === '#jiangnan-theme-implementation');
+            && links.some(x => x.getAttribute('href') === '#jiangnan-theme-implementation')
+            && links.some(x => x.getAttribute('href') === '#ktv-two-line-lyrics');
     })()`), true, 'Guide links to new chapters missing');
     const desktop = [];
     const previewImages = {};
     const themePreview = {};
     const themeImplementation = {};
+    let ktvPreview;
     let previewLargeLink;
     for (const chapter of chapters) {
         await evaluate('location.hash = ' + JSON.stringify(chapter));
@@ -168,6 +170,21 @@ function assertVisible(diagram) {
             }
             const text = await evaluate(`document.querySelector('#download-file-state').textContent`);
             for (const label of ['当前资源状态机', '历史状态机', '已解决问题', '本轮已实现并验证']) assert(text.includes(label));
+        }
+        if (chapter === 'ktv-two-line-lyrics') {
+            assert.equal(diagrams.length, 1);
+            assert.equal(await evaluate(`document.querySelector('#ktv-two-line-lyrics').textContent.includes('已接入播放器')`), true);
+            const previews = await evaluate(`(async()=>{const chapter=document.querySelector('#ktv-two-line-lyrics');const images=[...chapter.querySelectorAll('img')];await Promise.all(images.map(image=>image.decode()));return {images:images.map(image=>{const r=image.getBoundingClientRect();return {src:image.currentSrc,width:r.width,height:r.height,naturalWidth:image.naturalWidth,containerWidth:chapter.clientWidth}}),interactive:chapter.querySelector('a[href="assets/previews/ktv-two-line-preview.html"]')?.href};})()`);
+            assert.equal(previews.images.length, 4);
+            for (const [index, name] of ['ktv-actual-desktop-playing', 'ktv-actual-mini-playing', 'ktv-actual-mini-hover', 'ktv-two-line-overview'].entries()) {
+                const preview = previews.images[index];
+                assert(preview.src.endsWith('/assets/previews/' + name + '.png') && preview.naturalWidth > 0);
+                assert(preview.width > 0 && preview.height > 0 && preview.width <= preview.containerWidth);
+            }
+            assert.equal(new URL(previews.interactive).protocol, 'file:');
+            ktvPreview = previews;
+            await evaluate(`document.querySelector('#ktv-two-line-lyrics img').scrollIntoView({block:'center'})`);
+            await frame(); await capture('ktv-two-line.png');
         }
         if (chapter === 'vinyl-player-preview') {
             previewImages.desktop = await inspectPreviewImage();
@@ -280,10 +297,10 @@ function assertVisible(diagram) {
         chromium: process.versions.chrome, protocol: 'file:', network: 'HTTP(S) blocked; no requests attempted',
         initial, desktop, narrowDiagrams: narrow.length, printDiagrams: printed.length,
         sourceToggle: 'Mermaid and both PlantUML sources passed', largeViews,
-        previewImages, originalPreviewImage: originalImage, themePreview, themeImplementation,
+        previewImages, originalPreviewImage: originalImage, themePreview, themeImplementation, ktvPreview,
         invalidDiagramFallback: fallback, normalPageConsoleErrors,
         screenshots: ['codebase', 'flows', 'download-implemented', 'download-before', 'vinyl-player-preview',
-            'jiangnan-main', 'jiangnan-detail-mini', 'jiangnan-narrow', 'jiangnan-implementation'].map(name => path.join(testRoot, name + '.png')) };
+            'jiangnan-main', 'jiangnan-detail-mini', 'jiangnan-narrow', 'jiangnan-implementation', 'ktv-two-line'].map(name => path.join(testRoot, name + '.png')) };
     fs.writeFileSync(path.join(__dirname, 'browser-render-results.json'), JSON.stringify(report, null, 2) + '\n');
     console.log('PASS', JSON.stringify({ initial, narrow: narrow.length, print: printed.length, fallback, remoteRequests: remoteRequests.length,
         preview: 'local image decoded at desktop/narrow/print sizes; original-size link passed',
