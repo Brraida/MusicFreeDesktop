@@ -1,6 +1,6 @@
 # 正确性回归测试
 
-测试在仓库根目录运行，使用现有 npm 依赖。Node 测试加载实际 TypeScript 源码；音频与部分系统边界使用可控替身。Electron 测试使用真实 Windows Chromium、IndexedDB、React、HTTP 和音频元素。
+测试在仓库根目录运行，使用现有 npm 依赖。Node 测试加载实际 TypeScript 源码；音频与部分系统边界使用可控替身。Electron 测试使用真实 Chromium、IndexedDB、React、HTTP 和音频元素；各平台运行入口由 CI 提供。
 
 ## Node 回归
 
@@ -59,11 +59,25 @@ node scripts/tests/lyric-regression.cjs
 
 动画回归先通过 Chromium CDP 明确设置 `prefers-reduced-motion: no-preference` 验证旋转与滚动，再切换 `reduce` 验证动画停止；结果同时记录系统原设置。避免 CI 宿主默认减少动态效果时读取不存在的动画对象。已在 Windows 强制减少动态效果的条件下验证两个阶段。
 
-这些测试不等于所有在线插件、真实音乐格式和设备的全量兼容性测试。download-resource Node 测试也已在 WSL Linux 执行；Linux GUI 与 macOS 本轮未执行运行验收。
+这些测试不等于所有在线插件、真实音乐格式和设备的全量兼容性测试。CI 在 Windows、Linux（Xvfb）和 macOS 两种架构执行回归；这些隔离测试不等于全部设备和安装体验已验收。
 
-## 编译版启动性能
+## 编译版验收与启动测量
 
-使用隔离 profile，比较 1000 条旧下载记录、完成指纹后的记录和空歌库；记录前端初始化、首屏和全部迁移的耗时。结果保存在独立的 `out` 测试目录。这是单次缓存磁盘测试，不代表 exe 冷启动 P95。
+以下脚本使用完整编译目录，并以独立 profile 运行包内真实 main、preload 和 renderer。它们由与包内相同版本的已安装 Electron 承载；原生模块另用 `verify-build.cjs` 检查。
+
+```powershell
+.\node_modules\.bin\electron.cmd scripts/tests/packaged-ktv-check.cjs out/MusicFree-win32-x64
+.\node_modules\.bin\electron.cmd scripts/tests/packaged-startup-theme-check.cjs out/MusicFree-win32-x64
+.\node_modules\.bin\electron.cmd scripts/tests/packaged-startup-benchmark.cjs dev-ktv
+```
+
+前两个脚本接受完整编译目录参数。示例使用标准输出目录；其他输出位置直接传入对应目录。启动测量的参数是 `out` 下的目录名称，例如 `dev-ktv` 对应 `out/dev-ktv/MusicFree-win32-x64`。
+
+- 双行歌词验收检查真实附属窗口、当前句/下一句、重复文字、暂停、seek、间奏、末句、切歌和字号高度。
+- 启动与主题验收检查首帧、加载失败重试、旧歌曲时长恢复、下载缓存图标、多选、主题切换和迷你窗口同步。
+- 启动测量比较空歌库、1000 条旧下载记录和完成指纹后的记录，输出前端初始化、首屏与迁移耗时。单次缓存磁盘及同进程重载结果不代表 EXE 冷启动 P95。
+
+测试封面使用仓库内原创的 `fixtures/cover.svg`，不依赖辅助知识库或参考截图。结果、日志和截图仅写入忽略提交的 `out` 子目录。编译版验收是可选补充，未加入默认回归清单。
 
 ## CI/CD
 
