@@ -102,3 +102,12 @@ plugins
 undefinedelectron-log-preload.js
 
 make-log.txt
+
+# Local reference material and personal knowledge base
+/docs/knowledge-base/
+/docs/ref/
+/docs/history/
+/docs/reviews/
+/docs/design/download-file-state/
+/CODE_REVIEW_2026-10-04.md
+/COMMIT_CONVENTION.md
