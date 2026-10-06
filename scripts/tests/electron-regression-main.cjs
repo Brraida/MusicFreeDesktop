@@ -65,6 +65,15 @@ function finish(code, error) {
     const page = path.join(testRoot, "index.html");
     fs.writeFileSync(page, "<!doctype html><meta charset=\"utf-8\"><div id=\"test-root\"></div>");
     await window.loadFile(page);
+    let motionPreferences;
+    if (["vinyl", "lyric"].includes(suite)) {
+        const systemReducedMotion = await window.webContents.executeJavaScript("matchMedia('(prefers-reduced-motion: reduce)').matches");
+        window.webContents.debugger.attach("1.3");
+        await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "no-preference" }] });
+        const normalMotion = await window.webContents.executeJavaScript("!matchMedia('(prefers-reduced-motion: reduce)').matches");
+        if (!normalMotion) throw new Error("Normal-motion test condition was not applied");
+        motionPreferences = { systemReducedMotion, normalMotion: true };
+    }
     const code = fs.readFileSync(path.join(__dirname, suite + "-renderer.cjs"), "utf8");
     const base = "http://127.0.0.1:" + server.address().port;
     const result = await window.webContents.executeJavaScript(`(async () => { const module = { exports: {} }; ${code}\n try { return await module.exports(${JSON.stringify(testRoot)}, ${JSON.stringify(base)}); } catch (error) { return { rendererError: error.stack || error.message || String(error) }; } })()`);
@@ -74,10 +83,10 @@ function finish(code, error) {
             await window.webContents.executeJavaScript(`window.vinylPreviewMode(${JSON.stringify(mode)})`);
             fs.writeFileSync(path.join(testRoot, mode + ".png"), (await window.webContents.capturePage()).toPNG());
         }
-        window.webContents.debugger.attach("1.3");
         await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
         const reduced = await window.webContents.executeJavaScript("new Promise(resolve => requestAnimationFrame(() => resolve([...document.querySelectorAll('.vinyl-record')].every(x => getComputedStyle(x).animationName === 'none'))))");
         if (!reduced) throw new Error("Reduced motion preference not respected");
+        motionPreferences.reducedMotion = true;
         await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [] });
         window.webContents.debugger.detach();
         await window.webContents.executeJavaScript("window.vinylFinish()");
@@ -88,14 +97,14 @@ function finish(code, error) {
             fs.writeFileSync(path.join(testRoot, mode + ".png"), (await window.webContents.capturePage()).toPNG());
         }
         await window.webContents.executeJavaScript("window.lyricPreviewMode('long')");
-        window.webContents.debugger.attach("1.3");
         await window.webContents.debugger.sendCommand("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
         const reduced = await window.webContents.executeJavaScript("new Promise(resolve => requestAnimationFrame(() => resolve(getComputedStyle(document.querySelector('.lyric-next-row span')).animationName === 'none')))");
         if (!reduced) throw new Error("Lyric preview ignores reduced motion");
+        motionPreferences.reducedMotion = true;
         window.webContents.debugger.detach();
         await window.webContents.executeJavaScript("window.lyricFinish()");
     }
-    fs.writeFileSync(path.join(testRoot, "result.json"), JSON.stringify({ suite, passed: true, result, counts, electron: process.versions.electron }, null, 2));
+    fs.writeFileSync(path.join(testRoot, "result.json"), JSON.stringify({ suite, passed: true, result, counts, motionPreferences, electron: process.versions.electron }, null, 2));
     console.log(result);
     console.log("RESULT_FILE", path.join(testRoot, "result.json"));
     finish(0);
