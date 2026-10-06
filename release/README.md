@@ -33,7 +33,7 @@ runner 标签与架构按 [GitHub 官方 runner 列表](https://github.com/actio
 ## 日常提交
 
 - `dev`、`master`、`main` 的 push 和目标为这些分支的 PR 自动运行。
-- 每个平台先检查代码格式，再执行类型检查、七组 Node 回归、五组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
+- 每个平台先检查代码格式，再执行类型检查、十组 Node 回归、八组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
 - 普通提交不生成发布归档。测试日志与结果保留 7 天；失败时也尝试上传已有结果。
 - 安装使用锁文件和 npm 官方 registry，依赖版本及 integrity 不随 CI 更新。缓存 npm 下载，不缓存 `node_modules`。
 
