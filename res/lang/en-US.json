@@ -98,6 +98,7 @@
     "refreshing_files": "Checking local files…",
     "refresh_failed": "Failed to refresh local files",
     "checking": "Checking local file",
+    "cached_status": "Last checked: {{status}}; rechecking in the background",
     "local_unavailable": "Local file unavailable: {{reason}}; click to download again",
     "file_reasons": {
       "offline": "drive offline",

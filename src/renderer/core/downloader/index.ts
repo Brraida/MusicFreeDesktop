@@ -1,12 +1,13 @@
 import { getMediaPrimaryKey, getQualityOrder, isSameMedia, setInternalData } from "@/common/media-util";
 import * as Comlink from "comlink";
+import { DownloadResourceState, effectiveResourceState } from "@/common/download-resource";
 import { DownloadState, localPluginName } from "@/common/constant";
 import PQueue from "p-queue";
 import {
     addDownloadedMusicToList, isDownloaded, removeDownloadedMusic,
     setupDownloadedMusicList, useDownloaded, useDownloadedMusicList,
-    refreshDownloadedMusicList, useDownloadResourceStatus,
-    setupDownloadedMusicListInBackground, prepareDownloadedMusicList, refreshDownloadedMusicItem, getDownloadedMusicItem,
+    refreshDownloadedMusicList, useDownloadResourceStatus, getDownloadResourceStatus,
+    setupDownloadedMusicListInBackground, prepareDownloadedMusicList, refreshDownloadedMusicItem, getDownloadedMusicItem, prioritizeDownloadResource,
 } from "./downloaded-sheet";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import Store from "@/common/store";
@@ -95,9 +96,14 @@ function getDownloadStatus(item: IMusic.IMusicItem): IDownloadStatus | null {
         ?? (isDownloaded(item) ? { state: DownloadState.DONE } : null);
 }
 
+function isVerifiedDownload(item: IMedia.IMediaBase) {
+    const status = getDownloadResourceStatus(item);
+    return effectiveResourceState(status) === DownloadResourceState.AVAILABLE && !status.cached;
+}
+
 function updateStatus(item: IMusic.IMusicItem, status: IDownloadStatus) {
     // Only a finished task discards late callbacks; restoration must not finish an active transfer.
-    if (isDownloaded(item) && !downloadingProgress.has(getMediaPrimaryKey(item))) {
+    if (isVerifiedDownload(item) && !downloadingProgress.has(getMediaPrimaryKey(item))) {
         finishDownload(item);
         return;
     }
@@ -201,7 +207,7 @@ function enqueue(item: IMusic.IMusicItem) {
     queuedKeys.add(pk);
     void downloadingQueue.add(async () => {
         queuedKeys.delete(pk);
-        if (isDownloaded(item)) {
+        if (isVerifiedDownload(item)) {
             finishDownload(item);
             return;
         }
@@ -225,7 +231,7 @@ async function startDownload(musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]
     const validItems = items.filter((item) => {
         const pk = getMediaPrimaryKey(item);
         const state = downloadingProgress.get(pk)?.state;
-        if (seen.has(pk) || isDownloaded(item) || item.platform === localPluginName ||
+        if (seen.has(pk) || isVerifiedDownload(item) || item.platform === localPluginName ||
             queuedKeys.has(pk) || activeControllers.has(pk) ||
             (state && state !== DownloadState.ERROR)) {
             return false;
@@ -324,5 +330,5 @@ export default {
     useDownloaded, isDownloaded, useDownloadedMusicList, removeDownloadedMusic,
     setDownloadingConcurrency, useDownloadState,
     refreshDownloadedMusicList, useDownloadResourceStatus,
-    setupDownloadedMusicListInBackground, prepareDownloadedMusicList, refreshDownloadedMusicItem, getDownloadedMusicItem,
+    setupDownloadedMusicListInBackground, prepareDownloadedMusicList, refreshDownloadedMusicItem, getDownloadedMusicItem, prioritizeDownloadResource,
 };

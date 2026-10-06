@@ -66,7 +66,7 @@ module.exports = async (testRoot) => {
     };
     const context = { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: oldDir }, workersPath: { downloader: "test" } }) };
     const logger = { logError() {}, logInfo() {} };
-    const mocks = { "@/common/download-resource": resource, "@/common/media-util": media, "@/common/store": Store,
+    const mocks = { "@/common/time-util": compile("src/common/time-util.ts"), "@/common/download-resource": resource, "@/common/media-util": media, "@/common/store": Store,
         "@/renderer/utils/user-perference": prefs, "../db/music-sheet-db": db,
         "@/common/constant": constants, "./ee": ee, "@shared/utils/renderer": { fsUtil: files },
         "p-queue": PQueue, "@shared/logger/renderer": logger,
@@ -89,6 +89,7 @@ module.exports = async (testRoot) => {
     const originalWorker = window.Worker; window.Worker = class {};
     window.path = path;
     const core = compile("src/renderer/core/downloader/index.ts", {
+        "@/common/download-resource": resource,
         "@/common/media-util": media, comlink: { wrap: () => ({}) }, "@/common/constant": constants,
         "p-queue": PQueue, "./downloaded-sheet": sheet, "@/shared/global-context/renderer": context,
         "@/common/store": Store, "./ee": ee, "@shared/app-config/renderer": config,

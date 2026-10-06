@@ -73,13 +73,13 @@ module.exports = async (testRoot, base) => {
     };
     const context = { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: oldDir }, workersPath: { downloader: "test" } }) };
     const logger = { logError() {}, logInfo() {} };
-    const mocks = { "@/common/download-resource": resource, "@/common/media-util": media, "@/common/store": Store,
+    const mocks = { "@/common/time-util": compile("src/common/time-util.ts"), "@/common/download-resource": resource, "@/common/media-util": media, "@/common/store": Store,
         "@/renderer/utils/user-perference": prefs, "../db/music-sheet-db": db,
         "@/common/constant": constants, "./ee": ee, "@shared/utils/renderer": { fsUtil: files },
         "p-queue": PQueue, "@shared/logger/renderer": logger,
         "@shared/app-config/renderer": config, "@/shared/global-context/renderer": context,
     };
-    const sheet = compile("src/renderer/core/downloader/downloaded-sheet.ts", mocks);
+    let sheet = compile("src/renderer/core/downloader/downloaded-sheet.ts", mocks);
     const { DownloadResourceState: State } = resource;
     const song = id => ({ platform: "test", id, title: id, artist: "artist" });
     const A = song("A"), B = song("B"), C = song("C"), D = song("D");
@@ -87,13 +87,15 @@ module.exports = async (testRoot, base) => {
     const complete = (item, fp) => media.setInternalData(item, "downloadData", { path: fp, quality: "high" }, true);
     fs.writeFileSync(oldA, "original-A"); fs.writeFileSync(oldB, "original-B");
     const originalWorker = window.Worker; window.Worker = class {};
-    const core = compile("src/renderer/core/downloader/index.ts", {
+    const makeCore = sheet => compile("src/renderer/core/downloader/index.ts", {
+        "@/common/download-resource": resource,
         "@/common/media-util": media, comlink: { wrap: () => ({}) }, "@/common/constant": constants,
         "p-queue": PQueue, "./downloaded-sheet": sheet, "@/shared/global-context/renderer": context,
         "@/common/store": Store, "./ee": ee, "@shared/app-config/renderer": config,
         "@shared/plugin-manager/renderer": {}, "@/shared/i18n/renderer": { i18n: { t: key => key } },
         "@shared/logger/renderer": logger,
     }).default;
+    let core = makeCore(sheet);
     {
         // First launch with legacy download metadata: showing the UI must not wait for any disk read.
         const legacy = Array.from({ length: 24 }, (_, index) => {
@@ -140,6 +142,107 @@ module.exports = async (testRoot, base) => {
         assert.equal(await sheet.removeDownloadedMusic(legacy, true).then(result => result[0]), true);
         beforeInspection = async () => {};
     }
+    await sheet.stopDownloadedMusicMonitor();
+    {
+        // Recreate the module over the same real IndexedDB to simulate a process restart.
+        const cached = [];
+        for (let index = 0; index < 24; index++) {
+            const fp = path.join(oldDir,"cached-"+index+".mp3");
+            fs.writeFileSync(fp,"cached audio "+index);
+            const inspection = await fileSystem.inspectDownloadFile(fp);
+            const state = index===1 ? State.MISSING : index===23 ? State.UNAVAILABLE : State.AVAILABLE;
+            const item = media.setInternalData({ ...song("cached-"+String(index).padStart(2,"0")), duration:180, [constants.musicRefSymbol]:2 },"downloadData",{
+                path:fp,quality:"high",fingerprint:inspection.identity,
+                verified:{ version:1,path:fp,directory:oldDir,state,reason:state===State.UNAVAILABLE ? "permission" : undefined,checkedAt:Date.now() },
+            },true);
+            cached.push(item);
+        }
+        await db.musicStore.bulkPut(cached);
+        const fp = index => media.getInternalData(cached[index],"downloadData").path;
+        fs.unlinkSync(fp(1));fs.unlinkSync(fp(14)); // One already known missing; one removed while the app was closed.
+        faults.set(fp(23),{ state:State.UNAVAILABLE,reason:"permission" });
+        let watchNotify, monitorAttached=false, release0, entered0, release8, entered8;
+        const held0=new Promise(resolve=>{
+            release0=resolve;
+        });const begun0=new Promise(resolve=>{
+            entered0=resolve;
+        });
+        const held8=new Promise(resolve=>{
+            release8=resolve;
+        });const begun8=new Promise(resolve=>{
+            entered8=resolve;
+        });
+        const inspections=[];
+        beforeInspection=async file=>{
+            inspections.push(file);
+            if(file===fp(0)){
+                entered0();await held0;
+            }
+            if(file===fp(8)){
+                entered8();await held8;
+            }
+        };
+        const restart=compile("src/renderer/core/downloader/downloaded-sheet.ts",{
+            ...mocks,"@shared/utils/renderer":{ fsUtil:{ ...files,
+                watchDownloadDirectories:async (_dirs,notify)=>{
+                    monitorAttached=true;watchNotify=notify;notify({ paths:[],full:true });
+                },
+                stopDownloadWatcher:async()=>{},
+            } },
+        });
+        await restart.prepareDownloadedMusicList();
+        assert.equal(inspections.length,0,"Cache restoration performs no audio/disk inspection");
+        assert.equal(restart.getDownloadResourceStatus(cached[14]).cached,true);
+        assert.equal(restart.isDownloaded(cached[14]),true,"Last confirmed icon is available immediately");
+        assert.equal(restart.getDownloadResourceStatus(cached[1]).state,State.MISSING,"Known missing results survive restart");
+        assert.equal(restart.getDownloadResourceStatus(cached[23]).state,State.UNAVAILABLE,"Offline/access results survive restart");
+        const React=req("react"),{ createRoot }=req("react-dom/client");
+        const Icon=compile("src/renderer/components/MusicDownloaded/index.tsx",{
+            "@/common/media-util":media,"@/renderer/components/SvgAsset":props=>React.createElement("span",{ "data-icon":props.iconName }),
+            "@/common/download-resource":resource,"./index.scss":{},"@/common/constant":constants,
+            "@/renderer/core/downloader":{ ...core,useDownloadResourceStatus:restart.useDownloadResourceStatus,
+                useDownloadState:()=>constants.DownloadState.NONE,prioritizeDownloadResource:()=>Promise.resolve() },
+            "react-i18next":{ useTranslation:()=>({ t:key=>key }) },
+        }).default;
+        const container=document.getElementById("test-root"),view=createRoot(container);
+        view.render(React.createElement(Icon,{ musicItem:cached[14] }));
+        const until=async check=>{
+            const deadline=Date.now()+10000;while(!check()){
+                assert(Date.now()<deadline,"Cached icon condition timed out");await new Promise(resolve=>setTimeout(resolve,20));
+            }
+        };
+        await until(()=>!!container.querySelector("[data-icon=\"check-circle\"]"));
+        assert.equal(container.querySelector(".music-download-base").title,"download_page.cached_status");
+        assert.equal(inspections.length,0,"The restored icon renders before validation starts");
+        const all=restart.setupDownloadedMusicList();await begun0;
+        assert(monitorAttached,"Watcher must be attached before the baseline inspection");
+        const selected=restart.prioritizeDownloadResource(cached[14]);
+        assert.equal(selected,restart.prioritizeDownloadResource(cached[14]),"Visible rows share one priority request");
+        release0();assert.equal(resource.effectiveResourceState(await selected),State.MISSING);
+        await until(()=>!!container.querySelector("[data-icon=\"array-download-tray\"]"));
+        await begun8;fs.unlinkSync(fp(3));watchNotify({ paths:[fp(3)] });
+        await new Promise(resolve=>setTimeout(resolve,300));release8();await all;
+        const first3=inspections.indexOf(fp(3)),second3=inspections.indexOf(fp(3),first3+1);
+        assert(second3>first3 && second3<inspections.indexOf(fp(16)),"Incremental watcher corrections run before the remaining full baseline: "+JSON.stringify(inspections.map(file=>path.basename(file))));
+        assert.equal(restart.getDownloadResourceStatus(cached[3]).state,State.MISSING);
+        assert.equal(restart.getDownloadResourceStatus(cached[14]).cached,undefined,"Checked results are no longer historical");
+        assert.equal((await db.musicStore.get([cached[14].platform,cached[14].id]))[constants.musicRefSymbol],2);
+        const saved=media.getInternalData(await db.musicStore.get([cached[14].platform,cached[14].id]),"downloadData");
+        assert.equal(saved.verified.state,State.MISSING);
+        view.unmount();await restart.stopDownloadedMusicMonitor();
+        beforeInspection=async file=>{
+            inspections.push(file);
+        };const before=inspections.length;
+        const again=compile("src/renderer/core/downloader/downloaded-sheet.ts",{ ...mocks,"@shared/utils/renderer":{ fsUtil:{ ...files,stopDownloadWatcher:async()=>{} } } });
+        await again.prepareDownloadedMusicList();assert.equal(inspections.length,before);
+        assert.equal(again.getDownloadResourceStatus(cached[14]).state,State.MISSING,"Corrected missing state is restored on the next restart");
+        assert.equal(again.getDownloadResourceStatus(cached[14]).cached,true);
+        await again.stopDownloadedMusicMonitor();
+        await db.musicStore.bulkDelete(cached.map(item=>[item.platform,item.id]));
+        faults.clear();beforeInspection=async()=>{};
+    }
+    sheet = compile("src/renderer/core/downloader/downloaded-sheet.ts", mocks);
+    core = makeCore(sheet);
     await sheet.setupDownloadedMusicList();
     assert.equal(await sheet.addDownloadedMusicToList([complete(A, oldA), complete(B, oldB)]), true);
     const favorite = await db.musicStore.get([A.platform, A.id]);
@@ -152,6 +255,9 @@ module.exports = async (testRoot, base) => {
         "react-i18next": { useTranslation: () => ({ t: key => key }) },
     }).default;
     const container = document.getElementById("test-root"), view = createRoot(container);
+    // The bottom bar renders this component before any song has been selected.
+    req("react-dom").flushSync(() => view.render(React.createElement(Icon, { musicItem: undefined })));
+    assert(container.querySelector("[data-icon=\"array-download-tray\"]"), "Empty playback state must render without crashing");
     function Probe() {
         const downloaded = core.useDownloadedMusicList();
         return React.createElement("div", null, React.createElement(Icon, { musicItem: favorite }),
@@ -312,5 +418,5 @@ module.exports = async (testRoot, base) => {
     assert.equal(fallbackCalls, 1); assert.equal(playerErrors.length, 0); assert.equal(effective(local), State.MISSING);
     player.audioController.destroy();
     view.unmount(); await sheet.stopDownloadedMusicMonitor(); window.Worker = originalWorker; db.close();
-    return "PASS: real Windows watcher + IndexedDB + React, external deletion/restoration/directory recreation, hash-verified moves, manual refresh, offline/permission/I/O/content/playback unavailability, stale configuration exclusion, commit rollback, concurrent re-download ownership, real HTMLAudio local-open failure and decoded network fallback";
+    return "PASS: cached restart before any disk reads, incremental correction during baseline, real Windows watcher + IndexedDB + React, external deletion/restoration/directory recreation, hash-verified moves, manual refresh, offline/permission/I/O/content/playback unavailability, stale configuration exclusion, commit rollback, concurrent re-download ownership, real HTMLAudio local-open failure and decoded network fallback";
 };

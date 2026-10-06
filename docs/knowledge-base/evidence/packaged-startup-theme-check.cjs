@@ -58,7 +58,11 @@ const songs = names.map((title, index) => ({ platform: "本地", id: "jiangnan-d
 songs[1].duration = undefined;
 songs[2].platform = "示例音源";
 songs[2].duration = " ";
-songs[2].$ = { downloadData: { path: wavPath, quality: "standard" } };
+const audioStat = fs.statSync(wavPath);
+songs[2].$ = { downloadData: { path: wavPath, quality: "standard",
+    fingerprint: { size: audioStat.size, mtimeMs: audioStat.mtimeMs, sha256: require("node:crypto").createHash("sha256").update(wav).digest("hex"), device: String(audioStat.dev) },
+    verified: { version: 1, path: wavPath, directory: app.getPath("downloads"), state: "AVAILABLE", checkedAt: Date.now() },
+} };
 songs[3].duration = "240";
 songs[4].duration = "1:02:03";
 songs[5].duration = null;
@@ -104,6 +108,14 @@ app.on("browser-window-created", (_event, window) => {
         });
         window.webContents.on("dom-ready", () => window.webContents.executeJavaScript(`(() => {
             window.startupThemeFrames=[];
+            window.cachedDownloadFrame=null;
+            const cacheObserver=new MutationObserver(()=>{
+                const icons=document.querySelectorAll('.music-download-base[data-cached="true"]');
+                if(!icons.length)return;
+                window.cachedDownloadFrame={count:icons.length,atMs:performance.now(),title:icons[0].title};
+                cacheObserver.disconnect();
+            });
+            cacheObserver.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-cached']});
             const sample=()=>{if(window.startupThemeFrames.length>=2000)return;
                 window.startupThemeFrames.push({theme:document.documentElement.dataset.builtinTheme,primary:getComputedStyle(document.documentElement).getPropertyValue('--primaryColor').trim()});
                 requestAnimationFrame(sample);};sample();
@@ -177,9 +189,15 @@ async function reloadMain() {
             tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});db.close();
         localStorage.setItem('currentMusic',${JSON.stringify(JSON.stringify(songs[0]))});localStorage.setItem('volume','0');
     })()`);
+    // Reload with the playlist route already selected, as when restoring the current page.
+    await navigate("/main/musicsheet/" + encodeURIComponent("本地") + "/favorite");
+    await waitFor(() => evaluate(main, "location.hash.endsWith('/favorite')"), "playlist route before restart");
     await reloadMain();
     await navigate("/main/musicsheet/" + encodeURIComponent("本地") + "/favorite");
     await waitFor(() => evaluate(main, "document.querySelectorAll('.music-list-container tbody tr[data-index]').length === 6 || document.querySelector('.music-list-container tbody')?.textContent.includes('云水之间')"), "six demo songs");
+    const cachedDownloadFrame = await evaluate(main,"window.cachedDownloadFrame");
+    assert(cachedDownloadFrame?.count>=1,"Packaged playlist must render the historical downloaded icon before its background confirmation");
+    assert(cachedDownloadFrame.title.includes("后台复核"),"Cached status must identify itself as historical");
     const expectedDurations = ["03:00", "03:00", "03:00", "04:00", "1:02:03", "03:00"];
     await waitFor(() => evaluate(main, `JSON.stringify([...document.querySelectorAll('.music-list-container tbody td[data-id="duration"]')].map(cell=>cell.textContent.trim()))===${JSON.stringify(JSON.stringify(['03:00','03:00','03:00','04:00','1:02:03','03:00']))}`), "local and downloaded duration hydration");
     const durationCells = await evaluate(main, `[...document.querySelectorAll('.music-list-container tbody td[data-id="duration"]')].map(cell=>({text:cell.textContent.trim(),width:cell.clientWidth,content:cell.scrollWidth}))`);
@@ -326,10 +344,10 @@ async function reloadMain() {
     main.webContents.session.flushStorageData();
     assert.deepEqual(failures, []);
     assert.deepEqual(remoteRequests, [], "Theme preview must work offline");
-    const report = { passed: true, durationCells, savedDurations, firstShownSnapshot, firstStartupMarks, heldChunk, logoChecks, legacyClassicMigrated:true, brokenExternalPackFallsBackToBlue:true, realChunkFailureRetryPassed:true, packagedMainPreloadRenderer: true, isolatedProfile: app.getPath("userData"), portableProfileTarget: path.join(portable, "userData"),
+    const report = { passed: true, cachedDownloadFrame, durationCells, savedDurations, firstShownSnapshot, firstStartupMarks, heldChunk, logoChecks, legacyClassicMigrated:true, brokenExternalPackFallsBackToBlue:true, realChunkFailureRetryPassed:true, packagedMainPreloadRenderer: true, isolatedProfile: app.getPath("userData"), portableProfileTarget: path.join(portable, "userData"),
         appName: app.getName(), protocolCalls, platform: process.platform, electron: process.versions.electron,
         chromium: process.versions.chrome, network: "HTTP(S) blocked; no requests attempted", resources,
-        checks: ["old local and downloaded songs recover and persist duration; numeric and formatted strings render", "blue default and local images", "real six-song playlist", "select all then deselect one", "850px narrow page",
+        checks: ["cached download icon appears before background confirmation; tooltip marks historical result", "old local and downloaded songs recover and persist duration; numeric and formatted strings render", "blue default and local images", "real six-song playlist", "select all then deselect one", "850px narrow page",
             "local synthesized WAV playback", "detail and mini circular covers", "real mini-window state sync", "pause in both windows",
             "legacy classic migrated to porcelain without an orange frame", "external pack precedence and restore", "theme persisted after reload", "nonblank first frame before 3.2s delayed player chunk", "music note, regular F and last e at 1050/1200px and 100/125/150/200 percent zoom", "chunk failure retry", "production identity; registration intercepted and isolated test profile"],
         demo: "Six fictional tracks share a locally synthesized quiet chime; original lyrics; isolated preview music only",

@@ -62,6 +62,7 @@ declare namespace IMusic {
       path: string;
       quality: IQualityKey;
       fingerprint?: import("@/common/download-resource").DownloadFileIdentity;
+      verified?: import("@/common/download-resource").DownloadResourceSnapshot;
     };
   }
 
