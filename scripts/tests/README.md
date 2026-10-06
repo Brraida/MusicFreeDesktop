@@ -57,6 +57,8 @@ node scripts/tests/lyric-regression.cjs
 
 - 双行歌词：真实 React、SCSS、共享歌词函数、消息状态订阅与 ResizeObserver；重复文字切句、两窗一致、快退、前奏/间奏/末句/切歌清空、长句暂停/恢复/回退、16/54/80 排版、340×72 迷你窗、封面控件不遮挡歌词、减少动态效果与卸载清理。编译后的真实主进程/preload/renderer 验收另见 [双行歌词记录](../../docs/knowledge-base/evidence/ktv-two-line-results.json)。
 
+动画回归先通过 Chromium CDP 明确设置 `prefers-reduced-motion: no-preference` 验证旋转与滚动，再切换 `reduce` 验证动画停止；结果同时记录系统原设置。避免 CI 宿主默认减少动态效果时读取不存在的动画对象。已在 Windows 强制减少动态效果的条件下验证两个阶段。
+
 这些测试不等于所有在线插件、真实音乐格式和设备的全量兼容性测试。download-resource Node 测试也已在 WSL Linux 执行；Linux GUI 与 macOS 本轮未执行运行验收。
 
 ## 编译版启动性能
