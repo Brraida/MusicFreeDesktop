@@ -13,6 +13,7 @@ node scripts/tests/store-regression.cjs
 node scripts/tests/startup-regression.cjs
 node scripts/tests/ci-regression.cjs
 node scripts/tests/download-resource-regression.cjs
+node scripts/tests/lyric-regression.cjs
 ```
 
 | 测试 | 覆盖与边界 |
@@ -23,6 +24,7 @@ node scripts/tests/download-resource-regression.cjs
 | audio | HLS 与 Blob 生命周期、最终 headers、播放/暂停意图、seek、A → B → A、取消与 URL 释放；Audio/HLS/fetch 用替身 |
 | store | 提交后通知、订阅错误隔离、其他订阅继续执行、更新函数失败保留旧状态 |
 | ci | 四平台产物路径、版本标签、完整便携 ZIP（包含空 portable 和隐藏资源）、SHA-256、重复产物保护、Release 草稿创建/更新与正式发布保护；独立临时文件和 GitHub CLI 替身 |
+| lyric | 真实歌词解析与双句推导：乱序、重复文字、同时间戳、前奏/间奏/末句、纯文本与零时间单句、过时快照、翻译、正负 offset；16～80 字号与窗口高度换算 |
 | startup | 配置/插件/歌单/播放状态/语言/下载记录的阶段错误信息；各初始化服务用替身 |
 | download-resource | 真实文件读取与 SHA-256、同名同大小内容冒充、删除/恢复、父目录删除/重建、监听重挂后原生事件、无关目录边界、换目录代次和 stop 释放；权限/离线/I/O 分类用故障注入 |
 
@@ -38,6 +40,7 @@ node scripts/tests/download-resource-regression.cjs
 .\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs relocation
 .\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs download-resource
 .\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs vinyl
+.\node_modules\.bin\electron.cmd scripts/tests/electron-regression-main.cjs lyric
 ```
 
 测试数据保存在 `out/.download-regression-data-*`、`out/.correctness-regression-*` 独立目录，不使用正常应用的音乐库或设置。scanner 测试会清理其独立目录，其余结果/profile 保留在 out 便于诊断。
@@ -49,6 +52,8 @@ node scripts/tests/download-resource-regression.cjs
 - 歌单：真实 IndexedDB，20 个并发重复添加、添加/删除竞态、引用计数、收藏索引、清空/删歌单、写入失败回滚。
 - 启动：真实 React 加载/失败/成功界面；日志服务失败时仍显示诊断；成功前不挂载播放器。重试按钮通过整页重载重新初始化，不删除配置或音乐库。
 - 唱片：真实 React 组件、SCSS 和 Chromium 动画；旋转周期、暂停保持角度和继续、透明素材解码、唱臂实际 alpha 边界、针尖落在黑胶外圈与暂停离盘、固定反光、44px/56px 适配、主窗口 Store 与迷你订阅、隐藏停转、切歌、坏封面回退、键盘/双击/悬停、减少动态效果与卸载清理。独立 profile 输出播放/暂停/底部栏与迷你窗口截图；部分外围控件使用替身。
+
+- 双行歌词：真实 React、SCSS、共享歌词函数、消息状态订阅与 ResizeObserver；重复文字切句、两窗一致、快退、前奏/间奏/末句/切歌清空、长句暂停/恢复/回退、16/54/80 排版、340×72 迷你窗、封面控件不遮挡歌词、减少动态效果与卸载清理。
 
 这些测试不等于所有在线插件、真实音乐格式和设备的全量兼容性测试。download-resource Node 测试也已在 WSL Linux 执行；Linux GUI 与 macOS 本轮未执行运行验收。
 

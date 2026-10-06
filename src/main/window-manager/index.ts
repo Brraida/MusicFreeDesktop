@@ -10,6 +10,7 @@ import AppConfig from "@shared/app-config/main";
 import messageBus from "@shared/message-bus/main";
 import { IAppConfig } from "@/types/app-config";
 import debounce from "@/common/debounce";
+import { LYRIC_LAYOUT, lyricWindowHeight, lyricFontSizeForHeight } from "@/common/lyric-layout";
 import logger from "@shared/logger/main";
 
 
@@ -251,11 +252,11 @@ class WindowManager implements IWindowManager {
     /**************************** Lyric Window ***************************/
     private static lyricWindowMinSize: ICommon.ISize = {
         width: 920,
-        height: 92, // 60 + 16 * 2
+        height: lyricWindowHeight(LYRIC_LAYOUT.minFont),
     };
     private static lyricWindowMaxSize: ICommon.ISize = {
         width: Infinity,
-        height: 240, // 60 + 80 * 2
+        height: lyricWindowHeight(LYRIC_LAYOUT.maxFont),
     };
 
     private formatLyricWindowSize(width?: number, height?: number): ICommon.ISize {
@@ -267,7 +268,7 @@ class WindowManager implements IWindowManager {
 
     private evaluateWindowHeight() {
         const fontSize = AppConfig.getConfig("lyric.fontSize") || 54;
-        return 60 + fontSize * 2;
+        return lyricWindowHeight(fontSize);
     }
 
     private createLyricWindow() {
@@ -352,7 +353,7 @@ class WindowManager implements IWindowManager {
 
         const updateLyricSizeConfig = debounce(() => {
             const [wWidth, wHeight] = lyricWindow.getSize();
-            const fontSize = Math.max(Math.min(Math.floor((wHeight - 60) / 2), 80), 16);
+            const fontSize = lyricFontSizeForHeight(wHeight);
             AppConfig.setConfig({
                 "lyric.fontSize": fontSize,
                 "private.lyricWindowSize": {

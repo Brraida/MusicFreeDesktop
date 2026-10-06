@@ -1,4 +1,5 @@
 import { defaultFont } from "@/common/constant";
+import { LYRIC_LAYOUT } from "@/common/lyric-layout";
 import { IAppConfig } from "@/types/app-config";
 
 const _defaultAppConfig: IAppConfig =  {
@@ -19,8 +20,8 @@ const _defaultAppConfig: IAppConfig =  {
     "lyric.alwaysOnTop": false,
     "lyric.lockLyric": false,
     "lyric.fontData": defaultFont,
-    "lyric.fontColor": "#fff",
-    "lyric.strokeColor": "#b48f1d",
+    "lyric.fontColor": LYRIC_LAYOUT.color,
+    "lyric.strokeColor": LYRIC_LAYOUT.stroke,
     "lyric.fontSize": 54,
     "shortCut.enableLocal": true,
     "shortCut.enableGlobal": false,

@@ -29,6 +29,8 @@ export default class LyricParser {
 
     public hasTranslation = false;
 
+    public hasTimeTags = false;
+
     get musicItem() {
         return this._musicItem;
     }
@@ -42,6 +44,7 @@ export default class LyricParser {
             translation = undefined;
         }
 
+        this.hasTimeTags = !!raw?.match(timeReg)?.length;
         const { lrcItems, meta } = this.parseLyricImpl(raw);
         this.meta = meta;
         this.lrcItems = lrcItems;
@@ -215,7 +218,8 @@ export default class LyricParser {
             }
             rawLrcs.shift();
         }
-        let lrcItems = rawLrcItems.sort((a, b) => a.time - b.time);
+        let lrcItems = rawLrcItems.sort((a, b) => a.time - b.time)
+            .map((item, index) => ({ ...item, index }));
         if (lrcItems.length === 0 && raw.length) {
             lrcItems = raw.split("\n").map((_, index) => ({
                 time: 0,

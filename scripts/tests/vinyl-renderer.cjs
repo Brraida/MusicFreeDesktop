@@ -98,7 +98,8 @@ module.exports = async (testRoot) => {
         "./index.scss": {}, "@/renderer/components/SvgAsset": Svg, "@/renderer/components/Tag": Tag,
         "@/common/time-util": load("src/common/time-util.ts"), "@/renderer/components/MusicFavorite": () => h("span", null, "♡"),
         "@/renderer/components/MusicDetail": Detail, "react-i18next": translation, "@renderer/core/track-player/hooks": hooks,
-        "@/renderer/components/VinylCover": VinylCover, "@/common/constant": constants, "@/common/media-util": media,
+        "@/renderer/components/VinylCover": VinylCover,
+        "@/common/constant": constants, "@/common/media-util": media,
         "@renderer/components/Panel": { hidePanel() {}, showPanel() {} }, "@renderer/components/MusicDownloaded": () => null,
         "@shared/plugin-manager/renderer": { isSupportFeatureMethod: () => false },
     }).default;
@@ -109,7 +110,12 @@ module.exports = async (testRoot) => {
         subscribeAppState: () => {}, sendCommand: command => commands.push(command),
     };
     const extension = load("src/shared/message-bus/renderer/extension.ts");
+    const useLyricPair = load("src/renderer/utils/use-lyric-pair.ts", {
+        "@shared/message-bus/renderer/extension": extension,
+        "./lyric-pair": load("src/renderer/utils/lyric-pair.ts"),
+    }).default;
     const Mini = load("src/renderer-minimode/pages/index.tsx", {
+        "@/renderer/utils/use-lyric-pair": useLyricPair,
         "./index.scss": {}, "@/renderer/components/SvgAsset": Svg, "@/common/constant": constants,
         "@/assets/imgs/album-cover.jpg": fallback, "@/renderer/components/VinylCover": VinylCover,
         "@/common/media-util": media, "react-i18next": translation,
@@ -247,7 +253,7 @@ module.exports = async (testRoot) => {
     await act(async () => mini().dispatchEvent(new MouseEvent("dblclick", { bubbles: true })));
     assert.equal(showMain, 1);
     await act(async () => document.querySelector(".minimode-header-container").dispatchEvent(new MouseEvent("mouseover", { bubbles: true })));
-    const toggle = document.querySelector(".options-container .option-item:nth-of-type(3)");
+    const toggle = document.querySelector(".options-container .option-item:nth-of-type(2)");
     assert(toggle, "Mini controls lost their hover behavior");
     await act(async () => toggle.click()); assert(commands.includes("TogglePlayerState"));
     await act(async () => document.querySelector(".minimode-header-container").dispatchEvent(new MouseEvent("mouseout", { bubbles: true, relatedTarget: document.body })));
