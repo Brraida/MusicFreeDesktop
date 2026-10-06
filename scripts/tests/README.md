@@ -13,6 +13,7 @@ node scripts/tests/store-regression.cjs
 node scripts/tests/startup-regression.cjs
 node scripts/tests/ci-regression.cjs
 node scripts/tests/download-resource-regression.cjs
+node scripts/tests/duration-regression.cjs
 node scripts/tests/lyric-regression.cjs
 ```
 
@@ -24,6 +25,7 @@ node scripts/tests/lyric-regression.cjs
 | audio | HLS 与 Blob 生命周期、最终 headers、播放/暂停意图、seek、A → B → A、取消与 URL 释放；Audio/HLS/fetch 用替身 |
 | store | 提交后通知、订阅错误隔离、其他订阅继续执行、更新函数失败保留旧状态 |
 | ci | 四平台产物路径、版本标签、完整便携 ZIP（包含空 portable 和隐藏资源）、SHA-256、重复产物保护、Release 草稿创建/更新与正式发布保护；独立临时文件和 GitHub CLI 替身 |
+| duration | 本地时长恢复、已有时长归一化、播放事件持久化与未知时长占位；保留 dev 的新增时长回归 |
 | lyric | 真实歌词解析与双句推导：乱序、重复文字、同时间戳、前奏/间奏/末句、纯文本与零时间单句、过时快照、翻译、正负 offset；16～80 字号与窗口高度换算 |
 | startup | 配置/插件/歌单/播放状态/语言/下载记录的阶段错误信息；各初始化服务用替身 |
 | download-resource | 真实文件读取与 SHA-256、同名同大小内容冒充、删除/恢复、父目录删除/重建、监听重挂后原生事件、无关目录边界、换目录代次和 stop 释放；权限/离线/I/O 分类用故障注入 |
