@@ -755,7 +755,7 @@ class TrackPlayer {
         if (downloadedData && !skipLocal) {
             const status = await refreshDownloadedMusicItem(musicItem);
             const latest = getInternalData<IMusic.IMusicItemInternalData>(getDownloadedMusicItem(musicItem), "downloadData") ?? downloadedData;
-            if (effectiveResourceState(status) === DownloadResourceState.AVAILABLE) {
+            if (!status.cached && effectiveResourceState(status) === DownloadResourceState.AVAILABLE) {
                 return {
                     quality: latest.quality,
                     mediaSource: {

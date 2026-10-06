@@ -98,6 +98,7 @@
     "refreshing_files": "正在核對本機檔案…",
     "refresh_failed": "本機檔案狀態更新失敗",
     "checking": "正在核對本機檔案",
+    "cached_status": "上次核對：{{status}}，背景複核中",
     "local_unavailable": "本機檔案暫時無法使用：{{reason}}；點擊重新下載",
     "file_reasons": {
       "offline": "磁碟離線",

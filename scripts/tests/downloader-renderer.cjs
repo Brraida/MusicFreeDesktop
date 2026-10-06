@@ -58,7 +58,7 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
             }
         },
     };
-    const sheetMocks = { "@/common/download-resource": resource,
+    const sheetMocks = { "@/common/time-util": compile("src/common/time-util.ts"), "@/common/download-resource": resource,
         "@shared/app-config/renderer": { getConfig: () => testRoot, onConfigUpdate() {} },
         "@/shared/global-context/renderer": { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: testRoot } }) },
         "@/common/media-util": media,
@@ -169,6 +169,7 @@ module.exports = async function runDownloadTests(testRoot, baseURL) {
         return { url: baseURL + (song.id.includes("slow") ? "/slow" : "/ok") };
     } };
     const core = compile("src/renderer/core/downloader/index.ts", {
+        "@/common/download-resource": resource,
         "@/common/media-util": media,
         comlink: { ...comlink, wrap: () => comlink.wrap(channel.port2) },
         "@/common/constant": constants,

@@ -88,6 +88,7 @@
     "refreshing_files": "正在核对本地文件…",
     "refresh_failed": "本地文件状态刷新失败",
     "checking": "正在核对本地文件",
+    "cached_status": "上次核对：{{status}}，后台复核中",
     "local_unavailable": "本地文件暂不可用：{{reason}}；点击重新下载",
     "file_reasons": {
       "offline": "磁盘离线",

@@ -33,6 +33,20 @@ async function until(check, label) {
         assert.equal(initial.state, State.AVAILABLE);
         assert.match(initial.identity.sha256, /^[a-f0-9]{64}$/);
         assert.equal(initial.identity.size, 14);
+        const verified = { version: 1, path: file, directory: downloads, state: State.AVAILABLE, checkedAt: Date.now() };
+        const data = { path: file, fingerprint: initial.identity, verified };
+        assert.deepEqual(resource.restoreDownloadResource(data, downloads, key),
+            { state: State.AVAILABLE, path: file, checkedAt: verified.checkedAt, reason: undefined, cached: true });
+        for (const invalid of [{ ...data, path: file + ".moved" }, { ...data, fingerprint: undefined },
+            { ...data, verified: { ...verified, version: 2 } }, { ...data, verified: { ...verified, checkedAt: NaN } },
+            { ...data, verified: { ...verified, state: State.CHECKING } }, { ...data, verified: undefined }]) {
+            assert.equal(resource.restoreDownloadResource(invalid, downloads, key).state, State.CHECKING);
+        }
+        assert.equal(resource.restoreDownloadResource(data, other, key).state, State.CHECKING,"Changed download directory invalidates the cached result");
+        for (const state of [State.MISSING, State.UNAVAILABLE]) {
+            assert.equal(resource.restoreDownloadResource({ ...data, verified: { ...verified, state } }, downloads, key).state,state);
+        }
+
         const copy = path.join(other, "song.mp3");
         await fs.copyFile(file, copy);
         assert.equal((await inspectDownloadFile(copy, initial.identity, true)).state, State.AVAILABLE);
