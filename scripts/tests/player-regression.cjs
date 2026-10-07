@@ -4,7 +4,7 @@ const { load, deferred } = require("./source-loader.cjs");
 const A = { platform: "test", id: "A", title: "A" };
 const B = { ...A, id: "B", title: "B" };
 
-function createPlayer({ delay = async () => {}, downloaded, files = {}, internalData = () => undefined, reconcile } = {}) {
+function createPlayer({ delay = async () => {}, downloaded, files = {}, internalData = () => undefined, reconcile, onPreference = () => {} } = {}) {
     const constants = load("src/common/constant.ts");
     const resource = load("src/common/download-resource.ts");
     const media = {
@@ -16,7 +16,11 @@ function createPlayer({ delay = async () => {}, downloaded, files = {}, internal
     const stores = load("src/renderer/core/track-player/store.ts", {
         "@/common/store": Store, "@/common/constant": constants,
     }).default;
+    let audioInstances = 0;
     class Audio {
+        constructor() {
+            ++audioInstances;
+        }
         resetCount = 0; tracks = [];
         get hasSource() {
             return this.tracks.length > 0;
@@ -50,7 +54,7 @@ function createPlayer({ delay = async () => {}, downloaded, files = {}, internal
         "./enum": load("src/renderer/core/track-player/enum.ts"),
         "@/common/download-resource": resource, "@/common/media-util": media, "@/common/constant": constants,
         "@/renderer/utils/lyric-parser": Lyric,
-        "@/renderer/utils/user-perference": { setUserPreference() {}, setUserPreferenceIDB() {}, removeUserPreference() {} },
+        "@/renderer/utils/user-perference": { setUserPreference: onPreference, setUserPreferenceIDB() {}, removeUserPreference() {} },
         "@shared/app-config/renderer": { getConfig: key => key === "playMusic.playError" ? "skip" : "standard" },
         "@/common/index-map": { createIndexMap: () => ({ update() {}, indexOf: a => a?.id === "A" ? 0 : 1 }) },
         "./store": stores, eventemitter3: EventEmitter,
@@ -65,6 +69,9 @@ function createPlayer({ delay = async () => {}, downloaded, files = {}, internal
         },
         "@shared/utils/renderer": { fsUtil: files }, "@shared/plugin-manager/renderer": plugins,
     }).default;
+    assert.equal(audioInstances, 0, "Importing the player must not allocate an unused native audio controller");
+    player.createAudioController();
+    assert.equal(audioInstances, 1);
     player.setMusicQueue([A, B]);
     return { player, stores, plugins };
 }
@@ -74,6 +81,34 @@ const tick = async () => {
 };
 
 (async () => {
+    // Progress UI remains immediate while disk checkpoints are bounded.
+    {
+        const writes = [];
+        const { player, stores } = createPlayer({ onPreference: (key, value) => writes.push([key, value]) });
+        player.createAudioController();
+        const originalNow = Date.now;
+        let now = 100000;
+        Date.now = () => now;
+        try {
+            for (let i = 0; i < 100; i++) {
+                now += 250;
+                player.audioController.onProgressUpdate({ currentTime: i / 4, duration: 100 });
+                assert.equal(stores.progressStore.getValue().currentTime, i / 4);
+            }
+            assert.equal(writes.filter(([key]) => key === "currentProgress").length, 13);
+            player.pause();
+            assert.equal(writes.at(-1)[1], 24.75);
+            player.seekTo(55);
+            assert.equal(writes.at(-1)[1], 55);
+            player.flushProgress();
+            assert.equal(writes.at(-1)[1], 55, "Unload cannot overwrite pending seek with the old progress");
+            player.resetProgress();
+            player.flushProgress();
+            assert.equal(writes.at(-1)[1], 55, "Reset cannot flush stale checkpoints");
+        } finally {
+            Date.now = originalNow;
+        }
+    }
     // A view may still hold the old metadata after automatic path reconciliation.
     {
         const updated = { ...A, downloadData: { path: "new/A.mp3", quality: "high" } };

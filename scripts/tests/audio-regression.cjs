@@ -108,6 +108,21 @@ const response = { ok: true, blob: async () => ({}) };
         controller.setTrackSource(protectedSource, A); controller.destroy();
         failed.reject(new Error("late failure")); await tick(); assert.equal(errors.length, 2);
         assert.equal(controller.audio.src, ""); assert.equal(controller.musicItem, null);
+        // Repeated transitions must not accumulate live HLS or Blob resources.
+        global.fetch = async () => response;
+        const cycling = new Controller();
+        for (let i = 0; i < 1000; i++) {
+            cycling.setTrackSource(protectedSource, i % 2 ? A : B); await tick();
+            const objectUrl = cycling.audio.src;
+            assert(objectUrl.startsWith("blob:"));
+            cycling.setTrackSource({ url: "https://example.test/cycle.m3u8" }, A);
+            assert(revoked.includes(objectUrl));
+            const currentHls = cycling.hls;
+            cycling.setTrackSource({ url: "https://example.test/cycle.mp3" }, B);
+            assert.equal(currentHls.destroyed, true);
+            cycling.reset(); assert.equal(cycling.objectUrl, null); assert.equal(cycling.hls, null);
+        }
+        cycling.destroy(); assert.equal(created, new Set(revoked).size);
         console.log("PASS: HLS teardown/headers, Blob auth/autoplay/seek, pause, abort, A-B-A and Object URL cleanup");
     } finally {
         for (const [key, descriptor] of globals) {

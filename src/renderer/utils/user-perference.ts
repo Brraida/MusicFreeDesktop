@@ -1,9 +1,7 @@
-import { safeParse } from "@/common/safe-serialization";
 import Dexie, { Table } from "dexie";
 import EventEmitter from "eventemitter3";
 import { useEffect, useState } from "react";
 
-const basicType = ["number", "string", "boolean", "null", "undefined"];
 
 const ee = new EventEmitter();
 
@@ -16,24 +14,32 @@ export function setUserPreference<K extends keyof IUserPreference.IType>(
     value: IUserPreference.IType[K],
 ) {
     try {
-        let newValue;
-        if (typeof value in basicType) {
-            newValue = value as any;
-        } else {
-            newValue = JSON.stringify(value);
-        }
-        localStorage.setItem(key, newValue as any);
-        ee.emit(EvtNames.USER_PREFERENCE_UPDATE, key, value);
-    } catch {
-    // 设置失败
+        if (value === undefined) localStorage.removeItem(key);
+        else localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.error("Preference save failed", key, error);
+        return false;
     }
+    try {
+        ee.emit(EvtNames.USER_PREFERENCE_UPDATE, key, value);
+    } catch (error) {
+        console.error("Preference notification failed", key, error);
+    }
+    return true;
 }
 
 export function removeUserPreference(key: keyof IUserPreference.IType) {
     try {
         localStorage.removeItem(key);
+    } catch (error) {
+        console.error("Preference removal failed", key, error); return false;
+    }
+    try {
         ee.emit(EvtNames.USER_PREFERENCE_UPDATE, key, null);
-    } catch {}
+    } catch (error) {
+        console.error("Preference notification failed", key, error);
+    }
+    return true;
 }
 
 export function getUserPreference<K extends keyof IUserPreference.IType>(
@@ -42,7 +48,7 @@ export function getUserPreference<K extends keyof IUserPreference.IType>(
     let rawData = null;
     try {
         rawData = localStorage.getItem(key);
-        if (!rawData) {
+        if (!rawData || rawData === "undefined") {
             return null;
         }
         return JSON.parse(rawData);
@@ -84,7 +90,7 @@ export function useUserPreference<K extends keyof IUserPreference.IType>(
             ee.off(EvtNames.USER_PREFERENCE_UPDATE, updateFn);
             window.removeEventListener("storage", updateFnStorage);
         };
-    }, []);
+    }, [key]);
 
     return [state, setState] as const;
 }
@@ -120,12 +126,18 @@ export async function setUserPreferenceIDB<
                 value,
             });
         });
-        const cb = dbKeyUpdateCbs.get(key);
-        cb?.forEach((it) => it?.(value));
-        return true;
-    } catch {
+    } catch (error) {
+        console.error("IndexedDB preference save failed", key, error);
         return false;
     }
+    for (const callback of [...(dbKeyUpdateCbs.get(key) ?? [])]) {
+        try {
+            callback(value);
+        } catch (error) {
+            console.error("IndexedDB preference notification failed", key, error);
+        }
+    }
+    return true;
 }
 
 export async function getUserPreferenceIDB<
@@ -150,20 +162,23 @@ export function useUserPreferenceIDBValue<
     const [state, setState] = useState<IUserPreference.IDBType[K] | null>(null);
 
     useEffect(() => {
-        (async () => {
-            try {
-                const result = await getUserPreferenceIDB(key);
-                setState(result);
-            } catch {
-            } finally {
-                if (dbKeyUpdateCbs.has(key)) {
-                    dbKeyUpdateCbs.get(key).add(setState);
-                } else {
-                    dbKeyUpdateCbs.set(key, new Set([setState]));
-                }
-            }
-        })();
-    }, []);
+        let active = true, changed = false;
+        const callback = (value: IUserPreference.IDBType[K]) => {
+            changed = true;
+            if (active) setState(value);
+        };
+        const callbacks = dbKeyUpdateCbs.get(key) ?? new Set();
+        callbacks.add(callback);
+        dbKeyUpdateCbs.set(key, callbacks);
+        getUserPreferenceIDB(key).then(value => {
+            if (active && !changed) setState(value);
+        });
+        return () => {
+            active = false;
+            callbacks.delete(callback);
+            if (!callbacks.size) dbKeyUpdateCbs.delete(key);
+        };
+    }, [key]);
 
     return state;
 }

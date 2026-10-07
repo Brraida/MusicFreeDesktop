@@ -136,6 +136,14 @@ class TrackPlayer {
     private localSource?: { path: string; requestId: number };
     private localFallbackRequestId?: number;
     private playbackIntent = false;
+    private lastProgressSave = 0;
+    private progressSaveDirty = false;
+    private flushProgress = () => {
+        if (!this.progressSaveDirty) return;
+        const saved = setUserPreference("currentProgress", this.progress.currentTime);
+        this.progressSaveDirty = saved === false;
+        this.lastProgressSave = Date.now();
+    };
 
     private audioController: IAudioController;
 
@@ -144,7 +152,6 @@ class TrackPlayer {
     constructor() {
         this.indexMap = createIndexMap();
         this.ee = new EventEmitter();
-        this.audioController = new AudioController();
     }
 
     on<T extends keyof InternalPlayerEvents>(event: T, callback: InternalPlayerEvents[T]) {
@@ -181,6 +188,7 @@ class TrackPlayer {
 
 
     private createAudioController() {
+        this.audioController?.destroy?.();
         const audioController = new AudioController();
         // 播放结束
         audioController.onEnded = () => {
@@ -277,6 +285,7 @@ class TrackPlayer {
         // 2. init audio controller
         this.createAudioController();
         this.setupEvents();
+        window.addEventListener("beforeunload", this.flushProgress);
 
         // 3. resume state
         musicQueueStore.setValue(playList);
@@ -485,10 +494,17 @@ class TrackPlayer {
 
     public seekTo(seconds: number) {
         this.audioController.seekTo(seconds);
+        if (Number.isFinite(seconds)) {
+            const duration = this.progress.duration;
+            setUserPreference("currentProgress", Math.min(Math.max(0, seconds), duration > 0 ? duration : Infinity));
+            this.lastProgressSave = Date.now();
+            this.progressSaveDirty = false;
+        }
     }
 
     public pause() {
         this.playbackIntent = false;
+        this.flushProgress();
         this.audioController.pause();
         if (this.playerState !== this.audioController.playerState) {
             this.setPlayerState(this.audioController.playerState);
@@ -660,14 +676,18 @@ class TrackPlayer {
     public async setAudioOutputDevice(deviceId?: string) {
         try {
             await this.audioController.setSinkId(deviceId ?? "");
+            return true;
         } catch (e) {
             logger.logError("设置音频输出设备失败", e);
+            return false;
         }
     }
 
     public setMusicQueue(musicQueue: IMusic.IMusicItem[]) {
         musicQueueStore.setValue(musicQueue);
-        setUserPreferenceIDB("playList", musicQueue);
+        Promise.resolve(setUserPreferenceIDB("playList", musicQueue)).then(saved => {
+            if (saved === false) logger.logError("Playback queue could not be saved", new Error("IndexedDB preference write failed"));
+        }).catch(error => logger.logError("Playback queue could not be saved", error));
         this.indexMap.update(musicQueue);
         this.currentIndex = this.findMusicIndex(this.currentMusic);
     }
@@ -795,6 +815,7 @@ class TrackPlayer {
     // 只读数据的设置
     private setCurrentMusic(musicItem: IMusic.IMusicItem | null) {
         if (!this.isCurrentMusic(musicItem)) {
+            this.resetProgress();
             ++this.sourceRequestId;
             ++this.lyricRequestId;
             currentMusicStore.setValue(musicItem);
@@ -815,7 +836,8 @@ class TrackPlayer {
 
     private setProgress(progress: CurrentTime) {
         progressStore.setValue(progress);
-        setUserPreference("currentProgress", progress.currentTime);
+        this.progressSaveDirty = true;
+        if (Date.now() - this.lastProgressSave >= 2000) this.flushProgress();
         this.ee.emit(PlayerEvents.ProgressChanged, progress);
     }
 
@@ -837,6 +859,7 @@ class TrackPlayer {
     }
 
     private setPlayerState(playerState: PlayerState) {
+        if (playerState === PlayerState.Paused) this.flushProgress();
         playerStateStore.setValue(playerState);
         this.ee.emit(PlayerEvents.StateChanged, playerState);
     }
@@ -851,6 +874,8 @@ class TrackPlayer {
 
 
     private resetProgress() {
+        this.progressSaveDirty = false;
+        this.lastProgressSave = 0;
         resetProgress();
         removeUserPreference("currentProgress");
     }
@@ -866,7 +891,7 @@ class TrackPlayer {
         this.audioController.setTrackSource(mediaSource, musicItem);
 
         if (options.seekTo >= 0) {
-            this.audioController.seekTo(options.seekTo);
+            this.seekTo(options.seekTo);
         }
 
         if (options.autoPlay) {
