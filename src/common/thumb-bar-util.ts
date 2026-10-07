@@ -18,7 +18,7 @@ import messageBus from "@shared/message-bus/main";
  * @param isPlaying 当前是否正在播放音乐
  */
 function setThumbBarButtons(window: BrowserWindow, isPlaying?: boolean) {
-    if (!window) {
+    if (!window || window.isDestroyed()) {
         return;
     }
 
@@ -60,7 +60,8 @@ const getDefaultAlbumCoverImage = asyncMemoize(async () => {
     return await fs.readFile((getResourcePath(ResourceName.DEFAULT_ALBUM_COVER_IMAGE)));
 });
 
-let hookedFlag = false;
+const hookedWindows = new WeakSet<BrowserWindow>();
+const imageRequests = new WeakMap<BrowserWindow, AbortController>();
 
 /**
  * 设置缩略图
@@ -68,7 +69,7 @@ let hookedFlag = false;
  * @param src 图片url
  */
 async function setThumbImage(window: BrowserWindow, src: string) {
-    if (!window) {
+    if (!window || window.isDestroyed()) {
         return;
     }
 
@@ -77,14 +78,20 @@ async function setThumbImage(window: BrowserWindow, src: string) {
         return;
     }
 
+    imageRequests.get(window)?.abort();
+    const request = new AbortController();
+    imageRequests.set(window, request);
+    const current = () => !request.signal.aborted && !window.isDestroyed() && imageRequests.get(window) === request;
     try {
         const hwnd = window.getNativeWindowHandle().readBigUInt64LE(0);
 
         const taskBarThumbManager = (await import("@native/TaskbarThumbnailManager/TaskbarThumbnailManager.node")).default;
 
-        if (!hookedFlag) {
+        if (!current()) return;
+        if (!hookedWindows.has(window)) {
             taskBarThumbManager.config(hwnd);
-            hookedFlag = true;
+            hookedWindows.add(window);
+            window.once("closed", () => imageRequests.get(window)?.abort());
         }
 
         let buffer: Buffer;
@@ -95,6 +102,8 @@ async function setThumbImage(window: BrowserWindow, src: string) {
                 buffer = (
                     await axios.get(src, {
                         responseType: "arraybuffer",
+                        signal: request.signal,
+                        timeout: 10000,
                     })
                 ).data;
             } catch {
@@ -106,10 +115,11 @@ async function setThumbImage(window: BrowserWindow, src: string) {
             buffer = await getDefaultAlbumCoverImage();
         }
 
+        if (!current()) return;
         const size = 106;
 
         const sharp = (await import("sharp")).default;
-        const result = await sharp(buffer)
+        const convert = (image: Buffer) => sharp(image)
             .resize(size, size, {
                 fit: "cover",
             })
@@ -120,6 +130,16 @@ async function setThumbImage(window: BrowserWindow, src: string) {
                 resolveWithObject: true,
             });
 
+        let result;
+        try {
+            result = await convert(buffer);
+        } catch (error) {
+            if (!current()) return;
+            logger.logError("Invalid taskbar cover; using default image", error);
+            result = await convert(await getDefaultAlbumCoverImage());
+        }
+
+        if (!current()) return;
         taskBarThumbManager.sendIconicRepresentation(
             hwnd,
             {
@@ -129,7 +149,7 @@ async function setThumbImage(window: BrowserWindow, src: string) {
             result.data,
         );
     } catch (ex) {
-        logger.logError("Fail to setThumbImage", ex);
+        if (current()) logger.logError("Fail to setThumbImage", ex);
     }
 
 
