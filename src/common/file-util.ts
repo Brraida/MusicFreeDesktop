@@ -12,8 +12,6 @@ function getB64Picture(picture: IPicture) {
     return `data:${picture.format};base64,${picture.data.toString("base64")}`;
 }
 
-const specialEncoding = ["GB2312"];
-
 export async function parseLocalMusicItem(
     filePath: string,
 ): Promise<IMusic.IMusicItem> {
@@ -27,58 +25,36 @@ export async function parseLocalMusicItem(
             ? await parseBuffer(await fs.readFile(filePath), { path: filePath })
             : await parseFile(filePath);
 
-        const jschardet = await import("jschardet");
-
-        // 检测编码
-        let encoding: string | null = null;
-        let conf = 0;
-        const testItems = [common.title, common.artist, common.album];
-
-        for (const testItem of testItems) {
-            if (!testItem) {
-                continue;
+        // Decoded Unicode must stay intact. Preserve the existing GB2312
+        // compatibility path only for strings that can still represent raw bytes.
+        const byteString = (value: string) => {
+            if (typeof value !== "string") return false;
+            let high = false;
+            for (let index = 0; index < value.length; index++) {
+                const code = value.charCodeAt(index);
+                if (code > 255) return false;
+                high ||= code >= 128;
             }
-            const testResult = jschardet.detect(testItem, {
-                minimumThreshold: 0.4,
-            });
-            if (testResult.confidence > conf) {
-                conf = testResult.confidence;
-                encoding = testResult.encoding;
+            return high;
+        };
+        const fields = ["title", "artist", "album"] as const;
+        const legacy = fields.filter(field => byteString(common[field]));
+        if (legacy.length) {
+            const detector = await import("jschardet");
+            let confidence = 0, encoding: string;
+            for (const field of legacy) {
+                const detected = detector.detect(Buffer.from(common[field], "latin1"), { minimumThreshold: 0.4 });
+                if (detected.confidence > confidence) {
+                    confidence = detected.confidence; encoding = detected.encoding;
+                }
+                if (confidence > 0.9) break;
             }
-
-            if (conf > 0.9) {
-                break;
-            }
-        }
-
-        if (specialEncoding.includes(encoding)) {
-            const iconv = await import("iconv-lite");
-
-            if (common.title) {
-                common.title = iconv.decode(
-                    common.title as unknown as Buffer,
-                    encoding,
-                );
-            }
-            if (common.artist) {
-                common.artist = iconv.decode(
-                    common.artist as unknown as Buffer,
-                    encoding,
-                );
-            }
-            if (common.artist) {
-                common.album = iconv.decode(
-                    common.album as unknown as Buffer,
-                    encoding,
-                );
-            }
-            if (common.lyrics) {
-                common.lyrics = common.lyrics.map((it) =>
-                    it ? iconv.decode(it as unknown as Buffer, encoding) : "",
-                );
+            if (encoding === "GB2312") {
+                const iconv = await import("iconv-lite");
+                for (const field of legacy) common[field] = iconv.decode(Buffer.from(common[field], "latin1"), encoding);
+                if (common.lyrics) common.lyrics = common.lyrics.map(text => byteString(text) ? iconv.decode(Buffer.from(text, "latin1"), encoding) : text);
             }
         }
-
         return {
             title: common.title ?? path.parse(filePath).name,
             artist: common.artist ?? "未知作者",

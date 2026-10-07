@@ -6,6 +6,41 @@ const { load, deferred } = require("./source-loader.cjs");
 const time = load("src/common/time-util.ts");
 
 (async () => {
+    // Real metadata parser + WAV with ID3v2 UTF-8/UTF-16 tags (album, no artist).
+    const tagFolder = await fs.mkdtemp(path.join(os.tmpdir(), "musicfree-tags-"));
+    try {
+        const metadata = await import("music-metadata");
+        const util = load("src/common/file-util.ts", { "music-metadata": metadata, "./constant": load("src/common/constant.ts"),
+            "./local-media": {}, "./task-queue": load("src/common/task-queue.ts").default });
+        function frame(name, text, encoding) {
+            const value = Buffer.concat([Buffer.from([encoding === "utf8" ? 3 : ["gbk", "latin1"].includes(encoding) ? 0 : 1]),
+                encoding === "utf8" ? Buffer.from(text, "utf8") : encoding === "gbk" ? require("iconv-lite").encode(text, "gbk") : encoding === "latin1" ? Buffer.from(text, "latin1") : Buffer.concat([Buffer.from([255, 254]), Buffer.from(text, "utf16le")])]);
+            const header = Buffer.alloc(10); header.write(name); header.writeUInt32BE(value.length, 4);
+            return Buffer.concat([header, value]);
+        }
+        for (const encoding of ["utf8", "utf16le", "gbk", "latin1"]) {
+            const title = encoding === "gbk" ? "中国音乐流行经典歌曲爱你一万年" : encoding === "latin1" ? "Björk et Françoise élève" : "中文 title 音乐";
+            const album = encoding === "latin1" ? "Mötley Crüe Album" : "专辑 Album";
+            const body = Buffer.concat([frame("TIT2", title, encoding), frame("TALB", album, encoding)]);
+            const id3 = Buffer.alloc(10); id3.write("ID3"); id3[3] = encoding === "utf8" ? 4 : 3;
+            for (let i = 0; i < 4; i++) id3[6 + i] = (body.length >> (7 * (3 - i))) & 127;
+            const tags = Buffer.concat([id3, body]);
+            const wave = Buffer.alloc(44 + 32000); wave.write("RIFF"); wave.write("WAVEfmt ", 8);
+            wave.writeUInt32LE(16, 16); wave.writeUInt16LE(1, 20); wave.writeUInt16LE(1, 22);
+            wave.writeUInt32LE(16000, 24); wave.writeUInt32LE(32000, 28); wave.writeUInt16LE(2, 32); wave.writeUInt16LE(16, 34);
+            wave.write("data", 36); wave.writeUInt32LE(wave.length - 44, 40);
+            const chunk = Buffer.alloc(8); chunk.write("id3 "); chunk.writeUInt32LE(tags.length, 4);
+            const raw = Buffer.concat([wave, chunk, tags, tags.length % 2 ? Buffer.alloc(1) : Buffer.alloc(0)]);
+            raw.writeUInt32LE(raw.length - 8, 4);
+            const file = path.join(tagFolder, encoding + ".wav"); await fs.writeFile(file, raw);
+            const item = await util.parseLocalMusicItem(file);
+            assert.equal(item.title, title); assert.equal(item.album, album); assert.equal(item.artist, "未知作者");
+        }
+    } finally {
+        await fs.rm(tagFolder, { recursive: true, force: true });
+    }
+
+
     for (const [input, expected] of [[180.8, "03:00"], ["240", "04:00"], [" 03:08 ", "03:08"],
         ["1:02:03", "1:02:03"], [0, "00:00"], [" ", "--:--"], ["NaN", "--:--"],
         [NaN, "--:--"], [Infinity, "--:--"], [-2, "--:--"], ["03:99", "--:--"]]) {
@@ -94,7 +129,7 @@ const time = load("src/common/time-util.ts");
         assert.equal(pluginCalls,1,"Plugin details supply duration when available");
         assert.equal(await resolver.resolveMusicDuration({ platform:"unknown",id:"none" }),undefined,"Never invent missing duration");
         assert.equal(await resolver.resolveMusicDuration({ platform:"unknown",id:"file" },"missing"),undefined);
-        console.log("PASS: real audio import duration, string formatting, cached local/download metadata, bounded reads, plugin details and safe persistence");
+        console.log("PASS: actual UTF-8/UTF-16 and legacy GBK tags including album without artist; real audio import duration, string formatting, cached local/download metadata, bounded reads, plugin details and safe persistence");
     } finally {
         await fs.rm(folder,{ recursive:true,force:true,maxRetries:5,retryDelay:100 });
     }
