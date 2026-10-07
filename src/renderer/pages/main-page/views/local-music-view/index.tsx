@@ -4,13 +4,13 @@ import { useTranslation } from "react-i18next";
 import "./index.scss";
 import { showModal } from "@/renderer/components/Modal";
 import SvgAsset from "@/renderer/components/SvgAsset";
-import { useEffect, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import SwitchCase from "@/renderer/components/SwitchCase";
 import ListView from "./views/list";
 import ArtistView from "./views/artist";
 import AlbumView from "./views/album";
 import FolderView from "./views/folder";
-import AppConfig from "@shared/app-config/renderer";
+import useAppConfig from "@/hooks/useAppConfig";
 
 enum DisplayView {
     LIST,
@@ -25,49 +25,15 @@ export default function LocalMusicView() {
 
     const localMusicList = localMusicListStore.useValue();
     const [inputSearch, setInputSearch] = useState("");
-    const [filterMusicList, setFilterMusicList] = useState<
-    IMusic.IMusicItem[] | null
-    >(null);
-
-    const [isPending, startTransition] = useTransition();
-
-    useEffect(() => {
-        if (inputSearch.trim() === "") {
-            setFilterMusicList(null);
-        } else {
-            startTransition(() => {
-                const caseSensitive = AppConfig.getConfig(
-                    "playMusic.caseSensitiveInSearch",
-                );
-                if (caseSensitive) {
-                    setFilterMusicList(
-                        localMusicListStore
-                            .getValue()
-                            .filter(
-                                (item) =>
-                                    item.title?.includes(inputSearch) ||
-                  item.artist?.includes(inputSearch) ||
-                  item.album?.includes(inputSearch),
-                            ),
-                    );
-                } else {
-                    const searchText = inputSearch.toLocaleLowerCase();
-                    setFilterMusicList(
-                        localMusicListStore
-                            .getValue()
-                            .filter(
-                                (item) =>
-                                    item.title?.toLocaleLowerCase()?.includes(searchText) ||
-                  item.artist?.toLocaleLowerCase()?.includes(searchText) ||
-                  item.album?.toLocaleLowerCase()?.includes(searchText),
-                            ),
-                    );
-                }
-            });
-        }
-    }, [inputSearch]);
-
-    const finalMusicList = filterMusicList ?? localMusicList;
+    const caseSensitive = useAppConfig("playMusic.caseSensitiveInSearch");
+    // Derived rows share the input/library/config render instead of publishing
+    // a second state update and an intermediate transition with obsolete rows.
+    const finalMusicList = useMemo(() => {
+        if (!inputSearch.trim()) return localMusicList;
+        const query = caseSensitive ? inputSearch : inputSearch.toLocaleLowerCase();
+        return localMusicList.filter(item => [item.title, item.artist, item.album].some(value =>
+            caseSensitive ? value?.includes(query) : value?.toLocaleLowerCase().includes(query)));
+    }, [inputSearch, localMusicList, caseSensitive]);
 
     return (
         <div

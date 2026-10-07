@@ -1,7 +1,6 @@
 import {
-    MutableRefObject,
-    useCallback,
-    useEffect,
+    useMemo,
+    useLayoutEffect,
     useRef,
     useState,
 } from "react";
@@ -46,86 +45,59 @@ export default function useVirtualList<T>(props: IVirtualListProps<T>) {
     } = props;
     const dataRef = useRef(data);
     dataRef.current = data;
+    const optionsRef = useRef(props);
+    optionsRef.current = props;
 
     const [virtualItems, setVirtualItems] = useState<IVirtualItem<T>[]>([]);
-    const [totalHeight, setTotalHeight] = useState<number>(
-        data.length * estimateItemHeight,
-    );
+    const totalHeight = data.length * estimateItemHeight;
 
     const scrollElementRef = useRef<HTMLElement>();
 
-    const scrollHandler = useCallback(
-        throttle(
-            () => {
-                const scrollTop =
-          (scrollElementRef.current?.scrollTop ?? 0) -
-          (typeof offsetHeight === "number" ? offsetHeight : offsetHeight());
-                const realData = dataRef.current;
-                const estimizeStartIndex = Math.floor(scrollTop / estimateItemHeight);
-                const startIndex = Math.max(
-                    estimizeStartIndex - (estimizeStartIndex % 2 === 1 ? 3 : 2),
-                    0,
-                );
-
-                setVirtualItems(
-                    realData
-                        .slice(
-                            startIndex,
-                            startIndex +
-                (scrollElementRef.current
-                    ? renderCount
-                    : fallbackRenderCount < 0
-                        ? realData.length
-                        : fallbackRenderCount),
-                        )
-                        .map((item, index) => ({
-                            rowIndex: startIndex + index,
-                            dataItem: item,
-                            top: (startIndex + index) * estimateItemHeight,
-                        })),
-                );
-            },
-            32,
-            {
-                trailing: true,
-                leading: true,
-            },
-        ),
-        [],
-    );
-
-    useEffect(() => {
-        setTotalHeight(data.length * estimateItemHeight);
-        scrollHandler();
-    }, [data]);
-
-    useEffect(() => {
-        if (!scrollElementRef.current) {
-            scrollElementRef.current = getScrollElement
-                ? getScrollElement()
-                : document.querySelector(scrollElementQuery);
-        }
-        if (scrollElementRef.current) {
-            scrollElementRef.current.addEventListener("scroll", scrollHandler);
-        }
-
-        return () => {
-            scrollElementRef.current?.removeEventListener?.("scroll", scrollHandler);
-            scrollElementRef.current = null;
-        };
+    const refreshItems = useMemo(() => () => {
+        const { estimateItemHeight, renderCount = 40, fallbackRenderCount = -1, offsetHeight = 0 } = optionsRef.current;
+        const scrollTop = (scrollElementRef.current?.scrollTop ?? 0) -
+            (typeof offsetHeight === "number" ? offsetHeight : offsetHeight());
+        const index = Math.floor(scrollTop / estimateItemHeight);
+        const start = Math.max(index - (index % 2 === 1 ? 3 : 2), 0);
+        const count = scrollElementRef.current ? renderCount :
+            fallbackRenderCount < 0 ? dataRef.current.length : fallbackRenderCount;
+        const next = dataRef.current.slice(start, start + count).map((dataItem, offset) => ({
+            rowIndex: start + offset, dataItem, top: (start + offset) * estimateItemHeight,
+        }));
+        setVirtualItems(previous => previous.length === next.length && previous.every((item, offset) =>
+            item.rowIndex === next[offset].rowIndex && item.top === next[offset].top && item.dataItem === next[offset].dataItem) ? previous : next);
     }, []);
+    const scrollHandler = useMemo(() => throttle(refreshItems, 32, { leading: true, trailing: true }), [refreshItems]);
 
-    function setScrollElement(scrollElement: HTMLElement) {
+    function setScrollElement(element: HTMLElement) {
+        if (element === scrollElementRef.current) return;
         scrollElementRef.current?.removeEventListener("scroll", scrollHandler);
-        scrollElementRef.current = scrollElement;
-        if (scrollElement) {
-            scrollElement.addEventListener("scroll", scrollHandler);
-            scrollHandler();
-        }
+        scrollHandler.cancel();
+        scrollElementRef.current = element;
+        element?.addEventListener("scroll", scrollHandler);
+        refreshItems();
     }
 
+    // Inline getters change identity on every render. Only rebind if the actual
+    // DOM container changes; still detect replacements returned by a stable getter.
+    useLayoutEffect(() => {
+        if (getScrollElement || scrollElementQuery) {
+            setScrollElement(getScrollElement ? getScrollElement() : document.querySelector(scrollElementQuery));
+        }
+    });
+    useLayoutEffect(() => () => {
+        scrollElementRef.current?.removeEventListener("scroll", scrollHandler);
+        scrollHandler.cancel();
+        scrollElementRef.current = null;
+    }, [scrollHandler]);
+    useLayoutEffect(() => {
+        // Data/geometry changes must not wait for a pending scroll throttle.
+        scrollHandler.cancel();
+        refreshItems();
+    }, [data, estimateItemHeight, renderCount, fallbackRenderCount, typeof offsetHeight === "number" ? offsetHeight : undefined]);
+
     function scrollToIndex(index: number, behavior?: ScrollBehavior) {
-        scrollElementRef.current.scrollTo({
+        scrollElementRef.current?.scrollTo({
             top:
         (typeof offsetHeight === "number" ? offsetHeight : offsetHeight()) +
         estimateItemHeight * index,

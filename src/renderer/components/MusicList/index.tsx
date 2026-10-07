@@ -2,7 +2,6 @@ import {
     ColumnDef,
     createColumnHelper,
     flexRender,
-    getCoreRowModel,
     getSortedRowModel,
     SortingState,
     useReactTable,
@@ -21,7 +20,7 @@ import { localPluginName, RequestStateCode } from "@/common/constant";
 import BottomLoadingState from "../BottomLoadingState";
 import { IContextMenuItem, showContextMenu } from "../ContextMenu";
 import { getInternalData, getMediaPrimaryKey } from "@/common/media-util";
-import { CSSProperties, memo, useCallback, useEffect, useRef, useState } from "react";
+import { CSSProperties, memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { showModal } from "../Modal";
 import useVirtualList from "@/hooks/useVirtualList";
 import hotkeys from "hotkeys-js";
@@ -34,6 +33,7 @@ import DragReceiver, { startDrag } from "../DragReceiver";
 import { i18n } from "@/shared/i18n/renderer";
 import isLocalMusic from "@/renderer/utils/is-local-music";
 import AppConfig from "@shared/app-config/renderer";
+import cachedMusicRows from "./row-model";
 import { shellUtil } from "@shared/utils/renderer";
 
 interface IMusicListProps {
@@ -350,7 +350,7 @@ function _MusicList(props: IMusicListProps) {
                 : columnShownRef.current,
         },
         onSortingChange: setSorting,
-        getCoreRowModel: getCoreRowModel(),
+        getCoreRowModel: cachedMusicRows(),
         getSortedRowModel: getSortedRowModel(),
     });
 
@@ -372,9 +372,9 @@ function _MusicList(props: IMusicListProps) {
     const [activeItems, setActiveItems] = useState<Set<string>>(new Set());
     const lastActiveKeyRef = useRef<string>();
     const rows = table.getRowModel().rows;
-    const selectedItems = rows
+    const selectedItems = useMemo(() => activeItems.size ? rows
         .filter((row) => activeItems.has(getMediaPrimaryKey(row.original)))
-        .map((row) => row.original);
+        .map((row) => row.original) : [], [rows, activeItems]);
     const allSelected = musicList.length > 0 && selectedItems.length === musicList.length;
     const selectAllRef = useRef<HTMLInputElement>();
 
@@ -385,9 +385,13 @@ function _MusicList(props: IMusicListProps) {
     }, [selectedItems.length, allSelected, batchSelecting]);
 
     useEffect(() => {
+        if (!activeItems.size && !lastActiveKeyRef.current) return;
         const availableKeys = new Set(musicList.map(getMediaPrimaryKey));
-        setActiveItems((previous) => new Set([...previous].filter((key) => availableKeys.has(key))));
-        if (!availableKeys.has(lastActiveKeyRef.current)) {
+        setActiveItems(previous => {
+            const retained = new Set([...previous].filter(key => availableKeys.has(key)));
+            return retained.size === previous.size ? previous : retained;
+        });
+        if (lastActiveKeyRef.current && !availableKeys.has(lastActiveKeyRef.current)) {
             lastActiveKeyRef.current = undefined;
         }
     }, [musicList]);

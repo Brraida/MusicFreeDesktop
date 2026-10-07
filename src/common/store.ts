@@ -26,6 +26,9 @@ export class StateMapper<T> {
         };
         useEffect(() => {
             this.cbs.add(updateState);
+            // Reconcile updates between render and subscription without forcing
+            // each background DB publication into a synchronous React render.
+            updateState();
             return () => {
                 this.cbs.delete(updateState);
             };

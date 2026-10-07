@@ -14,11 +14,12 @@ export default function useAppConfig<K extends keyof IAppConfig>(configKey: K): 
         };
 
         AppConfig.onConfigUpdate(callback);
+        setState(AppConfig.getConfig(configKey));
 
         return () => {
             AppConfig.offConfigUpdate(callback);
         };
-    }, []);
+    }, [configKey]);
 
 
     return state;
