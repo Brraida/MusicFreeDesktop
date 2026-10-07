@@ -243,12 +243,16 @@ module.exports = async (testRoot) => {
     await mini().querySelector("img").decode();
     assert.equal(mini().querySelector("img").src, fallback, "Broken cover did not fall back");
     await update({ musicItem: songA, playerState: constants.PlayerState.Playing });
+    // Exercise a delayed compositor/animation start beyond the former 300ms wait.
+    document.querySelector(".music-detail--container").style.animationDelay = "350ms";
     await act(async () => detailStore.musicDetailShownStore.setValue(false));
-    await wait(300); await frame();
+    // Wait for the actual exit animation lifecycle; a busy compositor can
+    // start a 200ms animation later than a fixed 300ms wall-clock delay.
+    await until(() => detail() === null); await frame();
     assert.equal(detail(), null, "Closing detail failed to unmount");
     assert.equal(bar().dataset.spinning, "true");
     await act(async () => bar().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true })));
-    await wait(300);
+    await until(() => detail() !== null); await frame();
     assert(detail(), "Keyboard cover interaction did not open details");
     await act(async () => mini().dispatchEvent(new MouseEvent("dblclick", { bubbles: true })));
     assert.equal(showMain, 1);
