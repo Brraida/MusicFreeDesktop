@@ -1,41 +1,33 @@
 import MusicSheet from "../music-sheet";
 
-/**
- * 恢复
- * @param data 数据
- * @param overwrite 是否覆写歌单
- */
-async function resume(data: string | Record<string, any>, overwrite?: boolean) {
-    const dataObj = typeof data === "string" ? JSON.parse(data) : data;
-
-    const currentSheets = MusicSheet.frontend.getAllSheets();
-    const allSheets: IMusic.IMusicSheetItem[] = dataObj.musicSheets;
-
-    let importedDefaultSheet;
-    for (const sheet of allSheets) {
-        if (overwrite && sheet.id === MusicSheet.defaultSheet.id) {
-            importedDefaultSheet = sheet;
-            continue;
-        }
-        const newSheet = await MusicSheet.frontend.addSheet(sheet.title);
-        await MusicSheet.frontend.addMusicToSheet(sheet.musicList, newSheet.id);
+/** Validate the entire legacy/version-1 backup before the first database write. */
+async function resume(data: string | Record<string, any>, overwrite = false) {
+    const value = typeof data === "string" ? JSON.parse(data) : data;
+    if (!value || typeof value !== "object" || (value.version !== undefined && value.version !== 1) || !Array.isArray(value.musicSheets)) {
+        throw new Error("Invalid or unsupported playlist backup");
     }
-    if (overwrite) {
-        for (const sheet of currentSheets) {
-            if (sheet.id === MusicSheet.defaultSheet.id) {
-                if (importedDefaultSheet) {
-                    await MusicSheet.frontend.clearSheet(MusicSheet.defaultSheet.id);
-                    await MusicSheet.frontend.addMusicToFavorite(
-                        importedDefaultSheet.musicList,
-                    );
-                }
+    if (value.musicSheets.length > 10000) throw new Error("Backup contains too many playlists");
+    const sheets: IMusic.IMusicSheetItem[] = [];
+    let count = 0;
+    let defaultSeen = false;
+    for (const sheet of value.musicSheets) {
+        if (!sheet || typeof sheet.title !== "string" || !Array.isArray(sheet.musicList)) throw new Error("Invalid playlist in backup");
+        if (sheet.id === MusicSheet.defaultSheet.id) {
+            if (defaultSeen) throw new Error("Duplicate favorite playlist in backup");
+            defaultSeen = true;
+        }
+        count += sheet.musicList.length;
+        if (count > 500000) throw new Error("Backup contains too many tracks");
+        for (const item of sheet.musicList) {
+            if (!item || typeof item.platform !== "string" || !item.platform.length ||
+                !((typeof item.id === "string" && item.id.length > 0) || (typeof item.id === "number" && Number.isFinite(item.id)))) {
+                throw new Error("Invalid track identity in backup");
             }
-            await MusicSheet.frontend.removeSheet(sheet.id);
         }
+        // Detach from mutable input. JSON snapshots match the existing backup format.
+        sheets.push(JSON.parse(JSON.stringify(sheet)));
     }
+    await MusicSheet.frontend.restoreSheets(sheets, overwrite);
 }
 
-const BackupResume = {
-    resume,
-};
-export default BackupResume;
+export default { resume };

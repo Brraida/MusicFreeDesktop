@@ -71,6 +71,8 @@ export async function queryAllSheets() {
             }
         }
 
+        favoriteMusicListIds.clear();
+        musicSheets.find(sheet => sheet.id === defaultSheet.id)?.musicList.forEach(item => favoriteMusicListIds.add(getMediaPrimaryKey(item)));
         // 收藏歌单
         return musicSheets;
     } catch (e) {
@@ -106,7 +108,7 @@ export async function addSheet(sheetName: string) {
         createAt: Date.now(),
         platform: localPluginName,
         musicList: [],
-        $$sortIndex: musicSheets[musicSheets.length - 1].$$sortIndex + 1,
+        $$sortIndex: (musicSheets[musicSheets.length - 1]?.$$sortIndex ?? -1) + 1,
     };
     try {
         await musicSheetDB.transaction(
@@ -141,7 +143,8 @@ export async function updateSheet(
             "readwrite",
             musicSheetDB.sheets,
             async () => {
-                musicSheetDB.sheets.update(sheetId, newData);
+                const affected = await musicSheetDB.sheets.update(sheetId, newData);
+                if (!affected) throw new Error("Music sheet not found");
             },
         );
 
@@ -157,8 +160,7 @@ export async function updateSheet(
             }
         });
     } catch (e) {
-        // 更新歌单信息失败
-        console.log(e);
+        throw e;
     }
 }
 
@@ -195,7 +197,7 @@ export async function clearSheet(sheetId: string) {
  */
 export async function starMusicSheet(sheet: IMedia.IMediaBase) {
     const newSheets = [...starredMusicSheets, sheet];
-    await setUserPreferenceIDB("starredMusicSheets", newSheets);
+    if (!await setUserPreferenceIDB("starredMusicSheets", newSheets)) throw new Error("Failed to save starred playlists");
     starredMusicSheets = newSheets;
 }
 
@@ -207,7 +209,7 @@ export async function unstarMusicSheet(sheet: IMedia.IMediaBase) {
     const newSheets = starredMusicSheets.filter(
         (item) => !isSameMedia(item, sheet),
     );
-    await setUserPreferenceIDB("starredMusicSheets", newSheets);
+    if (!await setUserPreferenceIDB("starredMusicSheets", newSheets)) throw new Error("Failed to save starred playlists");
     starredMusicSheets = newSheets;
 }
 
@@ -216,7 +218,7 @@ export async function unstarMusicSheet(sheet: IMedia.IMediaBase) {
  */
 
 export async function setStarredMusicSheets(sheets: IMedia.IMediaBase[]) {
-    await setUserPreferenceIDB("starredMusicSheets", sheets);
+    if (!await setUserPreferenceIDB("starredMusicSheets", sheets)) throw new Error("Failed to save starred playlists");
     starredMusicSheets = sheets;
 }
 
@@ -393,4 +395,63 @@ export async function exportAllSheetDetails() {
             return allSheetDetails;
         },
     );
+}
+
+/** Apply a validated backup with the same commit boundary as its reference counts. */
+export async function restoreSheets(imported: IMusic.IMusicSheetItem[], overwrite: boolean) {
+    const identity = (item: IMedia.IUnique) => JSON.stringify([item.platform, item.id]);
+    const committed = await musicSheetDB.transaction("rw", musicSheetDB.sheets, musicSheetDB.musicStore, async () => {
+        const oldSheets = await musicSheetDB.sheets.toArray();
+        const oldRecords = await musicSheetDB.musicStore.toArray();
+        const records = new Map(oldRecords.map(item => [identity(item), item]));
+        const countReferences = (sheets: IMusic.IDBMusicSheetItem[]) => {
+            const counts = new Map<string, number>();
+            for (const sheet of sheets) for (const item of sheet.musicList ?? []) {
+                const key = identity(item);
+                counts.set(key, (counts.get(key) ?? 0) + 1);
+            }
+            return counts;
+        };
+        const oldCounts = countReferences(oldSheets);
+        const favorite = oldSheets.find(sheet => sheet.id === defaultSheet.id) ?? { ...defaultSheet, musicList: [] };
+        const nextSheets = overwrite ? [favorite] : [...oldSheets];
+        if (!nextSheets.some(sheet => sheet.id === defaultSheet.id)) nextSheets.unshift(favorite);
+        let sortIndex = Math.max(0, ...nextSheets.map(sheet => sheet.$$sortIndex ?? 0));
+        for (const source of imported) {
+            const isDefault = overwrite && source.id === defaultSheet.id;
+            const unique = new Map(source.musicList.map(item => [identity(item), item]));
+            const musicList = [...unique.values()].map((item, index) => {
+                const key = identity(item);
+                if (!records.has(key)) records.set(key, { ...item, [musicRefSymbol]: 0 });
+                return { platform: item.platform, id: item.id, [sortIndexSymbol]: index, [timeStampSymbol]: Date.now() };
+            });
+            const sheet = {
+                ...(isDefault ? favorite : { id: nanoid(), title: source.title, platform: localPluginName, createAt: Date.now(), $$sortIndex: ++sortIndex }),
+                musicList,
+                artwork: [...unique.values()].at(-1)?.artwork,
+            };
+            if (isDefault) nextSheets[0] = sheet;
+            else nextSheets.push(sheet);
+        }
+        const nextCounts = countReferences(nextSheets);
+        const saved = [], deleted: Array<[string, string | number]> = [];
+        for (const [key, record] of records) {
+            // Download associations own a separate reference; restoring playlists
+            // must not delete downloads or alter their current path/fingerprint.
+            const extra = Math.max(0, (record[musicRefSymbol] ?? 0) - (oldCounts.get(key) ?? 0));
+            const count = extra + (nextCounts.get(key) ?? 0);
+            if (count) saved.push({ ...record, [musicRefSymbol]: count });
+            else deleted.push([record.platform, record.id]);
+        }
+        await musicSheetDB.musicStore.bulkPut(saved);
+        await musicSheetDB.musicStore.bulkDelete(deleted);
+        const nextIds = new Set(nextSheets.map(sheet => sheet.id));
+        await musicSheetDB.sheets.bulkDelete(oldSheets.filter(sheet => !nextIds.has(sheet.id)).map(sheet => sheet.id));
+        await musicSheetDB.sheets.bulkPut(nextSheets);
+        return nextSheets;
+    });
+    musicSheets = committed;
+    favoriteMusicListIds.clear();
+    committed.find(sheet => sheet.id === defaultSheet.id)?.musicList.forEach(item => favoriteMusicListIds.add(getMediaPrimaryKey(item)));
+    return committed;
 }

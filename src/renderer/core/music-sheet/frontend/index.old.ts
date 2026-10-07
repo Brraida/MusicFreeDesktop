@@ -16,7 +16,13 @@ export const getAllSheets = musicSheetsStore.getValue;
 /** 更新默认歌单变化 */
 const refreshFavCbs = new Set<() => void>();
 function refreshFavoriteState() {
-    refreshFavCbs.forEach((cb) => cb?.());
+    for (const callback of [...refreshFavCbs]) {
+        try {
+            callback();
+        } catch (error) {
+            console.error("Favorite notification failed", error);
+        }
+    }
 }
 
 /**
@@ -41,7 +47,9 @@ export async function addSheet(sheetName: string) {
         const newSheetDetail = await backend.addSheet(sheetName);
         musicSheetsStore.setValue(backend.getAllSheets());
         return newSheetDetail;
-    } catch {}
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -57,7 +65,9 @@ export async function updateSheet(
     try {
         await backend.updateSheet(sheetId, newData);
         musicSheetsStore.setValue(backend.getAllSheets());
-    } catch {}
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -73,15 +83,14 @@ export async function updateSheetMusicOrder(
         const targetSheet = musicSheetsStore
             .getValue()
             .find((it) => it.id === sheetId);
-        updateSheetDetail({
-            ...targetSheet,
-            musicList,
-        });
         await backend.updateSheet(sheetId, {
             musicList: musicList.map(toMediaBase) as any,
         });
+        updateSheetDetail({ ...targetSheet, musicList });
         musicSheetsStore.setValue(backend.getAllSheets());
-    } catch {}
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -93,7 +102,9 @@ export async function removeSheet(sheetId: string) {
     try {
         await backend.removeSheet(sheetId);
         musicSheetsStore.setValue(backend.getAllSheets());
-    } catch {}
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -106,7 +117,9 @@ export async function clearSheet(sheetId: string) {
         await backend.clearSheet(sheetId);
         musicSheetsStore.setValue(backend.getAllSheets());
         refetchSheetDetail(sheetId);
-    } catch {}
+    } catch (error) {
+        throw error;
+    }
 }
 
 /**
@@ -224,7 +237,13 @@ const updateSheetDetailCallbacks: Map<
 > = new Map();
 
 function updateSheetDetail(newSheet: IMusic.IMusicSheetItem) {
-    updateSheetDetailCallbacks.get(newSheet?.id)?.forEach((cb) => cb?.(newSheet));
+    for (const callback of [...(updateSheetDetailCallbacks.get(newSheet?.id) ?? [])]) {
+        try {
+            callback(newSheet);
+        } catch (error) {
+            console.error("Sheet notification failed", error);
+        }
+    }
 }
 
 /**
@@ -232,7 +251,12 @@ function updateSheetDetail(newSheet: IMusic.IMusicSheetItem) {
  * @param sheetId
  */
 async function refetchSheetDetail(sheetId: string) {
-    let sheetDetail = await backend.getSheetItemDetail(sheetId);
+    let sheetDetail: IMusic.IMusicSheetItem;
+    try {
+        sheetDetail = await backend.getSheetItemDetail(sheetId);
+    } catch (error) {
+        console.error("Committed sheet detail refresh failed", error); return;
+    }
     if (!sheetDetail) {
     // 可能已经被删除了
         sheetDetail = {
@@ -368,4 +392,17 @@ export function useMusicSheet(sheetId: string) {
 
 export async function exportAllSheetDetails() {
     return await backend.exportAllSheetDetails();
+}
+
+export async function restoreSheets(sheets: IMusic.IMusicSheetItem[], overwrite: boolean) {
+    const previous = musicSheetsStore.getValue();
+    const committed = await backend.restoreSheets(sheets, overwrite);
+    musicSheetsStore.setValue(committed);
+    try {
+        refreshFavoriteState();
+    } catch (error) {
+        console.error("Favorite refresh after restore failed", error);
+    }
+    const results = await Promise.allSettled([...new Set([...previous, ...committed].map(sheet => sheet.id))].map(refetchSheetDetail));
+    for (const result of results) if (result.status === "rejected") console.error("Sheet refresh after restore failed", result.reason);
 }
