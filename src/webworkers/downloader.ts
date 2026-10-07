@@ -185,21 +185,4 @@ async function downloadFile(
     }
 }
 
-// Retain the adapter used by the unfinished alternative downloader implementation.
-interface IOptions {
-    onProgress?: (progress: ICommon.IDownloadFileSize) => Promise<void>;
-    onEnded?: () => Promise<void>;
-    onError?: (reason: Error) => Promise<void>;
-}
-async function downloadFileNew(mediaSource: IMusic.IMusicSource, filePath: string, options?: IOptions) {
-    const result = await downloadFile(mediaSource, filePath, (status) => {
-        options?.onProgress?.({ currentSize: status.downloaded ?? 0, totalSize: status.total ?? 0 });
-    });
-    if (result.state === DownloadState.DONE) {
-        await options?.onEnded?.();
-    } else if (result.state === DownloadState.ERROR) {
-        await options?.onError?.(new Error(result.msg));
-    }
-}
-
-Comlink.expose({ downloadFile, downloadFileNew, pauseAllDownloads, resumeAllDownloads });
+Comlink.expose({ downloadFile, pauseAllDownloads, resumeAllDownloads });

@@ -8,6 +8,7 @@ import { WebpackPlugin } from "@electron-forge/plugin-webpack";
 import { mainConfig } from "./config/webpack.main.config";
 import { rendererConfig } from "./config/webpack.renderer.config";
 import path from "path";
+import { trimSharpDlls } from "./scripts/ci/trim-sharp-dlls.cjs";
 
 const config: ForgeConfig = {
     packagerConfig: {
@@ -23,6 +24,12 @@ const config: ForgeConfig = {
         ],
     },
     rebuildConfig: {},
+    hooks: {
+        packageAfterPrune: async (_config, buildPath, _electronVersion, platform, arch) => {
+            const result = await trimSharpDlls(buildPath, platform, arch);
+            console.log(`Sharp vendor DLL duplicates removed: ${result.files}, ${result.bytes} bytes`);
+        },
+    },
     makers: [
         new MakerSquirrel({
             exe: "MusicFree.exe",
@@ -86,11 +93,6 @@ const config: ForgeConfig = {
                     {
                         js: "./src/webworkers/local-file-watcher.ts",
                         name: "local_file_watcher",
-                        nodeIntegration: true,
-                    },
-                    {
-                        js: "./src/webworkers/db-worker.ts",
-                        name: "db",
                         nodeIntegration: true,
                     },
                 ],
