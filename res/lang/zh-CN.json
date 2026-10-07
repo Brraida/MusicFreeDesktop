@@ -262,6 +262,7 @@
     "star": "收藏"
   },
   "settings": {
+    "common": { "device_failed": "无法切换音频输出设备", "save_failed": "设置保存失败：{{reason}}" },
     "choose_path": "选择路径",
     "change_path": "更改路径",
     "folder_not_exist": "文件夹不存在",

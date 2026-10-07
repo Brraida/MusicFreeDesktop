@@ -283,6 +283,7 @@
     "star": "收藏"
   },
   "settings": {
+    "common": { "device_failed": "無法切換音訊輸出裝置", "save_failed": "設定儲存失敗：{{reason}}" },
     "choose_path": "選擇路徑",
     "change_path": "更改路徑",
     "folder_not_exist": "文件夾不存在",

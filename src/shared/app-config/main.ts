@@ -1,8 +1,7 @@
 import path from "path";
 import { app, ipcMain } from "electron";
-import originalFs from "fs";
 import fs from "fs/promises";
-import { rimraf } from "rimraf";
+import { parseConfigJSON, saveConfigJSON } from "@/common/atomic-json";
 import { IAppConfig } from "@/types/app-config";
 import { IWindowManager } from "@/types/main/window-manager";
 import logger from "@shared/logger/main";
@@ -13,6 +12,8 @@ class AppConfig {
     private _configPath: string;
     private windowManager: IWindowManager;
     private config: IAppConfig;
+    private persistedRaw?: string;
+    private lastSaveError?: string;
 
     private onAppConfigUpdatedCallbacks = new Set<(patch: IAppConfig, config: IAppConfig, from: "main" | "renderer") => void>();
 
@@ -24,38 +25,10 @@ class AppConfig {
     }
 
 
-    private async checkPath() {
-        // 1. Check dir
-        const configDirPath = app.getPath("userData");
-
-        try {
-            const res = await fs.stat(configDirPath);
-            if (!res.isDirectory()) {
-                await rimraf(configDirPath);
-                throw new Error("Not a valid path");
-            }
-        } catch {
-            await fs.mkdir(configDirPath, {
-                recursive: true,
-            });
-        }
-
-        // 2. Check file
-        try {
-            const res = await fs.stat(this.configPath);
-            if (!res.isFile()) {
-                await rimraf(this.configPath);
-                throw new Error("Not a valid path");
-            }
-        } catch {
-            await fs.writeFile(this.configPath, JSON.stringify(_defaultAppConfig, undefined, 4), "utf-8");
-        }
-    }
-
     async setup(windowManager: IWindowManager) {
         this.windowManager = windowManager;
 
-        await this.checkPath();
+        await fs.mkdir(app.getPath("userData"), { recursive: true });
         await this.loadConfig();
 
         // Bind events
@@ -64,15 +37,13 @@ class AppConfig {
             return this.config;
         });
 
-        ipcMain.on("@shared/app-config/set-app-config", (_rawEvt, data: IAppConfig) => {
-            /**
-             * data: {key: value}
-             */
-            this._setConfig(data, "renderer");
+        ipcMain.handle("@shared/app-config/set-app-config", (_rawEvt, data: IAppConfig) => {
+            const success = this._setConfig(data, "renderer");
+            return { success, config: this.config, error: success ? undefined : this.lastSaveError };
         });
-
-        ipcMain.on("@shared/app-config/reset", () => {
-            this.reset();
+        ipcMain.handle("@shared/app-config/reset", () => {
+            const success = this.reset();
+            return { success, config: this.config, error: success ? undefined : this.lastSaveError };
         });
     }
 
@@ -149,7 +120,6 @@ class AppConfig {
                 "private.pluginMeta": oldConfig.private?.pluginMeta,
                 "private.minimode": oldConfig.private?.minimode,
             };
-            this.config = newConfig;
             for (const k in _defaultAppConfig) {
                 if (newConfig[k] === null || newConfig[k] === undefined) {
                     // @ts-ignore
@@ -157,36 +127,53 @@ class AppConfig {
                 }
             }
             const rawConfig = JSON.stringify(newConfig, undefined, 4);
-            originalFs.writeFileSync(this.configPath, rawConfig, "utf-8");
+            try {
+                saveConfigJSON(this.configPath, rawConfig, this.persistedRaw);
+                this.persistedRaw = rawConfig;
+            } catch (error) {
+                // This is a read-time representation change. Keep the legacy
+                // settings usable; the disk still owns the old valid JSON.
+                logger.logError("旧配置已读取，但保存迁移结果失败", error);
+            }
+            this.config = newConfig;
         } catch (e) {
             logger.logError("迁移旧版配置失败", e);
         }
     }
 
     async loadConfig() {
-        try {
-            if (this.config) {
-                return { ..._defaultAppConfig, ...this.config };
-            } else {
-                const rawConfig = await fs.readFile(this.configPath, "utf8");
-                this.config = JSON.parse(rawConfig);
-                // 升级旧版设置
+        if (this.config) return this.config;
+        for (const file of [this.configPath, this.configPath + ".bak"]) {
+            try {
+                const raw = await fs.readFile(file, "utf8");
+                this.config = parseConfigJSON(raw);
+                this.persistedRaw = raw;
+                if (file !== this.configPath) {
+                    // A stale .tmp is never promoted; only a validated last committed backup.
+                    try {
+                        saveConfigJSON(this.configPath, raw);
+                    } catch (error) {
+                        this.persistedRaw = undefined;
+                        logger.logError("配置备份已读取，但修复主文件失败", error);
+                    }
+                    logger.logInfo("Recovered configuration from the previous valid backup");
+                }
                 await this.migrateOldVersionConfig();
-                this.config = {
-                    ..._defaultAppConfig,
-                    ...this.config,
-                };
+                this.config = { ..._defaultAppConfig, ...this.config };
+                return this.config;
+            } catch (error) {
+                this.config = undefined;
+                this.persistedRaw = undefined;
+                if (error.code !== "ENOENT") logger.logError("读取配置失败", error);
             }
-        } catch (e) {
-            if (e.message === "Unexpected end of JSON input" || e.code === "EISDIR") {
-                // JSON 解析异常 / 非文件
-                await rimraf(this.configPath);
-                await this.checkPath();
-            } else if (e.code === "ENOENT") {
-                // 文件不存在
-                await this.checkPath();
-            }
-            this.config = { ..._defaultAppConfig };
+        }
+        this.config = { ..._defaultAppConfig };
+        const raw = JSON.stringify(this.config, undefined, 4);
+        try {
+            saveConfigJSON(this.configPath, raw);
+            this.persistedRaw = raw;
+        } catch (error) {
+            logger.logError("写入默认配置失败", error);
         }
         return this.config;
     }
@@ -196,8 +183,7 @@ class AppConfig {
     }
 
     public reset() {
-        this.config = {};
-        this.setConfig({});
+        return this._setConfig({ ..._defaultAppConfig }, "main", true);
     }
 
     public getConfig<T extends keyof IAppConfig>(key: T): IAppConfig[T] {
@@ -205,28 +191,45 @@ class AppConfig {
     }
 
     public setConfig(data: IAppConfig) {
-        this._setConfig(data, "main");
+        return this._setConfig(data, "main");
     }
 
-    private _setConfig(data: IAppConfig, from: "main" | "renderer") {
+    private _setConfig(data: IAppConfig, from: "main" | "renderer", replace = false): boolean {
+        let next: IAppConfig;
         try {
-            // 1. Merge old one
-            this.config = { ..._defaultAppConfig, ...this.config, ...data };
-            // 2. Save to file
-            const rawConfig = JSON.stringify(this.config, undefined, 4);
-            originalFs.writeFileSync(this.configPath, rawConfig, "utf-8");
-            // 3. Notify to all windows
-            this.windowManager.getAllWindows().forEach((window) => {
-                window.webContents.send("@shared/app-config/update-app-config", data);
-            });
-
-            this.onAppConfigUpdatedCallbacks.forEach((callback) => {
-                callback(data, this.config, from);
-            });
-
-        } catch (e) {
-            logger.logError("设置配置失败", e);
+            if (!data || typeof data !== "object" || Array.isArray(data) ||
+                Object.keys(data).some(key => ["__proto__", "constructor", "prototype"].includes(key))) {
+                throw new Error("Invalid configuration patch");
+            }
+            next = { ..._defaultAppConfig, ...(replace ? {} : this.config), ...data };
+            const raw = JSON.stringify(next, undefined, 4);
+            if (raw !== this.persistedRaw) {
+                saveConfigJSON(this.configPath, raw, this.persistedRaw);
+                this.persistedRaw = raw;
+            }
+        } catch (error) {
+            this.lastSaveError = [error.code, error.message].filter(Boolean).join(": ");
+            logger.logError("设置配置失败", error);
+            return false;
         }
+        const patch = replace ? { ...Object.fromEntries(Object.keys(this.config ?? {}).map(key => [key, undefined])), ...next } : data;
+        this.config = next;
+        // Committed data remains successful even if one subscriber/window fails.
+        for (const window of this.windowManager.getAllWindows()) {
+            try {
+                if (!window.isDestroyed()) window.webContents.send("@shared/app-config/update-app-config", patch);
+            } catch (error) {
+                logger.logError("配置窗口通知失败", error);
+            }
+        }
+        for (const callback of this.onAppConfigUpdatedCallbacks) {
+            try {
+                callback(patch, this.config, from);
+            } catch (error) {
+                logger.logError("配置订阅通知失败", error);
+            }
+        }
+        return true;
     }
 
 }

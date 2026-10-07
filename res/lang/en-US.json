@@ -283,6 +283,7 @@
     "star": "Star"
   },
   "settings": {
+    "common": { "device_failed": "Could not change the audio output device", "save_failed": "Could not save settings: {{reason}}" },
     "choose_path": "Choose Path",
     "change_path": "Change Path",
     "folder_not_exist": "Folder Not Exist",

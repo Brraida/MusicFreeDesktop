@@ -1,6 +1,6 @@
 import AppConfig from "@shared/app-config/renderer";
 import "./index.scss";
-import { HTMLInputTypeAttribute, useState } from "react";
+import { HTMLInputTypeAttribute, useEffect, useState } from "react";
 import { IAppConfig } from "@/types/app-config";
 import useAppConfig from "@/hooks/useAppConfig";
 
@@ -31,6 +31,10 @@ export default function InputSettingItem<T extends keyof IAppConfig>(
     const value = useAppConfig(keyPath);
     const [tmpValue, setTmpValue] = useState<string | null>(value as string || "");
 
+    useEffect(() => {
+        setTmpValue(value == null ? "" : String(value));
+    }, [value, keyPath]);
+
     return (
         <div
             className="setting-view--input-setting-item-container"
@@ -46,7 +50,7 @@ export default function InputSettingItem<T extends keyof IAppConfig>(
                     setTmpValue(e.target.value ?? null);
                 }}
                 type={type}
-                onBlur={() => {
+                onBlur={async () => {
                     if (tmpValue === null) {
                         return;
                     }
@@ -59,13 +63,15 @@ export default function InputSettingItem<T extends keyof IAppConfig>(
                     }
 
                     if (!event.defaultPrevented) {
-                        console.log(tmpValue);
-                        AppConfig.setConfig({
+                        const saved = await AppConfig.setConfig({
                             [keyPath]: trim ? tmpValue.trim() as any : tmpValue as any,
                         });
+                        if (saved === false) {
+                            const current = AppConfig.getConfig(keyPath);
+                            setTmpValue(current == null ? "" : String(current));
+                        }
                     }
                 }}
-                defaultValue={value as string}
                 value={(tmpValue || "") as string}
             ></input>
         </div>

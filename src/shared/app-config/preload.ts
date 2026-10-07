@@ -6,11 +6,11 @@ async function syncConfig() {
 }
 
 function setConfig(config: any) {
-    return ipcRenderer.send("@shared/app-config/set-app-config", config);
+    return ipcRenderer.invoke("@shared/app-config/set-app-config", config);
 }
 
 function reset() {
-    return ipcRenderer.send("@shared/app-config/reset");
+    return ipcRenderer.invoke("@shared/app-config/reset");
 }
 
 function onConfigUpdate(callback: (patch: any) => void) {
