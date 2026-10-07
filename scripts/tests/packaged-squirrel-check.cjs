@@ -39,8 +39,14 @@ function assertLinks(expected) {
     for (const location of ["desktop", "startMenu"]) {
         assert.equal(checked[location].length, expected, location + " shortcut count");
         for (const link of checked[location]) {
-            assert(path.resolve(link.target).toLowerCase().startsWith(fixture.toLowerCase() + path.sep));
             assert(fs.existsSync(link.target), "Shortcut target must exist");
+            // GitHub Windows runners may expose LOCALAPPDATA through an 8.3
+            // alias (RUNNER~1), while the Shell returns the equivalent long path.
+            const canonicalRoot = fs.realpathSync.native(fixture).toLowerCase();
+            const canonicalTarget = fs.realpathSync.native(link.target).toLowerCase();
+            const relative = path.relative(canonicalRoot, canonicalTarget);
+            assert(relative && relative !== ".." && !relative.startsWith(".." + path.sep) && !path.isAbsolute(relative),
+                "Shortcut target outside fixture: " + JSON.stringify({ fixture, target: link.target, canonicalRoot, canonicalTarget }));
         }
     }
 }
