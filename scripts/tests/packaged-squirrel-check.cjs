@@ -30,8 +30,11 @@ function run(command, args, timeout = 30000) {
     return result.stdout;
 }
 function probe() {
-    return JSON.parse(run("powershell.exe", ["-NoProfile", "-NonInteractive", "-File",
-        path.join(__dirname, "windows-shortcut-probe.ps1"), "-Title", title]).replace(/^\uFEFF/, ""));
+    const file = path.join(fixture, "shortcut-observation.json");
+    run("powershell.exe", ["-NoProfile", "-NonInteractive", "-File",
+        path.join(__dirname, "windows-shortcut-probe.ps1"), "-Title", title, "-OutputFile", file]);
+    run(require("electron"), [path.join(__dirname, "windows-shortcut-reader.cjs"), file]);
+    return JSON.parse(fs.readFileSync(file, "utf8"));
 }
 function assertLinks(expected) {
     checked = probe();
@@ -39,7 +42,7 @@ function assertLinks(expected) {
     for (const location of ["desktop", "startMenu"]) {
         assert.equal(checked[location].length, expected, location + " shortcut count");
         for (const link of checked[location]) {
-            assert(fs.existsSync(link.target), "Shortcut target must exist");
+            assert(fs.existsSync(link.target), "Shortcut target must exist: " + JSON.stringify({ fixture, link }));
             // GitHub Windows runners may expose LOCALAPPDATA through an 8.3
             // alias (RUNNER~1), while the Shell returns the equivalent long path.
             const canonicalRoot = fs.realpathSync.native(fixture).toLowerCase();
@@ -97,7 +100,15 @@ require('./.webpack/main');
     console.log("PASS: shipped Windows entry and actual Squirrel updater create/update/remove desktop and Start Menu links; no player, protocol or instance-lock startup");
     fs.writeFileSync(path.join(output, "package-squirrel.json"), JSON.stringify({ passed: true,
         recordedAt: new Date().toISOString(), source, operations, locations: ["Desktop", "StartMenu"],
-        isolatedTitle: title, method: "Real copied packaged EXE and updater; only fixture identity and guarded entry wrapper changed; native shell links read through WScript.Shell" }, null, 2) + "\n");
+        isolatedTitle: title, method: "Real copied packaged EXE and updater; only fixture identity and guarded entry wrapper changed; KnownFolder enumeration and Electron native Unicode Shell reader" }, null, 2) + "\n");
+} catch (error) {
+    const diagnostic = { passed: false, error: String(error), fixture, checked, operations,
+        fixtureFiles: fs.existsSync(fixture) ? fs.readdirSync(fixture) : [],
+        links: [...(checked?.desktop || []), ...(checked?.startMenu || [])].map(link => ({ path: link.path, base64: fs.readFileSync(link.path).toString("base64") })),
+        updaterLog: fs.existsSync(path.join(fixture, "SquirrelSetup.log")) ? fs.readFileSync(path.join(fixture, "SquirrelSetup.log"), "utf8").slice(-16000) : undefined };
+    fs.writeFileSync(path.join(output, "package-squirrel-failure.json"), JSON.stringify(diagnostic, null, 2) + "\n");
+    console.error(JSON.stringify(diagnostic));
+    throw error;
 } finally {
     // Remove only this run's uniquely named links, even if an assertion failed.
     if (fs.existsSync(updater) && fs.existsSync(path.join(packages, "RELEASES"))) {

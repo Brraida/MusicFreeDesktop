@@ -1,4 +1,4 @@
-param([Parameter(Mandatory=$true)][string]$Title)
+param([Parameter(Mandatory=$true)][string]$Title, [Parameter(Mandatory=$true)][string]$OutputFile)
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = New-Object System.Text.UTF8Encoding($false)
 $shell = New-Object -ComObject WScript.Shell
@@ -16,4 +16,5 @@ if (Test-Path -LiteralPath $desktop) {
 if (Test-Path -LiteralPath $programs) {
     $menuLinks = @(Get-ChildItem -LiteralPath $programs -Filter "$Title.lnk" -File -Recurse | ForEach-Object { Read-Link $_ })
 }
-[pscustomobject]@{ desktop = $desktopLinks; startMenu = $menuLinks } | ConvertTo-Json -Depth 4 -Compress
+$result = [pscustomobject]@{ desktop = $desktopLinks; startMenu = $menuLinks } | ConvertTo-Json -Depth 4 -Compress
+[IO.File]::WriteAllText($OutputFile, $result, (New-Object System.Text.UTF8Encoding($false)))

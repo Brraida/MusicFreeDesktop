@@ -153,6 +153,6 @@ GitHub Actions 会通过 `scripts/ci/run-tests.cjs` 分别执行 Node 和 Electr
 node scripts/tests/packaged-squirrel-check.cjs release/MusicFree-win32-x64
 ```
 
-使用编译后的真实 EXE、当前锁定的 Squirrel Update.exe、独立安装布局及唯一测试名称，实际创建/更新/删除桌面与开始菜单 `.lnk`，用 Windows WScript.Shell 检查目标存在且属于该测试目录。只更改副本的身份与入口守卫包装，包内主进程 bundle 不改；安装事件如进入协议注册、实例锁、正常启动或创建窗体，立即失败。目录包含中文/空格，完成或失败后清理本次专属快捷方式和安装副本。不会运行正式安装器或改动正式用户库；此测试覆盖快捷方式生命周期，不代表完整安装向导/注册表验收。
+使用编译后的真实 EXE、当前锁定的 Squirrel Update.exe、独立安装布局及唯一测试名称，实际创建/更新/删除桌面与开始菜单 `.lnk`。通过 Windows KnownFolder 枚举、Electron 原生 Unicode Shell 接口读取和 UTF-8 文件交换，检查目标存在且真实路径属于该测试目录，避免系统代码页与长短路径影响比较。只更改副本的身份与入口守卫包装，包内主进程 bundle 不改；安装事件如进入协议注册、实例锁、正常启动或创建窗体，立即失败。目录包含中文/空格，完成或失败后清理本次专属快捷方式和安装副本。不会运行正式安装器或改动正式用户库；此测试覆盖快捷方式生命周期，不代表完整安装向导/注册表验收。失败证据保留目标路径、链接字节和 updater 日志，便于判断读取问题与实际链接错误。
 
 CI 在 Windows 的完整应用编译及原生校验之后自动运行，普通 push 也覆盖；结果为 `out/ci-test-results/package-squirrel.json`。
