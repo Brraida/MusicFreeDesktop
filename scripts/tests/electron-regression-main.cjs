@@ -5,7 +5,7 @@ const http = require("node:http");
 const root = path.resolve(__dirname, "../..");
 process.chdir(root);
 const suite = process.argv[2];
-if (!["audio", "playlist", "startup", "relocation", "download-resource", "vinyl", "lyric"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, download-resource, vinyl or lyric");
+if (!["audio", "playlist", "startup", "relocation", "download-resource", "vinyl", "lyric", "quality"].includes(suite)) throw new Error("Specify audio, playlist, startup, relocation, download-resource, vinyl, lyric or quality");
 const testRoot = path.join(root, "out/.correctness-regression-" + suite + "-" + Date.now());
 fs.mkdirSync(testRoot, { recursive: true });
 app.setPath("userData", path.join(testRoot, "profile"));

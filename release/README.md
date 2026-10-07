@@ -10,7 +10,7 @@ flowchart TD
     Install --> Format["代码格式检测；失败则停止"]
     Format --> Tests["TypeScript + Node / Electron 回归"]
     Tests --> Package["编译应用并重建原生模块"]
-    Package --> Verify["运行产物检查入口、资源、SQLite 与 Sharp"]
+    Package --> Verify["运行产物检查入口、资源与 Sharp"]
     Verify --> Condition{"手动要求打包或 v 版本标签？"}
     Condition -->|否| Checks["保留检查结果；结束"]
     Condition -->|是| Make["生成安装包、便携包与 SHA-256"]
@@ -33,7 +33,7 @@ runner 标签与架构按 [GitHub 官方 runner 列表](https://github.com/actio
 ## 日常提交
 
 - `dev`、`master`、`main` 的 push 和目标为这些分支的 PR 自动运行。
-- 每个平台先检查代码格式，再执行类型检查、十组 Node 回归、八组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
+- 每个平台先检查代码格式，再执行类型检查、十四组 Node 回归、九组 Electron 回归，以及应用编译和产物验证。Linux 使用 Xvfb 提供虚拟显示，并为测试安装的 Chromium 沙箱辅助程序设置 root 所有者和 4755 权限。
 - 普通提交不生成发布归档。测试日志与结果保留 7 天；失败时也尝试上传已有结果。
 - 安装使用锁文件和 npm 官方 registry，依赖版本及 integrity 不随 CI 更新。缓存 npm 下载，不缓存 `node_modules`。
 
@@ -55,6 +55,12 @@ npm run format:fix    # 自动整理，再重新检测
 1. 打开仓库的 **Actions**，选择 `.github/workflows/build.yml` 对应的工作流。
 2. 点击 **Run workflow**，选择 `dev`，勾选 `build_packages`。
 3. 成功后，从运行页面的 **Artifacts** 下载 `release-win32-x64`、`release-linux-x64`、`release-darwin-x64` 或 `release-darwin-arm64`。
+
+Windows 下载 `release-win32-x64` 后，先解压 GitHub 的外层归档：
+
+- 安装版：运行其中的 `MusicFree-版本-win32-x64-setup.exe`，无需本地 Node.js、编译工具或 WSL。
+- 便携版：将其中的 `MusicFree-版本-win32-x64-portable.zip` 完整解压到可写目录，再运行 `MusicFree.exe`；保留其余资源文件和 `portable/`。便携版的数据写在自身目录，安装版通常使用系统用户数据目录，切换形式时不要误以为原歌单/插件丢失。
+- 确认运行记录为成功，并核对 `build-info-win32-x64.json` 的 commit 是需要的版本。普通 push 的 `checks-*` 是测试结果，不是安装包。
 
 发布文件保留 14 天。每个平台附带 `SHA256SUMS-平台-架构.txt` 和 `build-info-平台-架构.json`，用于核对下载完整性、版本、commit 和构建日志。
 
@@ -84,7 +90,7 @@ macOS ZIP 使用 Forge；DMG 使用系统自带的 `ditto` 和 `hdiutil`，包�
 ## 验证边界
 
 - 工作流使用目前仓库锁定的 Electron 和 Forge，不在配置 CI 时升级播放器宿主。
-- 原生库验证使用刚编译出的 Electron 可执行文件，检查 SQLite 模块加载、Sharp 实际图片处理和必要资源；不等同于各平台全部设备与功能测试。
+- 原生库验证使用刚编译出的 Electron 可执行文件，检查 Sharp 实际图片处理和必要资源；不等同于各平台全部设备与功能测试。
 - Windows 安装包和 macOS 应用未配置代码签名或 Apple 公证。若需要正式签名发布，后续接入维护者自己的证书与相应 secret。
 - 本地已验证回归入口、Windows 产物验证、版本与产物管理脚本和 workflow 语法；各平台的全新依赖安装及打包结果见下方实际试跑记录。
 
