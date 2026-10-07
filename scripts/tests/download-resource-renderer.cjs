@@ -6,10 +6,10 @@ module.exports = async (testRoot, base) => {
     const { createRequire } = require("node:module");
     const req = createRequire(path.resolve("package.json"));
     const ts = req("typescript"), cache = new Map();
-    function compile(file, mocks = {}) {
+    function compile(file, mocks = {}, suffix = "") {
         const full = path.resolve(file), localRequire = createRequire(full);
         const module = { exports: {} };
-        const code = ts.transpileModule(fs.readFileSync(full, "utf8"), { compilerOptions: {
+        const code = ts.transpileModule(fs.readFileSync(full, "utf8") + suffix, { compilerOptions: {
             module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2021,
             esModuleInterop: true, jsx: ts.JsxEmit.ReactJSX,
         } }).outputText;
@@ -40,7 +40,9 @@ module.exports = async (testRoot, base) => {
         onConfigUpdate: callback => {
             configChanged = callback;
         },
-        setConfig: patch => configChanged(patch), reset() {},
+        setConfig: patch => {
+            configChanged(patch); return { success: true };
+        }, reset() {},
     };
     const config = compile("src/shared/app-config/renderer.ts", { "@shared/app-config/default-app-config": {} }).default;
     await config.setup();
@@ -73,13 +75,29 @@ module.exports = async (testRoot, base) => {
     };
     const context = { getGlobalContext: () => ({ platform: process.platform, appPath: { downloads: oldDir }, workersPath: { downloader: "test" } }) };
     const logger = { logError() {}, logInfo() {} };
+    let indexWrites = 0, indexSaveFails = false;
+    const trackedPrefs = { ...prefs, setUserPreferenceIDB: async (key, value) => {
+        if (key === "downloadedList") {
+            ++indexWrites;
+            if (indexSaveFails) return false;
+        }
+        return prefs.setUserPreferenceIDB(key, value);
+    } };
     const mocks = { "@/common/time-util": compile("src/common/time-util.ts"), "@/common/download-resource": resource, "@/common/media-util": media, "@/common/store": Store,
-        "@/renderer/utils/user-perference": prefs, "../db/music-sheet-db": db,
+        "@/renderer/utils/user-perference": trackedPrefs, "../db/music-sheet-db": db,
         "@/common/constant": constants, "./ee": ee, "@shared/utils/renderer": { fsUtil: files },
         "p-queue": PQueue, "@shared/logger/renderer": logger,
         "@shared/app-config/renderer": config, "@/shared/global-context/renderer": context,
     };
-    let sheet = compile("src/renderer/core/downloader/downloaded-sheet.ts", mocks);
+    const HookReact = req("react"); let stateUpdates = 0;
+    let sheet = compile("src/renderer/core/downloader/downloaded-sheet.ts", { ...mocks, react: { ...HookReact,
+        useState: initial => {
+            const [value, setValue] = HookReact.useState(initial);
+            return [value, next => {
+                ++stateUpdates; setValue(next);
+            }];
+        },
+    } }, "\nexport { resourceStore as resourceStoreTest, saveDownloadIndex as saveDownloadIndexTest }; export const checkBatchTest = (items) => mutations.add(() => reconcileDownloadedMusicList(undefined, false, undefined, new Set(items.map(getMediaPrimaryKey)))); export const getVisibleTest = () => downloadedMusicListStore.getValue();");
     const { DownloadResourceState: State } = resource;
     const song = id => ({ platform: "test", id, title: id, artist: "artist" });
     const A = song("A"), B = song("B"), C = song("C"), D = song("D");
@@ -96,6 +114,34 @@ module.exports = async (testRoot, base) => {
         "@shared/logger/renderer": logger,
     }).default;
     let core = makeCore(sheet);
+    indexSaveFails = true;
+    assert.equal(await sheet.saveDownloadIndexTest(), false);
+    indexSaveFails = false;
+    assert.equal(await sheet.saveDownloadIndexTest(), true);
+    const committedWrites = indexWrites;
+    assert.equal(await sheet.saveDownloadIndexTest(), true);
+    assert.equal(indexWrites, committedWrites, "Identical committed indexes skip writes; failed indexes retry");
+    {
+        const React = req("react"), { createRoot } = req("react-dom/client"), { flushSync } = req("react-dom");
+        const fixture = createRoot(document.getElementById("test-root"));
+        let renders = 0, current;
+        function Target({ item }) {
+            ++renders; current = sheet.useDownloadResourceStatus(item); return null;
+        }
+        flushSync(() => fixture.render(React.createElement(Target, { item: A })));
+        await new Promise(r => setTimeout(r, 50)); const before = renders, beforeUpdates = stateUpdates;
+        flushSync(() => sheet.resourceStoreTest.setValue(new Map([[media.getMediaPrimaryKey(B), { state: State.AVAILABLE }]])));
+        assert.equal(renders, before, "Unrelated resource changes must not rerender this song");
+        assert.equal(stateUpdates, beforeUpdates, "Unrelated changes must not enqueue React state updates");
+        const available = { state: State.AVAILABLE, path: oldA };
+        flushSync(() => sheet.resourceStoreTest.setValue(new Map([[media.getMediaPrimaryKey(A), available]])));
+        assert.equal(current, available);
+        flushSync(() => fixture.render(React.createElement(Target, { item: C })));
+        assert.equal(current.state, State.NO_RECORD, "Identity changes cannot flash another song's availability");
+        fixture.unmount(); assert.equal(sheet.resourceStoreTest.valueChangeCbs.size, 0);
+        sheet.resourceStoreTest.setValue(new Map());
+    }
+
     {
         // First launch with legacy download metadata: showing the UI must not wait for any disk read.
         const legacy = Array.from({ length: 24 }, (_, index) => {
@@ -139,6 +185,84 @@ module.exports = async (testRoot, base) => {
         || !inspections.includes(media.getInternalData(legacy[8], "downloadData").path), "selected song takes priority between batches");
         await fullCheck;
         assert(legacy.every(item => sheet.isDownloaded(item)), "background migration must eventually verify every record");
+        assert.deepEqual(sheet.getVisibleTest().map(item => item.id), (await db.musicStore.toArray()).map(item => item.id), "Verification priority cannot reorder the download list");
+        await sheet.stopDownloadedMusicMonitor();
+        beforeInspection = async () => {};
+        const unchangedItem = sheet.getDownloadedMusicItem(legacy[0]);
+        const unchangedData = JSON.stringify(await db.musicStore.get([legacy[0].platform, legacy[0].id]));
+        let redundantWrites = 0;
+        const originalPut = db.musicStore.bulkPut.bind(db.musicStore);
+        db.musicStore.bulkPut = (...args) => {
+            ++redundantWrites; return originalPut(...args);
+        };
+        beforeInspection = async file => {
+            inspections.push(file);
+        };
+        const checksBefore = inspections.length;
+        await sheet.checkBatchTest(legacy.slice(0, 8));
+        assert.equal(redundantWrites, 0, "Unchanged background conclusions must not rewrite persistence timestamps");
+        assert.equal(inspections.length - checksBefore, 8, "Skipping redundant writes must still inspect every file");
+        assert.equal(sheet.getDownloadedMusicItem(legacy[0]), unchangedItem);
+        assert.equal(JSON.stringify(await db.musicStore.get([legacy[0].platform, legacy[0].id])), unchangedData);
+        await db.musicStore.update([legacy[1].platform, legacy[1].id], { "$.downloadData.quality": "high" });
+        await sheet.checkBatchTest([legacy[1]]);
+        assert.equal(media.getInternalData(sheet.getDownloadedMusicItem(legacy[1]), "downloadData").quality, "high", "Record reuse must not drop a new DB quality");
+        let enteredMetadata, releaseMetadata;
+        const metadataEntered = new Promise(resolve => {
+            enteredMetadata = resolve;
+        });
+        const hold = new Promise(resolve => {
+            releaseMetadata = resolve;
+        });
+        beforeInspection = async () => {
+            enteredMetadata(); await hold;
+        };
+        const metadataCheck = sheet.checkBatchTest([legacy[1]]); await metadataEntered;
+        await db.musicStore.update([legacy[1].platform, legacy[1].id], { title: "Concurrent DB title", [constants.musicRefSymbol]: 7 });
+        releaseMetadata(); await metadataCheck;
+        assert.equal(sheet.getDownloadedMusicItem(legacy[1]).title, "Concurrent DB title");
+        assert.equal(sheet.getDownloadedMusicItem(legacy[1])[constants.musicRefSymbol], 7);
+        assert.equal(redundantWrites, 0, "Background checks must preserve concurrent metadata without rewriting unchanged file conclusions");
+        beforeInspection = async () => {};
+        db.musicStore.bulkPut = originalPut;
+        // A real file identity change still requires a commit and can fail.
+        const changedFile = media.getInternalData(legacy[0], "downloadData").path;
+        const stat = fs.statSync(changedFile);
+        fs.utimesSync(changedFile, stat.atime, new Date(stat.mtimeMs + 1000));
+        const statusBefore = sheet.getDownloadResourceStatus(legacy[0]), itemBefore = sheet.getDownloadedMusicItem(legacy[0]);
+        const bulkPut = db.musicStore.bulkPut.bind(db.musicStore);
+        db.musicStore.bulkPut = () => {
+            throw new Error("Injected background batch commit failure");
+        };
+        await assert.rejects(sheet.checkBatchTest(legacy.slice(0, 8)), /Injected background batch commit failure/);
+        assert.equal(sheet.getDownloadResourceStatus(legacy[0]), statusBefore, "Background rollback restores the confirmed status object");
+        assert.equal(sheet.getDownloadedMusicItem(legacy[0]), itemBefore, "A failed batch cannot publish metadata");
+        assert(legacy.every(item => sheet.isDownloaded(item)));
+        db.musicStore.bulkPut = bulkPut;
+        await sheet.checkBatchTest(legacy.slice(0, 8));
+        assert.equal(sheet.getDownloadResourceStatus(legacy[0]).state, State.AVAILABLE);
+        assert.notEqual(sheet.getDownloadedMusicItem(legacy[0]), itemBefore);
+        assert.equal(sheet.getDownloadResourceStatus(legacy[8]).state, State.AVAILABLE, "The next batch remains intact");
+        const confirmed = sheet.getDownloadResourceStatus(legacy[0]);
+        const persisted = JSON.stringify(await db.musicStore.get([legacy[0].platform, legacy[0].id]));
+        let releaseStale, startedStale;
+        const heldStale = new Promise(resolve => {
+            releaseStale = resolve;
+        });
+        const enteredStale = new Promise(resolve => {
+            startedStale = resolve;
+        });
+        beforeInspection = async file => {
+            if (file === media.getInternalData(legacy[0], "downloadData").path) {
+                startedStale(); await heldStale;
+            }
+        };
+        const obsolete = sheet.checkBatchTest(legacy.slice(0, 8));
+        await enteredStale;
+        await config.setConfig({ "download.path": newDir }); releaseStale(); await obsolete;
+        assert.equal(sheet.getDownloadResourceStatus(legacy[0]), confirmed, "A superseded batch restores its journal");
+        assert.equal(JSON.stringify(await db.musicStore.get([legacy[0].platform, legacy[0].id])), persisted);
+        await config.setConfig({ "download.path": oldDir }); beforeInspection = async () => {};
         assert.equal(await sheet.removeDownloadedMusic(legacy, true).then(result => result[0]), true);
         beforeInspection = async () => {};
     }
@@ -365,9 +489,11 @@ module.exports = async (testRoot, base) => {
     assert.equal(dataOf(D).path, newD);
     // Re-downloading a missing resource replaces the association without adding a reference.
     fs.unlinkSync(newA); await sheet.refreshDownloadedMusicList();
+    assert(!(await prefs.getUserPreferenceIDB("downloadedList")).some(item => item.id === A.id && item.platform === A.platform));
     const replacementA = path.join(race2, "A-new.mp3"); fs.writeFileSync(replacementA, "replacement");
     await Promise.all([sheet.addDownloadedMusicToList(complete(A, replacementA)), sheet.refreshDownloadedMusicList()]);
     assert.equal(dataOf(A).path, replacementA); assert.equal((await db.musicStore.get([A.platform, A.id]))[constants.musicRefSymbol], 2);
+    assert((await prefs.getUserPreferenceIDB("downloadedList")).some(item => item.id === A.id && item.platform === A.platform));
     assert.equal(alerts.length, 0);
     // Real HTMLAudio: delete the verified local WAV immediately before opening it.
     const enumModule = compile("src/renderer/core/track-player/enum.ts");
@@ -403,7 +529,7 @@ module.exports = async (testRoot, base) => {
     const local = song("actual-audio"), wavPath = path.join(race2, "actual-audio.wav");
     fs.writeFileSync(wavPath, Buffer.from(await (await fetch(base + "/seed.wav")).arrayBuffer()));
     await sheet.addDownloadedMusicToList(complete(local, wavPath));
-    player.audioController.destroy(); player.createAudioController(); player.audioController.audio.muted = true;
+    player.audioController?.destroy(); player.createAudioController(); player.audioController.audio.muted = true;
     player.fetchCurrentLyric = async () => {}; player.setMusicQueue([local]);
     const setTrack = player.setTrack.bind(player);
     player.setTrack = (source, item, options) => {
