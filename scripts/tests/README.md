@@ -36,6 +36,7 @@ node scripts/tests/device-regression.cjs
 | package-slimming | 打包 Sharp 去重仅删内容相同的 vendor DLL，保留运行副本、不同内容、缺失对应项、元信息和其他平台；benchmark 门槛接受无退步，拒绝“包更小但启动更慢” |
 | config | 真实 Windows 配置原子替换、有效备份/损坏主文件恢复、旧配置迁移；ENOSPC/EIO/EACCES 故障注入，失败不提交缓存/通知、不残留临时文件；非全机断电验证 |
 | system | 任务栏封面 A/B 竞态、关闭窗口、损坏图片回退；网络/Sharp/任务栏边界用替身 |
+| squirrel | 安装/更新创建桌面和开始菜单快捷方式，卸载删除、旧版本退出；主进程入口在实例锁/配置/播放器导入前截获事件；普通/首次/开发/非 Windows 启动、中文/空格路径、子进程错误/退出/超时 |
 | device | 等数量设备更换、默认输出 group、非选中设备/麦克风移除、策略、乱序枚举/权限失败；设备事件和枚举用替身 |
 
 ## Windows Electron 回归
@@ -68,7 +69,7 @@ node scripts/tests/device-regression.cjs
 
 - 健壮性：真实 IndexedDB 事务失败回滚、导入格式/版本校验、下载关联与引用保留、重复备份/身份、前端错误传播；真实 React 订阅竞态、搜索配置更新、虚拟行高度/取消、100 次订阅挂载/卸载、配置失败回退、输出 sink 回退和 localStorage quota 注入。输出设备采用替身，避免自动修改宿主硬件。
 
-默认入口共 14 项 Node 和 9 项 Electron；失败结果逐项保留。
+默认入口共 15 项 Node 和 9 项 Electron；失败结果逐项保留。
 
 动画回归先通过 Chromium CDP 明确设置 `prefers-reduced-motion: no-preference` 验证旋转与滚动，再切换 `reduce` 验证动画停止；结果同时记录系统原设置。避免 CI 宿主默认减少动态效果时读取不存在的动画对象。已在 Windows 强制减少动态效果的条件下验证两个阶段。
 
@@ -145,3 +146,13 @@ node scripts/tests/scanning-benchmark.cjs stage2-scan 20
 ## CI/CD
 
 GitHub Actions 会通过 `scripts/ci/run-tests.cjs` 分别执行 Node 和 Electron 回归，记录每项结果及日志。构建、下载测试包与版本标签发布见 [发布说明](../../release/README.md)。
+
+## Windows 安装快捷方式验收
+
+```powershell
+node scripts/tests/packaged-squirrel-check.cjs release/MusicFree-win32-x64
+```
+
+使用编译后的真实 EXE、当前锁定的 Squirrel Update.exe、独立安装布局及唯一测试名称，实际创建/更新/删除桌面与开始菜单 `.lnk`，用 Windows WScript.Shell 检查目标存在且属于该测试目录。只更改副本的身份与入口守卫包装，包内主进程 bundle 不改；安装事件如进入协议注册、实例锁、正常启动或创建窗体，立即失败。目录包含中文/空格，完成或失败后清理本次专属快捷方式和安装副本。不会运行正式安装器或改动正式用户库；此测试覆盖快捷方式生命周期，不代表完整安装向导/注册表验收。
+
+CI 在 Windows 的完整应用编译及原生校验之后自动运行，普通 push 也覆盖；结果为 `out/ci-test-results/package-squirrel.json`。

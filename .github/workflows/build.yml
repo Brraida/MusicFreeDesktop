@@ -93,6 +93,9 @@ jobs:
         run: npm run package -- --arch=${{ matrix.arch }}
       - name: Verify packaged executable and native modules
         run: node scripts/ci/verify-build.cjs
+      - name: Verify Windows installer shortcut lifecycle
+        if: runner.os == 'Windows'
+        run: node scripts/tests/packaged-squirrel-check.cjs
       - name: Generate installation packages
         if: env.BUILD_PACKAGES == 'true' && runner.os != 'macOS'
         run: npm run make -- --skip-package --arch=${{ matrix.arch }}
