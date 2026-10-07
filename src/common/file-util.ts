@@ -4,6 +4,7 @@ import { localPluginName } from "./constant";
 import { isSupportedLocalMediaFile } from "./local-media";
 import CryptoJS from "crypto-js";
 import fs from "fs/promises";
+import TaskQueue from "./task-queue";
 import url from "url";
 import type { BigIntStats, PathLike, StatOptions, Stats } from "original-fs";
 
@@ -117,10 +118,10 @@ export async function parseLocalMusicItemFolder(
         if (folderStat.isDirectory()) {
             const files = await fs.readdir(folderPath);
             const validFiles = files.filter(isSupportedLocalMediaFile);
-            // TODO: 分片
+            const queue = new TaskQueue();
             return Promise.all(
                 validFiles.map((fp) =>
-                    parseLocalMusicItem(path.resolve(folderPath, fp)),
+                    queue.run(() => parseLocalMusicItem(path.resolve(folderPath, fp))),
                 ),
             );
         }

@@ -40,7 +40,9 @@ module.exports = async (testRoot) => {
         onConfigUpdate: callback => {
             configChanged = callback;
         },
-        setConfig: patch => configChanged(patch), reset() {},
+        setConfig: patch => {
+            configChanged(patch); return { success: true };
+        }, reset() {},
     };
     const config = compile("src/shared/app-config/renderer.ts", { "@shared/app-config/default-app-config": {} }).default;
     await config.setup();

@@ -6,13 +6,13 @@ const { load, deferred, root } = require("./source-loader.cjs");
 const constants = load("src/common/constant.ts");
 const supported = load("src/common/local-media.ts", { "./constant": constants });
 const metadata = { setInternalData() {} };
-const suffix = "\nexport { onAdd, onRemove, setupWatcher, readMusic, syncMusic }; export const waitDelivery = () => delivery; export const closeTest = async () => { syncMusic.cancel(); await watcher?.close(); await delivery; };";
+const suffix = "\nexport { onAdd, onRemove, setupWatcher, changeWatchPath, readMusic, syncMusic }; export const waitDelivery = () => delivery; export const closeTest = async () => { syncMusic.cancel(); await watcher?.close(); await delivery; };";
 
 function createProbe(parse) {
-    const watcher = new EventEmitter(); watcher.close = async () => {};
+    const watcher = new EventEmitter(); watcher.close = async () => {}; watcher.unwatch = async () => {}; watcher.add = () => {}; watcher._watched = new Map();
     let pending;
     const api = load("src/webworkers/local-file-watcher.ts", {
-        comlink: { expose() {} }, chokidar: { watch: () => watcher },
+        "@/common/task-queue": load("src/common/task-queue.ts").default, comlink: { expose() {} }, chokidar: { watch: () => watcher },
         "@/common/local-media": supported, "@/common/media-util": metadata,
         "@/common/file-util": { parseLocalMusicItem: parse || (async fp => ({ id: fp, platform: "local", title: fp })) },
         "lodash.debounce": fn => {
@@ -25,7 +25,7 @@ function createProbe(parse) {
 }
 
 (async () => {
-    for (const count of [1, 100, 10000]) {
+    for (const count of [1, 100, 10000, 50000]) {
         const { api, watcher, flush } = createProbe();
         await api.setupWatcher([]);
         const paths = Array.from({ length: count }, (_, i) => "test/" + i + ".MP3");
@@ -46,12 +46,58 @@ function createProbe(parse) {
         await api.onAdd(items => received.push(...items)); await api.onRemove(items => removed.push(...items));
         await api.setupWatcher([]);
         const pending = api.readMusic("song.MP3", { isFile: () => true });
+        await new Promise(resolve => setImmediate(resolve)); // let the first bounded task enter its held parse
         deleted ? watcher.emit("unlink", "song.MP3") : await api.readMusic("song.MP3", { isFile: () => true });
         held.resolve({ id: "song", platform: "local", title: "old" }); await pending; await flush();
         assert.equal(received.length, deleted ? 0 : 1);
         if (!deleted) assert.equal(received[0].title, "new");
         else assert.deepEqual(removed, ["song.MP3"]);
         await api.closeTest();
+    }
+    // An event queued by a closed watcher must not inherit the new generation.
+    {
+        const { api, watcher, flush } = createProbe();
+        let calls = 0; await api.onAdd(() => ++calls);
+        await api.setupWatcher([]);
+        const oldRead = watcher.listeners("add")[0];
+        await api.setupWatcher([]);
+        oldRead("stale.MP3", { isFile: () => true }); await new Promise(r => setImmediate(r)); await flush();
+        assert.equal(calls, 0); await api.closeTest();
+    }
+    // A failed in-flight save cannot requeue tracks from an unwatched directory.
+    {
+        const held = deferred(); let calls = 0;
+        const { api, flush } = createProbe();
+        await api.setupWatcher([]);
+        await api.onAdd(() => ++calls === 1 ? held.promise : undefined);
+        await api.readMusic("removed/song.MP3", { isFile: () => true });
+        const saving = flush(); await new Promise(resolve => setImmediate(resolve));
+        await api.changeWatchPath([], ["removed"]);
+        held.reject(new Error("Injected save failure after directory removal")); await saving; await flush();
+        assert.equal(calls, 1);
+        await api.readMusic("removed/song.MP3", { isFile: () => true }); await flush(); assert.equal(calls, 1);
+        await api.changeWatchPath(["removed"], []);
+        await api.readMusic("removed/song.MP3", { isFile: () => true }); await flush(); assert.equal(calls, 2);
+        await api.closeTest();
+    }
+    // Work is bounded, queued deletions do not open files, and delivery batches stay small.
+    {
+        const held = deferred(); let active = 0, peak = 0, reads = 0;
+        const { api, watcher, flush } = createProbe(async fp => {
+            ++reads; ++active; peak = Math.max(peak, active);
+            await held.promise; --active;
+            return { id: fp, platform: "local", title: fp };
+        });
+        await api.setupWatcher([]);
+        const sizes = []; await api.onAdd(batch => sizes.push(batch.length));
+        const jobs = Array.from({ length: 1000 }, (_, i) => api.readMusic("bounded/" + i + ".MP3", { isFile: () => true }));
+        await new Promise(resolve => setImmediate(resolve));
+        assert.equal(active, 64);
+        watcher.emit("unlink", "bounded/999.MP3");
+        held.resolve(); await Promise.all(jobs); await flush();
+        assert.equal(peak, 64); assert.equal(reads, 999);
+        assert.equal(sizes.reduce((sum, count) => sum + count, 0), 999);
+        assert(sizes.every(count => count <= 200)); await api.closeTest();
     }
     assert.equal(supported.isSupportedLocalMediaFile("C:\\Music\\A.FlAc"), true);
     assert.equal(supported.isSupportedLocalMediaFile("cover.PNG"), false);
@@ -61,12 +107,13 @@ function createProbe(parse) {
     let api;
     try {
         const fileUtil = load("src/common/file-util.ts", {
+            "./task-queue": load("src/common/task-queue.ts").default,
             "music-metadata": await import("music-metadata"), "./constant": constants, "./local-media": supported,
         });
         const originalParse = fileUtil.parseLocalMusicItem;
         const local = { ...fileUtil, parseLocalMusicItem: async fp => ({ ...(await originalParse(fp)), title: await fs.readFile(fp, "utf8") }) };
         api = load("src/webworkers/local-file-watcher.ts", {
-            comlink: { expose() {} }, "@/common/local-media": supported,
+            "@/common/task-queue": load("src/common/task-queue.ts").default, comlink: { expose() {} }, "@/common/local-media": supported,
             "@/common/media-util": metadata, "@/common/file-util": local,
         }, suffix);
         for (let i = 0; i < 100; i++) await fs.writeFile(path.join(testRoot, i + ".MP3"), "initial");
@@ -105,6 +152,13 @@ function createProbe(parse) {
         assert.equal(songs.size, 99);
         const imported = await fileUtil.parseLocalMusicItemFolder(testRoot);
         assert.equal(imported.length, 99); // folder import shares the uppercase rule
+        await api.changeWatchPath([], [testRoot]);
+        songs.clear();
+        await fs.writeFile(path.join(testRoot, "1.MP3"), "changed while unwatched");
+        await new Promise(resolve => setTimeout(resolve, 750)); assert.equal(songs.size, 0);
+        await api.changeWatchPath([testRoot], []);
+        await until(() => songs.size === 99);
+        assert.equal(songs.get(path.join(testRoot, "1.MP3")).title, "changed while unwatched");
         console.log("PASS: scan handshake at 1/100/10000, stale parses, real Windows watcher add/change/unlink, optional stats and folder import");
     } catch (error) {
         console.error("Scanner regression failure:", error);

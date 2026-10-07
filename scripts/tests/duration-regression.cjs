@@ -14,6 +14,7 @@ const time = load("src/common/time-util.ts");
     const folder = await fs.mkdtemp(path.join(os.tmpdir(), "musicfree-duration-"));
     try {
         const fileUtil = load("src/common/file-util.ts", {
+            "./task-queue": load("src/common/task-queue.ts").default,
             "music-metadata": await import("music-metadata"),
             "./constant": load("src/common/constant.ts"),
             "./local-media": { isSupportedLocalMediaFile: () => true },
