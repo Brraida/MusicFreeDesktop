@@ -5,12 +5,16 @@ import { useOutputAudioDevices } from "@/hooks/useMediaDevices";
 import ListBoxSettingItem from "../../components/ListBoxSettingItem";
 import trackPlayer from "@renderer/core/track-player";
 import { useTranslation } from "react-i18next";
+import { toast } from "react-toastify";
 import AppConfig from "@shared/app-config/renderer";
+import { useRef } from "react";
 
 
 export default function PlayMusic() {
     const audioDevices = useOutputAudioDevices();
     const { t } = useTranslation();
+    const deviceChanges = useRef(Promise.resolve());
+    const latestDeviceChange = useRef(0);
 
     return (
         <div className="setting-view--play-music-container">
@@ -70,10 +74,27 @@ export default function PlayMusic() {
                 width={"320px"}
                 onChange={async (evt, item) => {
                     evt.preventDefault();
-                    await trackPlayer.setAudioOutputDevice(item.deviceId);
-                    AppConfig.setConfig({
-                        "playMusic.audioOutputDevice": item.toJSON(),
+                    const request = ++latestDeviceChange.current;
+                    const change = deviceChanges.current.then(async () => {
+                        if (request !== latestDeviceChange.current) return;
+                        const previous = AppConfig.getConfig("playMusic.audioOutputDevice");
+                        if (await trackPlayer.setAudioOutputDevice(item?.deviceId) === false) {
+                            if (request === latestDeviceChange.current) toast.error(t("settings.common.device_failed"));
+                            return;
+                        }
+                        if (request !== latestDeviceChange.current) return;
+                        const saved = await AppConfig.setConfig({
+                            "playMusic.audioOutputDevice": item?.toJSON?.() ?? null,
+                        });
+                        // The next native change starts after this rollback; an
+                        // older failed save cannot undo a newer selected sink.
+                        if (saved === false) await trackPlayer.setAudioOutputDevice(previous?.deviceId);
                     });
+                    deviceChanges.current = change.catch(error => {
+                        console.error("Audio output change failed", error);
+                        if (request === latestDeviceChange.current) toast.error(t("settings.common.device_failed"));
+                    });
+                    await deviceChanges.current;
                 }}
                 options={audioDevices}
             ></ListBoxSettingItem>

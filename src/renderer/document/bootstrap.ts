@@ -285,18 +285,37 @@ function setupCommandAndEvents() {
 }
 
 async function setupDeviceChange() {
-    const getAudioDevices = async () =>
-        await navigator.mediaDevices.enumerateDevices().catch(() => []);
-    let devices = (await getAudioDevices()) || [];
-
-    navigator.mediaDevices.ondevicechange = async (evt) => {
-        const newDevices = await getAudioDevices();
-        if (
-            newDevices.length < devices.length &&
-            AppConfig.getConfig("playMusic.whenDeviceRemoved") === "pause"
-        ) {
-            trackPlayer.pause();
+    if (!navigator.mediaDevices?.enumerateDevices) return;
+    let devices: MediaDeviceInfo[] = [];
+    let generation = 0;
+    const refresh = async (initial = false) => {
+        const request = ++generation;
+        let next: MediaDeviceInfo[];
+        try {
+            next = await navigator.mediaDevices.enumerateDevices();
+        } catch (error) {
+            console.error("Audio device enumeration failed", error); return;
         }
-        devices = newDevices;
+        if (request !== generation) return;
+        const previousOutputs = devices.filter(device => device.kind === "audiooutput");
+        const nextOutputs = next.filter(device => device.kind === "audiooutput");
+        const selected = AppConfig.getConfig("playMusic.audioOutputDevice")?.deviceId;
+        let removed: boolean;
+        if (selected && selected !== "default" && selected !== "communications") {
+            removed = previousOutputs.some(device => device.deviceId === selected) &&
+                !nextOutputs.some(device => device.deviceId === selected);
+        } else {
+            const previousDefault = previousOutputs.find(device => device.deviceId === (selected || "default"));
+            const nextDefault = nextOutputs.find(device => device.deviceId === (selected || "default"));
+            removed = previousDefault?.groupId && nextDefault?.groupId
+                ? previousDefault.groupId !== nextDefault.groupId
+                : previousOutputs.some(device => !nextOutputs.some(next => next.deviceId === device.deviceId));
+        }
+        if (!initial && removed && AppConfig.getConfig("playMusic.whenDeviceRemoved") === "pause") trackPlayer.pause();
+        devices = next;
     };
+    navigator.mediaDevices.ondevicechange = () => {
+        void refresh();
+    };
+    await refresh(true);
 }
